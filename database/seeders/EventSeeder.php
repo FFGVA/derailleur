@@ -10,6 +10,10 @@ class EventSeeder extends Seeder
 {
     public function run(): void
     {
+        $activeMembers = Member::where('statuscode', 'A')->get();
+        $chefPeloton1 = $activeMembers->first(); // Sophie Dupont
+        $chefPeloton2 = $activeMembers->skip(1)->first(); // Marie Favre
+
         $events = [
             [
                 'title' => 'Sortie vélo autour du lac Léman',
@@ -20,6 +24,7 @@ class EventSeeder extends Seeder
                 'max_participants' => 20,
                 'price' => 15.00,
                 'statuscode' => 'P',
+                'chef_peloton_id' => $chefPeloton1->id,
             ],
             [
                 'title' => 'Atelier mécanique vélo - Les bases',
@@ -30,6 +35,7 @@ class EventSeeder extends Seeder
                 'max_participants' => 12,
                 'price' => 25.00,
                 'statuscode' => 'P',
+                'chef_peloton_id' => $chefPeloton2->id,
             ],
             [
                 'title' => 'Gravel ride dans le Jura genevois',
@@ -40,6 +46,7 @@ class EventSeeder extends Seeder
                 'max_participants' => 15,
                 'price' => 10.00,
                 'statuscode' => 'N',
+                'chef_peloton_id' => $chefPeloton1->id,
             ],
             [
                 'title' => 'Assemblée générale annuelle 2026',
@@ -50,6 +57,7 @@ class EventSeeder extends Seeder
                 'max_participants' => 50,
                 'price' => 0.00,
                 'statuscode' => 'P',
+                'chef_peloton_id' => null,
             ],
             [
                 'title' => 'Stage initiation vélo de route',
@@ -60,6 +68,7 @@ class EventSeeder extends Seeder
                 'max_participants' => 10,
                 'price' => 75.00,
                 'statuscode' => 'N',
+                'chef_peloton_id' => $chefPeloton2->id,
             ],
         ];
 
@@ -67,30 +76,40 @@ class EventSeeder extends Seeder
             Event::create($eventData);
         }
 
-        // Attach some members to events
-        $activeMembers = Member::where('statuscode', 'A')->get();
-
+        // Attach some members to events with present status
         // Sortie vélo - 6 participantes
         $sortie = Event::where('title', 'like', '%lac Léman%')->first();
         if ($sortie && $activeMembers->count() >= 6) {
-            foreach ($activeMembers->take(6) as $member) {
-                $sortie->members()->attach($member->id, ['status' => 'C', 'updated_at' => now()]);
+            foreach ($activeMembers->take(6) as $i => $member) {
+                $sortie->members()->attach($member->id, [
+                    'status' => 'C',
+                    'present' => $i < 4 ? true : false,
+                    'updated_at' => now(),
+                ]);
             }
         }
 
         // Atelier mécanique - 4 participantes
         $atelier = Event::where('title', 'like', '%mécanique%')->first();
         if ($atelier && $activeMembers->count() >= 8) {
-            foreach ($activeMembers->slice(2, 4) as $member) {
-                $atelier->members()->attach($member->id, ['status' => 'N', 'updated_at' => now()]);
+            foreach ($activeMembers->slice(2, 4) as $i => $member) {
+                $atelier->members()->attach($member->id, [
+                    'status' => 'N',
+                    'present' => null,
+                    'updated_at' => now(),
+                ]);
             }
         }
 
         // AG - 8 participantes
         $ag = Event::where('title', 'like', '%Assemblée%')->first();
         if ($ag && $activeMembers->count() >= 8) {
-            foreach ($activeMembers->take(8) as $member) {
-                $ag->members()->attach($member->id, ['status' => 'C', 'updated_at' => now()]);
+            foreach ($activeMembers->take(8) as $i => $member) {
+                $ag->members()->attach($member->id, [
+                    'status' => 'C',
+                    'present' => $i < 6 ? true : ($i === 6 ? false : null),
+                    'updated_at' => now(),
+                ]);
             }
         }
     }

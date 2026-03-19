@@ -5,9 +5,13 @@ namespace App\Models;
 use App\Enums\MemberStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Member extends Model
 {
+    use SoftDeletes;
+
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
 
@@ -15,7 +19,6 @@ class Member extends Model
         'first_name',
         'last_name',
         'email',
-        'phone',
         'date_of_birth',
         'address',
         'postal_code',
@@ -25,6 +28,8 @@ class Member extends Model
         'membership_start',
         'membership_end',
         'notes',
+        'is_invitee',
+        'metadata',
     ];
 
     protected function casts(): array
@@ -34,12 +39,25 @@ class Member extends Model
             'date_of_birth' => 'date',
             'membership_start' => 'date',
             'membership_end' => 'date',
+            'is_invitee' => 'boolean',
+            'metadata' => 'array',
         ];
+    }
+
+    public function phones(): HasMany
+    {
+        return $this->hasMany(MemberPhone::class);
+    }
+
+    public function ledEvents(): HasMany
+    {
+        return $this->hasMany(Event::class, 'chef_peloton_id');
     }
 
     public function events(): BelongsToMany
     {
         return $this->belongsToMany(Event::class, 'event_member')
-            ->withPivot('status', 'updated_at');
+            ->using(EventMember::class)
+            ->withPivot('status', 'present', 'updated_at');
     }
 }

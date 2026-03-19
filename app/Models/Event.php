@@ -4,10 +4,14 @@ namespace App\Models;
 
 use App\Enums\EventStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
 {
+    use SoftDeletes;
+
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
 
@@ -20,6 +24,7 @@ class Event extends Model
         'max_participants',
         'price',
         'statuscode',
+        'chef_peloton_id',
     ];
 
     protected function casts(): array
@@ -32,9 +37,15 @@ class Event extends Model
         ];
     }
 
+    public function chefPeloton(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'chef_peloton_id');
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(Member::class, 'event_member')
-            ->withPivot('status', 'updated_at');
+            ->using(EventMember::class)
+            ->withPivot('status', 'present', 'updated_at');
     }
 }

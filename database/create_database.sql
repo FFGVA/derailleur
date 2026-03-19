@@ -1,20 +1,19 @@
+-- =============================================
 -- Dérailleur — Fast and Female Geneva
--- Database creation script for MariaDB
--- Usage: mysql -u root -p < database/create_database.sql
+-- Production database script for MariaDB
+-- Usage: mysql -u username -p agiletra_ffgva < database/create_database.sql
+-- =============================================
 
--- Create database
-CREATE DATABASE IF NOT EXISTS `agiletra_ffgva`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
--- Create application user
-CREATE USER IF NOT EXISTS 'laravel'@'localhost' IDENTIFIED BY 'laravel';
-GRANT ALL PRIVILEGES ON `agiletra_ffgva`.* TO 'laravel'@'localhost';
-FLUSH PRIVILEGES;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
 USE `agiletra_ffgva`;
 
--- Laravel: users (admin / Filament)
+-- =============================================
+-- SECTION 1: Laravel system tables
+-- =============================================
+
+-- Laravel: users
 CREATE TABLE IF NOT EXISTS `users` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
@@ -22,6 +21,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email_verified_at` TIMESTAMP NULL,
     `password` VARCHAR(255) NOT NULL,
     `remember_token` VARCHAR(100) NULL,
+    `role` CHAR(1) NOT NULL DEFAULT 'C',
+    `member_id` BIGINT UNSIGNED NULL,
     `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -101,16 +102,15 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
--- Application tables
+-- SECTION 2: Domain tables
 -- =============================================
 
 -- Members
 CREATE TABLE IF NOT EXISTS `members` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `first_name` VARCHAR (40) NOT NULL,
+    `first_name` VARCHAR(40) NOT NULL,
     `last_name` VARCHAR(60) NOT NULL,
     `email` VARCHAR(255) NOT NULL UNIQUE,
-    `phone` VARCHAR(20 NULL,
     `date_of_birth` DATE NULL,
     `address` TEXT NULL,
     `postal_code` VARCHAR(10) NULL,
@@ -120,7 +120,10 @@ CREATE TABLE IF NOT EXISTS `members` (
     `membership_start` DATE NULL,
     `membership_end` DATE NULL,
     `notes` TEXT NULL,
-    `updated_at` TIMESTAMP NULL
+    `is_invitee` TINYINT(1) NOT NULL DEFAULT 0,
+    `metadata` JSON NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Events
@@ -134,17 +137,214 @@ CREATE TABLE IF NOT EXISTS `events` (
     `max_participants` INT UNSIGNED NULL,
     `price` DECIMAL(8,2) NOT NULL DEFAULT 0,
     `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
-    `updated_at` TIMESTAMP NULL
+    `chef_peloton_id` BIGINT UNSIGNED NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `events_chef_peloton_id_foreign` FOREIGN KEY (`chef_peloton_id`) REFERENCES `members` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Event ↔ Member (pivot)
+-- Event-Member pivot
 CREATE TABLE IF NOT EXISTS `event_member` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `event_id` BIGINT UNSIGNED NOT NULL,
     `member_id` BIGINT UNSIGNED NOT NULL,
     `status` CHAR(1) NOT NULL DEFAULT 'N',
+    `present` TINYINT(1) NULL,
     `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
     UNIQUE KEY `event_member_unique` (`event_id`, `member_id`),
-    CONSTRAINT `event_member_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ,
-    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) 
+    CONSTRAINT `event_member_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`),
+    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Member phones
+CREATE TABLE IF NOT EXISTS `member_phones` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `phone_number` VARCHAR(20) NOT NULL,
+    `label` VARCHAR(40) NULL,
+    `is_whatsapp` TINYINT(1) NOT NULL DEFAULT 0,
+    `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `member_phones_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- SECTION 3: Foreign key on users -> members
+-- (added after members table exists)
+-- =============================================
+
+-- Only add if the constraint does not already exist (idempotent via IF NOT EXISTS on index)
+ALTER TABLE `users`
+    ADD CONSTRAINT `users_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`);
+
+-- =============================================
+-- SECTION 4: Audit tables
+-- =============================================
+
+-- Members audit
+CREATE TABLE IF NOT EXISTS `members_audit` (
+    `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `audit_action` CHAR(1) NOT NULL,
+    `audit_user_id` BIGINT UNSIGNED NULL,
+    `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id` BIGINT UNSIGNED NOT NULL,
+    `first_name` VARCHAR(40) NOT NULL,
+    `last_name` VARCHAR(60) NOT NULL,
+    `email` VARCHAR(255) NOT NULL,
+    `date_of_birth` DATE NULL,
+    `address` TEXT NULL,
+    `postal_code` VARCHAR(10) NULL,
+    `city` VARCHAR(255) NULL,
+    `country` VARCHAR(2) DEFAULT 'CH',
+    `statuscode` CHAR(1) DEFAULT 'D',
+    `membership_start` DATE NULL,
+    `membership_end` DATE NULL,
+    `notes` TEXT NULL,
+    `is_invitee` TINYINT(1) DEFAULT 0,
+    `metadata` JSON NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Events audit
+CREATE TABLE IF NOT EXISTS `events_audit` (
+    `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `audit_action` CHAR(1) NOT NULL,
+    `audit_user_id` BIGINT UNSIGNED NULL,
+    `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id` BIGINT UNSIGNED NOT NULL,
+    `title` VARCHAR(200) NOT NULL,
+    `description` TEXT NULL,
+    `location` VARCHAR(255) NULL,
+    `starts_at` DATETIME NOT NULL,
+    `ends_at` DATETIME NULL,
+    `max_participants` INT UNSIGNED NULL,
+    `price` DECIMAL(8,2) DEFAULT 0,
+    `statuscode` CHAR(1) DEFAULT 'N',
+    `chef_peloton_id` BIGINT UNSIGNED NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Event-Member audit
+CREATE TABLE IF NOT EXISTS `event_member_audit` (
+    `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `audit_action` CHAR(1) NOT NULL,
+    `audit_user_id` BIGINT UNSIGNED NULL,
+    `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id` BIGINT UNSIGNED NOT NULL,
+    `event_id` BIGINT UNSIGNED NOT NULL,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `status` CHAR(1) DEFAULT 'N',
+    `present` TINYINT(1) NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Member phones audit
+CREATE TABLE IF NOT EXISTS `member_phones_audit` (
+    `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `audit_action` CHAR(1) NOT NULL,
+    `audit_user_id` BIGINT UNSIGNED NULL,
+    `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id` BIGINT UNSIGNED NOT NULL,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `phone_number` VARCHAR(20) NOT NULL,
+    `label` VARCHAR(40) NULL,
+    `is_whatsapp` TINYINT(1) DEFAULT 0,
+    `sort_order` TINYINT UNSIGNED DEFAULT 0,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
+-- SECTION 5: Triggers
+-- =============================================
+
+DELIMITER $$
+
+-- ── Members triggers ──
+
+DROP TRIGGER IF EXISTS `members_before_update`$$
+CREATE TRIGGER `members_before_update`
+BEFORE UPDATE ON `members`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+DROP TRIGGER IF EXISTS `members_before_delete`$$
+CREATE TRIGGER `members_before_delete`
+BEFORE DELETE ON `members`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+-- ── Events triggers ──
+
+DROP TRIGGER IF EXISTS `events_before_update`$$
+CREATE TRIGGER `events_before_update`
+BEFORE UPDATE ON `events`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+DROP TRIGGER IF EXISTS `events_before_delete`$$
+CREATE TRIGGER `events_before_delete`
+BEFORE DELETE ON `events`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+-- ── Event-Member triggers ──
+
+DROP TRIGGER IF EXISTS `event_member_before_update`$$
+CREATE TRIGGER `event_member_before_update`
+BEFORE UPDATE ON `event_member`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+DROP TRIGGER IF EXISTS `event_member_before_delete`$$
+CREATE TRIGGER `event_member_before_delete`
+BEFORE DELETE ON `event_member`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+-- ── Member phones triggers ──
+
+DROP TRIGGER IF EXISTS `member_phones_before_update`$$
+CREATE TRIGGER `member_phones_before_update`
+BEFORE UPDATE ON `member_phones`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+DROP TRIGGER IF EXISTS `member_phones_before_delete`$$
+CREATE TRIGGER `member_phones_before_delete`
+BEFORE DELETE ON `member_phones`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+DELIMITER ;
+
+SET FOREIGN_KEY_CHECKS = 1;

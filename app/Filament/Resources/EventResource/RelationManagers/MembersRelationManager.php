@@ -31,6 +31,24 @@ class MembersRelationManager extends RelationManager
             ]);
     }
 
+    protected function canAttach(): bool
+    {
+        return $this->canManageParticipants();
+    }
+
+    protected function canDetach(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return $this->canManageParticipants();
+    }
+
+    private function canManageParticipants(): bool
+    {
+        $user = auth()->user();
+
+        return $user->isAdmin()
+            || $user->member_id === $this->getOwnerRecord()->chef_peloton_id;
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -44,12 +62,12 @@ class MembersRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail'),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('pivot.status')
                     ->label('Statut')
                     ->badge()
-                    ->state(fn ($record) => EventMemberStatus::from($record->pivot->status))
-                    ->formatStateUsing(fn (EventMemberStatus $state) => $state->getLabel())
-                    ->color(fn (EventMemberStatus $state) => $state->getColor()),
+                    ->state(fn ($record) => $record->pivot->status)
+                    ->formatStateUsing(fn ($state) => $state instanceof EventMemberStatus ? $state->getLabel() : EventMemberStatus::from($state)->getLabel())
+                    ->color(fn ($state) => $state instanceof EventMemberStatus ? $state->getColor() : EventMemberStatus::from($state)->getColor()),
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
@@ -63,14 +81,31 @@ class MembersRelationManager extends RelationManager
                             ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
                             ->default('N')
                             ->required(),
-                    ]),
+                    ])
+                    ->visible(fn () => $this->canManageParticipants()),
             ])
             ->actions([
-                Tables\Actions\DetachAction::make()->label('Retirer'),
+                Tables\Actions\Action::make('changeStatus')
+                    ->label('Statut')
+                    ->icon('heroicon-o-pencil-square')
+                    ->form([
+                        Forms\Components\Select::make('status')
+                            ->label('Statut')
+                            ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
+                            ->required(),
+                    ])
+                    ->fillForm(fn ($record) => ['status' => $record->pivot->getRawOriginal('status')])
+                    ->action(fn ($record, array $data) => $record->pivot->update(['status' => $data['status']]))
+                    ->visible(fn () => $this->canManageParticipants()),
+                Tables\Actions\DetachAction::make()
+                    ->label('Retirer')
+                    ->visible(fn () => $this->canManageParticipants()),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()->label('Retirer'),
+                    Tables\Actions\DetachBulkAction::make()
+                        ->label('Retirer')
+                        ->visible(fn () => $this->canManageParticipants()),
                 ]),
             ]);
     }

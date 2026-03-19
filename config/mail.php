@@ -115,4 +115,12 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Recipient
+    |--------------------------------------------------------------------------
+    */
+
+    'to_contact' => env('MAIL_TO_CONTACT', 'fastandfemalegva@etik.com'),
+
 ];

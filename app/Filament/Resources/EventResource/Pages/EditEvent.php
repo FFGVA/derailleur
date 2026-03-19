@@ -13,6 +13,7 @@ class EditEvent extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ViewAction::make()->label('Voir'),
             Actions\DeleteAction::make()->label('Supprimer'),
         ];
     }

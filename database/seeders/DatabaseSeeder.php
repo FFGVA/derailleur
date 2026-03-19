@@ -15,15 +15,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call([
+            MemberSeeder::class,
+            EventSeeder::class,
+        ]);
+
+        // Admin user (no member link)
         User::factory()->create([
             'name' => 'Admin FFGVA',
             'email' => 'admin@ffgva.ch',
             'password' => bcrypt('password'),
+            'role' => 'A',
+            'member_id' => null,
         ]);
 
-        $this->call([
-            MemberSeeder::class,
-            EventSeeder::class,
+        // Chef de peloton user linked to first member (Sophie Dupont)
+        $firstMember = \App\Models\Member::first();
+        User::factory()->create([
+            'name' => 'Sophie Dupont',
+            'email' => 'sophie.dupont@ffgva.ch',
+            'password' => bcrypt('password'),
+            'role' => 'C',
+            'member_id' => $firstMember->id,
         ]);
     }
 }
