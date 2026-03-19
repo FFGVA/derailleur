@@ -1,6 +1,6 @@
 -- =============================================
 -- Dérailleur — Fast and Female Geneva
--- Production database script for MariaDB
+-- Production database script for MariaDB 10.11+
 -- Usage: mysql -u username -p agiletra_ffgva < database/create_database.sql
 -- =============================================
 
@@ -13,7 +13,6 @@ USE `agiletra_ffgva`;
 -- SECTION 1: Laravel system tables
 -- =============================================
 
--- Laravel: users
 CREATE TABLE IF NOT EXISTS `users` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
@@ -27,14 +26,12 @@ CREATE TABLE IF NOT EXISTS `users` (
     `updated_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Laravel: password reset tokens
 CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
     `email` VARCHAR(255) NOT NULL PRIMARY KEY,
     `token` VARCHAR(255) NOT NULL,
     `created_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Laravel: sessions
 CREATE TABLE IF NOT EXISTS `sessions` (
     `id` VARCHAR(255) NOT NULL PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NULL,
@@ -46,7 +43,6 @@ CREATE TABLE IF NOT EXISTS `sessions` (
     INDEX `sessions_last_activity_index` (`last_activity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Laravel: cache
 CREATE TABLE IF NOT EXISTS `cache` (
     `key` VARCHAR(255) NOT NULL PRIMARY KEY,
     `value` MEDIUMTEXT NOT NULL,
@@ -59,7 +55,6 @@ CREATE TABLE IF NOT EXISTS `cache_locks` (
     `expiration` INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Laravel: jobs
 CREATE TABLE IF NOT EXISTS `jobs` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `queue` VARCHAR(255) NOT NULL,
@@ -94,7 +89,6 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
     `failed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Laravel: migrations tracking
 CREATE TABLE IF NOT EXISTS `migrations` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `migration` VARCHAR(255) NOT NULL,
@@ -105,7 +99,6 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 -- SECTION 2: Domain tables
 -- =============================================
 
--- Members
 CREATE TABLE IF NOT EXISTS `members` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `first_name` VARCHAR(40) NOT NULL,
@@ -122,11 +115,12 @@ CREATE TABLE IF NOT EXISTS `members` (
     `notes` TEXT NULL,
     `is_invitee` TINYINT(1) NOT NULL DEFAULT 0,
     `metadata` JSON NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
-    `deleted_at` TIMESTAMP NULL
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `members_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Events
 CREATE TABLE IF NOT EXISTS `events` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `title` VARCHAR(200) NOT NULL,
@@ -138,26 +132,28 @@ CREATE TABLE IF NOT EXISTS `events` (
     `price` DECIMAL(8,2) NOT NULL DEFAULT 0,
     `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
     `chef_peloton_id` BIGINT UNSIGNED NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
     `deleted_at` TIMESTAMP NULL,
-    CONSTRAINT `events_chef_peloton_id_foreign` FOREIGN KEY (`chef_peloton_id`) REFERENCES `members` (`id`)
+    CONSTRAINT `events_chef_peloton_id_foreign` FOREIGN KEY (`chef_peloton_id`) REFERENCES `members` (`id`),
+    CONSTRAINT `events_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Event-Member pivot
 CREATE TABLE IF NOT EXISTS `event_member` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `event_id` BIGINT UNSIGNED NOT NULL,
     `member_id` BIGINT UNSIGNED NOT NULL,
     `status` CHAR(1) NOT NULL DEFAULT 'N',
     `present` TINYINT(1) NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
     `deleted_at` TIMESTAMP NULL,
     UNIQUE KEY `event_member_unique` (`event_id`, `member_id`),
     CONSTRAINT `event_member_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`),
-    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`)
+    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`),
+    CONSTRAINT `event_member_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Member phones
 CREATE TABLE IF NOT EXISTS `member_phones` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `member_id` BIGINT UNSIGNED NOT NULL,
@@ -165,28 +161,29 @@ CREATE TABLE IF NOT EXISTS `member_phones` (
     `label` VARCHAR(40) NULL,
     `is_whatsapp` TINYINT(1) NOT NULL DEFAULT 0,
     `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
     `deleted_at` TIMESTAMP NULL,
-    CONSTRAINT `member_phones_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`)
+    CONSTRAINT `member_phones_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`),
+    CONSTRAINT `member_phones_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
--- SECTION 3: Foreign key on users -> members
--- (added after members table exists)
+-- SECTION 3: Cross-table foreign keys
 -- =============================================
 
--- Only add if the constraint does not already exist (idempotent via IF NOT EXISTS on index)
 ALTER TABLE `users`
     ADD CONSTRAINT `users_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`);
 
 -- =============================================
 -- SECTION 4: Audit tables
+-- Each audit row = full before-image + action + who + when
+-- audit_user_id has referential integrity to users
 -- =============================================
 
--- Members audit
 CREATE TABLE IF NOT EXISTS `members_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `audit_action` CHAR(1) NOT NULL,
+    `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
@@ -204,14 +201,15 @@ CREATE TABLE IF NOT EXISTS `members_audit` (
     `notes` TEXT NULL,
     `is_invitee` TINYINT(1) DEFAULT 0,
     `metadata` JSON NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
-    `deleted_at` TIMESTAMP NULL
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `members_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Events audit
 CREATE TABLE IF NOT EXISTS `events_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `audit_action` CHAR(1) NOT NULL,
+    `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
@@ -224,14 +222,15 @@ CREATE TABLE IF NOT EXISTS `events_audit` (
     `price` DECIMAL(8,2) DEFAULT 0,
     `statuscode` CHAR(1) DEFAULT 'N',
     `chef_peloton_id` BIGINT UNSIGNED NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
-    `deleted_at` TIMESTAMP NULL
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `events_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Event-Member audit
 CREATE TABLE IF NOT EXISTS `event_member_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `audit_action` CHAR(1) NOT NULL,
+    `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
@@ -239,14 +238,15 @@ CREATE TABLE IF NOT EXISTS `event_member_audit` (
     `member_id` BIGINT UNSIGNED NOT NULL,
     `status` CHAR(1) DEFAULT 'N',
     `present` TINYINT(1) NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
-    `deleted_at` TIMESTAMP NULL
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `event_member_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Member phones audit
 CREATE TABLE IF NOT EXISTS `member_phones_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `audit_action` CHAR(1) NOT NULL,
+    `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
@@ -255,25 +255,28 @@ CREATE TABLE IF NOT EXISTS `member_phones_audit` (
     `label` VARCHAR(40) NULL,
     `is_whatsapp` TINYINT(1) DEFAULT 0,
     `sort_order` TINYINT UNSIGNED DEFAULT 0,
+    `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
-    `deleted_at` TIMESTAMP NULL
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `member_phones_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
 -- SECTION 5: Triggers
+-- Copy full before-image to audit table on UPDATE and DELETE
 -- =============================================
 
 DELIMITER $$
 
--- ── Members triggers ──
+-- ── Members ──
 
 DROP TRIGGER IF EXISTS `members_before_update`$$
 CREATE TRIGGER `members_before_update`
 BEFORE UPDATE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DROP TRIGGER IF EXISTS `members_before_delete`$$
@@ -281,19 +284,19 @@ CREATE TRIGGER `members_before_delete`
 BEFORE DELETE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
--- ── Events triggers ──
+-- ── Events ──
 
 DROP TRIGGER IF EXISTS `events_before_update`$$
 CREATE TRIGGER `events_before_update`
 BEFORE UPDATE ON `events`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DROP TRIGGER IF EXISTS `events_before_delete`$$
@@ -301,19 +304,19 @@ CREATE TRIGGER `events_before_delete`
 BEFORE DELETE ON `events`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
--- ── Event-Member triggers ──
+-- ── Event-Member ──
 
 DROP TRIGGER IF EXISTS `event_member_before_update`$$
 CREATE TRIGGER `event_member_before_update`
 BEFORE UPDATE ON `event_member`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DROP TRIGGER IF EXISTS `event_member_before_delete`$$
@@ -321,19 +324,19 @@ CREATE TRIGGER `event_member_before_delete`
 BEFORE DELETE ON `event_member`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `event_member_audit` (`audit_action`, `audit_user_id`, `id`, `event_id`, `member_id`, `status`, `present`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
--- ── Member phones triggers ──
+-- ── Member phones ──
 
 DROP TRIGGER IF EXISTS `member_phones_before_update`$$
 CREATE TRIGGER `member_phones_before_update`
 BEFORE UPDATE ON `member_phones`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DROP TRIGGER IF EXISTS `member_phones_before_delete`$$
@@ -341,8 +344,8 @@ CREATE TRIGGER `member_phones_before_delete`
 BEFORE DELETE ON `member_phones`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DELIMITER ;

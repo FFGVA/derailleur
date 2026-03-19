@@ -2,8 +2,9 @@
 
 ## Project
 - Club membership management app for Fast and Female Geneva (cycling club)
-- Production: derailleur.ffgva.ch (Hostpoint, PHP 8.4, MariaDB)
+- Production: derailleur.ffgva.ch (Hostpoint, PHP 8.4, MariaDB 10.11)
 - Local dev: PHP 8.4 (Debian), MariaDB 11.8, Apache vhost derailleur.local
+- SQL must be compatible with MariaDB 10.11 (production) — avoid 11.x-only features
 - GitHub: FFGVA/derailleur
 
 ## Stack

@@ -25,6 +25,7 @@ class Event extends Model
         'price',
         'statuscode',
         'chef_peloton_id',
+        'modified_by_id',
     ];
 
     protected function casts(): array
@@ -35,6 +36,11 @@ class Event extends Model
             'ends_at' => 'datetime',
             'price' => 'decimal:2',
         ];
+    }
+
+    public function modifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'modified_by_id');
     }
 
     public function chefPeloton(): BelongsTo

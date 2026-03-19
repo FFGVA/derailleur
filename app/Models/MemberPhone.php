@@ -18,6 +18,7 @@ class MemberPhone extends Model
         'label',
         'is_whatsapp',
         'sort_order',
+        'modified_by_id',
     ];
 
     protected function casts(): array
@@ -25,6 +26,11 @@ class MemberPhone extends Model
         return [
             'is_whatsapp' => 'boolean',
         ];
+    }
+
+    public function modifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'modified_by_id');
     }
 
     public function member(): BelongsTo

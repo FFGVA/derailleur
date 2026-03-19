@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\MemberStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,6 +31,7 @@ class Member extends Model
         'notes',
         'is_invitee',
         'metadata',
+        'modified_by_id',
     ];
 
     protected function casts(): array
@@ -42,6 +44,11 @@ class Member extends Model
             'is_invitee' => 'boolean',
             'metadata' => 'array',
         ];
+    }
+
+    public function modifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'modified_by_id');
     }
 
     public function phones(): HasMany
