@@ -55,13 +55,37 @@ class MemberResource extends Resource
                                     ->label('Numéro')
                                     ->tel()
                                     ->required()
-                                    ->maxLength(20),
+                                    ->maxLength(20)
+                                    ->rules([
+                                        fn () => function (string $attribute, $value, \Closure $fail) {
+                                            $result = \App\Services\PhoneFormatter::format($value);
+                                            if ($result['error'] !== null) {
+                                                $fail($result['error']);
+                                            }
+                                        },
+                                    ])
+                                    ->extraInputAttributes([
+                                        'x-on:blur' => "if (typeof sgPhoneFormat === 'function') { let r = sgPhoneFormat(\$el.value); if (r.error) { } else { \$el.value = r.formatted; \$dispatch('input', r.formatted) } }",
+                                    ]),
                                 Forms\Components\TextInput::make('label')
                                     ->label('Type')
                                     ->maxLength(40)
                                     ->placeholder('Mobile, Domicile...'),
                                 Forms\Components\Toggle::make('is_whatsapp')
-                                    ->label('WhatsApp'),
+                                    ->label('WhatsApp')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $component) {
+                                        if ($state) {
+                                            $phones = $get('../../phones');
+                                            $currentPath = $component->getStatePath();
+                                            foreach ($phones as $key => $phone) {
+                                                $path = "phones.{$key}.is_whatsapp";
+                                                if (!str_ends_with($currentPath, $path)) {
+                                                    $set("../../phones.{$key}.is_whatsapp", false);
+                                                }
+                                            }
+                                        }
+                                    }),
                             ])
                             ->columns(3)
                             ->defaultItems(0)
@@ -69,39 +93,41 @@ class MemberResource extends Resource
                             ->collapsible()
                             ->columnSpanFull(),
                     ]),
-                Forms\Components\Section::make('Adresse')
-                    ->columns(2)
-                    ->schema([
-                        Forms\Components\Textarea::make('address')
-                            ->label('Adresse')
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('postal_code')
-                            ->label('Code postal')
-                            ->maxLength(10),
-                        Forms\Components\TextInput::make('city')
-                            ->label('Ville'),
-                        Forms\Components\TextInput::make('country')
-                            ->label('Pays')
-                            ->default('CH')
-                            ->maxLength(2),
-                    ]),
                 Forms\Components\Section::make('Adhésion')
-                    ->columns(2)
+                    ->columns(4)
                     ->schema([
                         Forms\Components\Select::make('statuscode')
                             ->label('Statut')
                             ->options(collect(MemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
                             ->default('D')
-                            ->required(),
-                        Forms\Components\Toggle::make('is_invitee')
-                            ->label('Invitée (non-membre)'),
+                            ->required()
+                            ->columnSpan(2),
                         Forms\Components\DatePicker::make('membership_start')
-                            ->label('Début d\'adhésion'),
+                            ->label('Début adhésion'),
                         Forms\Components\DatePicker::make('membership_end')
-                            ->label('Fin d\'adhésion'),
+                            ->label('Fin adhésion'),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
+                    ]),
+                Forms\Components\Section::make('Adresse')
+                    ->columns(20)
+                    ->schema([
+                        Forms\Components\Textarea::make('address')
+                            ->label('Adresse')
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('postal_code')
+                            ->label('NPA')
+                            ->maxLength(10)
+                            ->columnSpan(2),
+                        Forms\Components\TextInput::make('city')
+                            ->label('Ville')
+                            ->columnSpan(16),
+                        Forms\Components\TextInput::make('country')
+                            ->label('Pays')
+                            ->default('CH')
+                            ->maxLength(2)
+                            ->columnSpan(2),
                     ]),
             ]);
     }
@@ -113,24 +139,30 @@ class MemberResource extends Resource
                 Tables\Columns\TextColumn::make('last_name')
                     ->label('Nom')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->grow(false),
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Prénom')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->label('E-mail')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable()
+                    ->grow(false),
                 Tables\Columns\ViewColumn::make('phones_display')
                     ->label('Tél.')
-                    ->view('filament.columns.phones'),
+                    ->view('filament.columns.phones')
+                    ->grow(false)
+                    ->alignStart(),
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('Statut')
                     ->badge()
                     ->formatStateUsing(fn (MemberStatus $state) => $state->getLabel())
                     ->color(fn (MemberStatus $state) => $state->getColor())
-                    ->sortable(),
+                    ->sortable()
+                    ->grow(false)
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('E-mail')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('city')
                     ->label('Ville')
                     ->sortable()
@@ -156,25 +188,12 @@ class MemberResource extends Resource
                     ->label('Supprimés'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()->label('Voir'),
-                Tables\Actions\EditAction::make()->label('Modifier'),
-                Tables\Actions\RestoreAction::make()
-                    ->label('Restaurer')
-                    ->visible(fn () => auth()->user()->isAdmin()),
-                Tables\Actions\ForceDeleteAction::make()
-                    ->label('Supprimer définitivement')
-                    ->visible(fn () => auth()->user()->isAdmin()),
+                Tables\Actions\EditAction::make()
+                    ->label('')
+                    ->tooltip('Modifier')
+                    ->color('info'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Supprimer'),
-                    Tables\Actions\RestoreBulkAction::make()
-                        ->label('Restaurer')
-                        ->visible(fn () => auth()->user()->isAdmin()),
-                    Tables\Actions\ForceDeleteBulkAction::make()
-                        ->label('Supprimer définitivement')
-                        ->visible(fn () => auth()->user()->isAdmin()),
-                ]),
                 Tables\Actions\BulkAction::make('downloadVcards')
                     ->label('Télécharger vCards')
                     ->icon('heroicon-o-arrow-down-tray')

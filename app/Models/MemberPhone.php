@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PhoneFormatter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,6 +12,16 @@ class MemberPhone extends Model
     use SoftDeletes;
 
     const CREATED_AT = null;
+
+    protected static function booted(): void
+    {
+        static::saving(function (MemberPhone $phone) {
+            $result = PhoneFormatter::format($phone->phone_number);
+            if ($result['error'] === null && $result['formatted'] !== '') {
+                $phone->phone_number = $result['formatted'];
+            }
+        });
+    }
 
     protected $fillable = [
         'member_id',

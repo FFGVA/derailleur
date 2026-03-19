@@ -43,6 +43,13 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn () => new HtmlString('<style>' . file_get_contents(resource_path('css/filament/admin.css')) . '</style>'),
             )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn () => new HtmlString(
+                    '<script src="/js/sg-phone-rules.js"></script>' .
+                    '<script src="/js/sg-phone.js"></script>'
+                ),
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([

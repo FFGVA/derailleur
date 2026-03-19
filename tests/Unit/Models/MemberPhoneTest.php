@@ -41,7 +41,7 @@ class MemberPhoneTest extends TestCase
 
         $this->assertDatabaseHas('member_phones', [
             'id' => $phone->id,
-            'phone_number' => '+41791234567',
+            'phone_number' => '+41 79 123 45 67',
             'label' => 'Mobile',
         ]);
     }

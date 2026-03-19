@@ -71,7 +71,9 @@ class MembersRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
-                    ->label('Ajouter une participante')
+                    ->label('Ajouter')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
                     ->preloadRecordSelect()
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()

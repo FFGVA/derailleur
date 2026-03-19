@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class EventResource extends Resource
@@ -31,7 +32,7 @@ class EventResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Détails de l\'événement')
-                    ->columns(2)
+                    ->columns(12)
                     ->schema([
                         Forms\Components\TextInput::make('title')
                             ->label('Titre')
@@ -42,33 +43,50 @@ class EventResource extends Resource
                             ->label('Description')
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('location')
-                            ->label('Lieu'),
+                            ->label('Lieu')
+                            ->columnSpan(6),
                         Forms\Components\Select::make('statuscode')
                             ->label('Statut')
                             ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
                             ->default('N')
-                            ->required(),
+                            ->required()
+                            ->columnSpan(2),
+                        Forms\Components\TextInput::make('max_participants')
+                            ->label('Places')
+                            ->numeric()
+                            ->minValue(1)
+                            ->columnSpan(2),
+                        Forms\Components\TextInput::make('price')
+                            ->label('Prix (CHF)')
+                            ->numeric()
+                            ->prefix('CHF')
+                            ->default(0)
+                            ->columnSpan(2),
                         Forms\Components\DateTimePicker::make('starts_at')
                             ->label('Début')
-                            ->required(),
+                            ->required()
+                            ->columnSpan(3),
                         Forms\Components\DateTimePicker::make('ends_at')
-                            ->label('Fin'),
+                            ->label('Fin')
+                            ->columnSpan(3),
                         Forms\Components\Select::make('chef_peloton_id')
                             ->label('Cheffe de peloton')
                             ->relationship('chefPeloton', 'last_name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
                             ->searchable(['first_name', 'last_name'])
                             ->preload()
-                            ->nullable(),
-                        Forms\Components\TextInput::make('max_participants')
-                            ->label('Places max.')
-                            ->numeric()
-                            ->minValue(1),
-                        Forms\Components\TextInput::make('price')
-                            ->label('Prix (CHF)')
-                            ->numeric()
-                            ->prefix('CHF')
-                            ->default(0),
+                            ->nullable()
+                            ->columnSpan(6),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('delete')
+                                ->label('Supprimer')
+                                ->icon('heroicon-o-trash')
+                                ->color('danger')
+                                ->requiresConfirmation()
+                                ->action(fn ($record) => $record?->delete() ?: null)
+                                ->after(fn () => redirect(EventResource::getUrl('index')))
+                                ->visible(fn (?Model $record) => $record !== null && auth()->user()->isAdmin()),
+                        ])->alignEnd()->verticallyAlignEnd()->columnSpanFull(),
                     ]),
             ]);
     }
@@ -101,7 +119,7 @@ class EventResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Prix')
-                    ->money('CHF')
+                    ->money('CHF', locale: 'de_CH')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('members_count')
                     ->label('Participantes')
@@ -116,14 +134,10 @@ class EventResource extends Resource
                     ->label('Supprimés'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()->label('Voir'),
-                Tables\Actions\EditAction::make()->label('Modifier'),
-                Tables\Actions\RestoreAction::make()
-                    ->label('Restaurer')
-                    ->visible(fn () => auth()->user()->isAdmin()),
-                Tables\Actions\ForceDeleteAction::make()
-                    ->label('Supprimer définitivement')
-                    ->visible(fn () => auth()->user()->isAdmin()),
+                Tables\Actions\EditAction::make()
+                    ->label('')
+                    ->tooltip('Modifier')
+                    ->color('info'),
             ])
             ->bulkActions([]);
     }
