@@ -107,35 +107,33 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 -- Members
 CREATE TABLE IF NOT EXISTS `members` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `first_name` VARCHAR(255) NOT NULL,
-    `last_name` VARCHAR(255) NOT NULL,
+    `first_name` VARCHAR (40) NOT NULL,
+    `last_name` VARCHAR(60) NOT NULL,
     `email` VARCHAR(255) NOT NULL UNIQUE,
-    `phone` VARCHAR(255) NULL,
+    `phone` VARCHAR(20 NULL,
     `date_of_birth` DATE NULL,
     `address` TEXT NULL,
     `postal_code` VARCHAR(10) NULL,
     `city` VARCHAR(255) NULL,
     `country` VARCHAR(2) NOT NULL DEFAULT 'CH',
-    `status` ENUM('active', 'inactive', 'pending') NOT NULL DEFAULT 'pending',
+    `statuscode` CHAR(1) NOT NULL DEFAULT 'D',
     `membership_start` DATE NULL,
     `membership_end` DATE NULL,
     `notes` TEXT NULL,
-    `created_at` TIMESTAMP NULL,
     `updated_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Events
 CREATE TABLE IF NOT EXISTS `events` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `title` VARCHAR(255) NOT NULL,
+    `title` VARCHAR(200) NOT NULL,
     `description` TEXT NULL,
     `location` VARCHAR(255) NULL,
     `starts_at` DATETIME NOT NULL,
     `ends_at` DATETIME NULL,
     `max_participants` INT UNSIGNED NULL,
     `price` DECIMAL(8,2) NOT NULL DEFAULT 0,
-    `status` ENUM('draft', 'published', 'cancelled', 'completed') NOT NULL DEFAULT 'draft',
-    `created_at` TIMESTAMP NULL,
+    `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
     `updated_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -144,10 +142,9 @@ CREATE TABLE IF NOT EXISTS `event_member` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `event_id` BIGINT UNSIGNED NOT NULL,
     `member_id` BIGINT UNSIGNED NOT NULL,
-    `status` ENUM('registered', 'confirmed', 'cancelled') NOT NULL DEFAULT 'registered',
-    `created_at` TIMESTAMP NULL,
+    `status` CHAR(1) NOT NULL DEFAULT 'N',
     `updated_at` TIMESTAMP NULL,
     UNIQUE KEY `event_member_unique` (`event_id`, `member_id`),
-    CONSTRAINT `event_member_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
-    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE
+    CONSTRAINT `event_member_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ,
+    CONSTRAINT `event_member_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
