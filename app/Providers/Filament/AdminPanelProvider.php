@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Support\Enums\Alignment;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\HtmlString;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -30,10 +33,16 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Dérailleur')
             ->colors([
                 'primary' => Color::hex('#80081C'),
-                'gray' => Color::hex('#d9bbae'),
-                'info' => Color::hex('#8d8cc7'),
-                'danger' => Color::hex('#b57b7b'),
+                'gray' => Color::Zinc,
+                'info' => Color::hex('#5b5a9e'),
+                'danger' => Color::hex('#9b2c2c'),
+                'success' => Color::hex('#276749'),
+                'warning' => Color::hex('#b7791f'),
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => new HtmlString('<style>' . file_get_contents(resource_path('css/filament/admin.css')) . '</style>'),
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -42,7 +51,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

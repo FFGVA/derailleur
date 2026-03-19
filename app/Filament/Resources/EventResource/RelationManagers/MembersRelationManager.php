@@ -62,12 +62,12 @@ class MembersRelationManager extends RelationManager
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail'),
-                Tables\Columns\TextColumn::make('pivot.status')
+                Tables\Columns\TextColumn::make('pivot_status')
                     ->label('Statut')
                     ->badge()
-                    ->state(fn ($record) => $record->pivot->status)
-                    ->formatStateUsing(fn ($state) => $state instanceof EventMemberStatus ? $state->getLabel() : EventMemberStatus::from($state)->getLabel())
-                    ->color(fn ($state) => $state instanceof EventMemberStatus ? $state->getColor() : EventMemberStatus::from($state)->getColor()),
+                    ->state(fn ($record) => $record->pivot->getRawOriginal('status'))
+                    ->formatStateUsing(fn (string $state) => EventMemberStatus::from($state)->getLabel())
+                    ->color(fn (string $state) => EventMemberStatus::from($state)->getColor()),
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()

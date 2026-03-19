@@ -125,17 +125,7 @@ class EventResource extends Resource
                     ->label('Supprimer définitivement')
                     ->visible(fn () => auth()->user()->isAdmin()),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Supprimer'),
-                    Tables\Actions\RestoreBulkAction::make()
-                        ->label('Restaurer')
-                        ->visible(fn () => auth()->user()->isAdmin()),
-                    Tables\Actions\ForceDeleteBulkAction::make()
-                        ->label('Supprimer définitivement')
-                        ->visible(fn () => auth()->user()->isAdmin()),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array
