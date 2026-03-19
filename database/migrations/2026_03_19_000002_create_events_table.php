@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('title', 200);
             $table->text('description')->nullable();
             $table->string('location')->nullable();
             $table->dateTime('starts_at');
             $table->dateTime('ends_at')->nullable();
             $table->unsignedInteger('max_participants')->nullable();
             $table->decimal('price', 8, 2)->default(0);
-            $table->enum('status', ['draft', 'published', 'cancelled', 'completed'])->default('draft');
-            $table->timestamps();
+            $table->char('statuscode', 1)->default('N');
+            $table->timestamp('updated_at')->nullable();
         });
     }
 

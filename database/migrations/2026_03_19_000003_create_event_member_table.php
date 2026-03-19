@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('event_member', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('member_id')->constrained()->cascadeOnDelete();
-            $table->enum('status', ['registered', 'confirmed', 'cancelled'])->default('registered');
-            $table->timestamps();
+            $table->foreignId('event_id')->constrained();
+            $table->foreignId('member_id')->constrained();
+            $table->char('status', 1)->default('N');
+            $table->timestamp('updated_at')->nullable();
 
             $table->unique(['event_id', 'member_id']);
         });
