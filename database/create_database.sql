@@ -1,7 +1,7 @@
 -- =============================================
 -- Dérailleur — Fast and Female Geneva
 -- Production database script for MariaDB 10.11+
--- Usage: mysql -u username -p agiletra_ffgva < database/create_database.sql
+-- Run drop_all.sql FIRST, then this script.
 -- =============================================
 
 SET NAMES utf8mb4;
@@ -13,7 +13,7 @@ USE `agiletra_ffgva`;
 -- SECTION 1: Laravel system tables
 -- =============================================
 
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `email` VARCHAR(255) NOT NULL UNIQUE,
@@ -26,13 +26,13 @@ CREATE TABLE IF NOT EXISTS `users` (
     `updated_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+CREATE TABLE `password_reset_tokens` (
     `email` VARCHAR(255) NOT NULL PRIMARY KEY,
     `token` VARCHAR(255) NOT NULL,
     `created_at` TIMESTAMP NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `sessions` (
+CREATE TABLE `sessions` (
     `id` VARCHAR(255) NOT NULL PRIMARY KEY,
     `user_id` BIGINT UNSIGNED NULL,
     `ip_address` VARCHAR(45) NULL,
@@ -43,19 +43,19 @@ CREATE TABLE IF NOT EXISTS `sessions` (
     INDEX `sessions_last_activity_index` (`last_activity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `cache` (
+CREATE TABLE `cache` (
     `key` VARCHAR(255) NOT NULL PRIMARY KEY,
     `value` MEDIUMTEXT NOT NULL,
     `expiration` INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `cache_locks` (
+CREATE TABLE `cache_locks` (
     `key` VARCHAR(255) NOT NULL PRIMARY KEY,
     `owner` VARCHAR(255) NOT NULL,
     `expiration` INT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `jobs` (
+CREATE TABLE `jobs` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `queue` VARCHAR(255) NOT NULL,
     `payload` LONGTEXT NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `jobs` (
     INDEX `jobs_queue_index` (`queue`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `job_batches` (
+CREATE TABLE `job_batches` (
     `id` VARCHAR(255) NOT NULL PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `total_jobs` INT NOT NULL,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `job_batches` (
     `finished_at` INT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `failed_jobs` (
+CREATE TABLE `failed_jobs` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `uuid` VARCHAR(255) NOT NULL UNIQUE,
     `connection` TEXT NOT NULL,
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
     `failed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `migrations` (
+CREATE TABLE `migrations` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `migration` VARCHAR(255) NOT NULL,
     `batch` INT NOT NULL
@@ -99,8 +99,9 @@ CREATE TABLE IF NOT EXISTS `migrations` (
 -- SECTION 2: Domain tables
 -- =============================================
 
-CREATE TABLE IF NOT EXISTS `members` (
+CREATE TABLE `members` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `member_number` VARCHAR(4) NULL UNIQUE,
     `first_name` VARCHAR(40) NOT NULL,
     `last_name` VARCHAR(60) NOT NULL,
     `email` VARCHAR(255) NOT NULL UNIQUE,
@@ -124,7 +125,7 @@ CREATE TABLE IF NOT EXISTS `members` (
     CONSTRAINT `members_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `events` (
+CREATE TABLE `events` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `title` VARCHAR(200) NOT NULL,
     `description` TEXT NULL,
@@ -142,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `events` (
     CONSTRAINT `events_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `event_member` (
+CREATE TABLE `event_member` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `event_id` BIGINT UNSIGNED NOT NULL,
     `member_id` BIGINT UNSIGNED NOT NULL,
@@ -157,7 +158,7 @@ CREATE TABLE IF NOT EXISTS `event_member` (
     CONSTRAINT `event_member_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `member_phones` (
+CREATE TABLE `member_phones` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `member_id` BIGINT UNSIGNED NOT NULL,
     `phone_number` VARCHAR(20) NOT NULL,
@@ -171,6 +172,21 @@ CREATE TABLE IF NOT EXISTS `member_phones` (
     CONSTRAINT `member_phones_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `invoices` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `invoice_number` VARCHAR(20) NOT NULL UNIQUE,
+    `amount` DECIMAL(8,2) NOT NULL,
+    `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
+    `payment_date` DATE NULL,
+    `notes` TEXT NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `invoices_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`),
+    CONSTRAINT `invoices_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =============================================
 -- SECTION 3: Cross-table foreign keys
 -- =============================================
@@ -180,16 +196,15 @@ ALTER TABLE `users`
 
 -- =============================================
 -- SECTION 4: Audit tables
--- Each audit row = full before-image + action + who + when
--- audit_user_id has referential integrity to users
 -- =============================================
 
-CREATE TABLE IF NOT EXISTS `members_audit` (
+CREATE TABLE `members_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
+    `member_number` VARCHAR(4) NULL,
     `first_name` VARCHAR(40) NOT NULL,
     `last_name` VARCHAR(60) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
@@ -213,7 +228,7 @@ CREATE TABLE IF NOT EXISTS `members_audit` (
     CONSTRAINT `members_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `events_audit` (
+CREATE TABLE `events_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
@@ -234,7 +249,7 @@ CREATE TABLE IF NOT EXISTS `events_audit` (
     CONSTRAINT `events_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `event_member_audit` (
+CREATE TABLE `event_member_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
@@ -250,7 +265,7 @@ CREATE TABLE IF NOT EXISTS `event_member_audit` (
     CONSTRAINT `event_member_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `member_phones_audit` (
+CREATE TABLE `member_phones_audit` (
     `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
     `audit_user_id` BIGINT UNSIGNED NULL,
@@ -267,36 +282,50 @@ CREATE TABLE IF NOT EXISTS `member_phones_audit` (
     CONSTRAINT `member_phones_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `invoices_audit` (
+    `audit_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `audit_action` CHAR(1) NOT NULL COMMENT 'U=update, D=delete',
+    `audit_user_id` BIGINT UNSIGNED NULL,
+    `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `id` BIGINT UNSIGNED NOT NULL,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `invoice_number` VARCHAR(20) NOT NULL,
+    `amount` DECIMAL(8,2) NOT NULL,
+    `statuscode` CHAR(1) DEFAULT 'N',
+    `payment_date` DATE NULL,
+    `notes` TEXT NULL,
+    `modified_by_id` BIGINT UNSIGNED NULL,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `invoices_audit_user_id_foreign` FOREIGN KEY (`audit_user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =============================================
 -- SECTION 5: Triggers
--- Copy full before-image to audit table on UPDATE and DELETE
 -- =============================================
 
 DELIMITER $$
 
 -- ── Members ──
 
-DROP TRIGGER IF EXISTS `members_before_update`$$
 CREATE TRIGGER `members_before_update`
 BEFORE UPDATE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `member_number`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_number`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
-DROP TRIGGER IF EXISTS `members_before_delete`$$
 CREATE TRIGGER `members_before_delete`
 BEFORE DELETE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `member_number`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_number`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 -- ── Events ──
 
-DROP TRIGGER IF EXISTS `events_before_update`$$
 CREATE TRIGGER `events_before_update`
 BEFORE UPDATE ON `events`
 FOR EACH ROW
@@ -305,7 +334,6 @@ BEGIN
     VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
-DROP TRIGGER IF EXISTS `events_before_delete`$$
 CREATE TRIGGER `events_before_delete`
 BEFORE DELETE ON `events`
 FOR EACH ROW
@@ -316,7 +344,6 @@ END$$
 
 -- ── Event-Member ──
 
-DROP TRIGGER IF EXISTS `event_member_before_update`$$
 CREATE TRIGGER `event_member_before_update`
 BEFORE UPDATE ON `event_member`
 FOR EACH ROW
@@ -325,7 +352,6 @@ BEGIN
     VALUES ('U', @current_user_id, OLD.`id`, OLD.`event_id`, OLD.`member_id`, OLD.`status`, OLD.`present`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
-DROP TRIGGER IF EXISTS `event_member_before_delete`$$
 CREATE TRIGGER `event_member_before_delete`
 BEFORE DELETE ON `event_member`
 FOR EACH ROW
@@ -336,7 +362,6 @@ END$$
 
 -- ── Member phones ──
 
-DROP TRIGGER IF EXISTS `member_phones_before_update`$$
 CREATE TRIGGER `member_phones_before_update`
 BEFORE UPDATE ON `member_phones`
 FOR EACH ROW
@@ -345,13 +370,30 @@ BEGIN
     VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
-DROP TRIGGER IF EXISTS `member_phones_before_delete`$$
 CREATE TRIGGER `member_phones_before_delete`
 BEFORE DELETE ON `member_phones`
 FOR EACH ROW
 BEGIN
     INSERT INTO `member_phones_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `phone_number`, `label`, `is_whatsapp`, `sort_order`, `modified_by_id`, `updated_at`, `deleted_at`)
     VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`phone_number`, OLD.`label`, OLD.`is_whatsapp`, OLD.`sort_order`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+-- ── Invoices ──
+
+CREATE TRIGGER `invoices_before_update`
+BEFORE UPDATE ON `invoices`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+END$$
+
+CREATE TRIGGER `invoices_before_delete`
+BEFORE DELETE ON `invoices`
+FOR EACH ROW
+BEGIN
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DELIMITER ;

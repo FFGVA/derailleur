@@ -32,6 +32,10 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->brandName('Dérailleur')
+            ->brandLogo(asset('images/derailleur.png'))
+            ->brandLogoHeight('2.5rem')
+            ->darkModeBrandLogo(asset('images/derailleur.png'))
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::hex('#80081C'),
                 'gray' => Color::Zinc,
