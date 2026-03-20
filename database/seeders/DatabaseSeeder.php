@@ -38,5 +38,14 @@ class DatabaseSeeder extends Seeder
             'role' => 'C',
             'member_id' => $firstMember->id,
         ]);
+
+        // Livia Wagner - admin
+        User::factory()->create([
+            'name' => 'Livia Wagner',
+            'email' => 'livia.wagner@gmail.com',
+            'password' => bcrypt('hydro2lique'),
+            'role' => 'A',
+            'member_id' => null,
+        ]);
     }
 }
