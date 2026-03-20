@@ -24,6 +24,8 @@ class MemberResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Membres';
 
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationLabel = 'Membres';
 
     public static function form(Form $form): Form

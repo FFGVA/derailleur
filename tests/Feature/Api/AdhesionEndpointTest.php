@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Mail\AdhesionMail;
+use App\Mail\AdhesionWelcomeMail;
 use App\Models\Member;
 use App\Models\MemberPhone;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -176,5 +177,42 @@ class AdhesionEndpointTest extends TestCase
             'missing telephone' => ['telephone'],
             'missing photo_ok' => ['photo_ok'],
         ];
+    }
+
+    public function test_welcome_email_sent_to_member(): void
+    {
+        Mail::fake();
+
+        $payload = $this->validPayload();
+        $this->postJson('/api/adhesion', $payload, $this->headers);
+
+        Mail::assertSent(AdhesionWelcomeMail::class, function (AdhesionWelcomeMail $mail) use ($payload) {
+            return $mail->hasTo($payload['email']);
+        });
+    }
+
+    public function test_activation_token_stored(): void
+    {
+        Mail::fake();
+
+        $payload = $this->validPayload(['email' => 'adhesion-token-test@example.com']);
+        $this->postJson('/api/adhesion', $payload, $this->headers);
+
+        $member = Member::where('email', 'adhesion-token-test@example.com')->first();
+        $this->assertNotNull($member);
+        $this->assertNotNull($member->activation_token);
+        $this->assertNotNull($member->activation_sent_at);
+    }
+
+    public function test_admin_notification_still_sent(): void
+    {
+        Mail::fake();
+
+        $payload = $this->validPayload();
+        $this->postJson('/api/adhesion', $payload, $this->headers);
+
+        // Both the admin notification AND the welcome email should be sent
+        Mail::assertSent(AdhesionMail::class);
+        Mail::assertSent(AdhesionWelcomeMail::class);
     }
 }

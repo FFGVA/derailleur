@@ -40,6 +40,20 @@ class AdhesionMail extends Mailable
     {
         return new Content(
             view: 'emails.adhesion',
+            with: [
+                'nom' => $this->nom,
+                'prenom' => $this->prenom,
+                'email' => $this->email,
+                'telephone' => $this->telephone,
+                'photo_ok' => $this->photo_ok,
+                'type_velo' => $this->type_velo,
+                'sorties' => $this->sorties,
+                'atelier' => $this->atelier,
+                'instagram' => $this->instagram,
+                'strava' => $this->strava,
+                'statuts_ok' => $this->statuts_ok,
+                'cotisation_ok' => $this->cotisation_ok,
+            ],
         );
     }
 }

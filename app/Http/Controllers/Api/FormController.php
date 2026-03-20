@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdhesionRequest;
 use App\Http\Requests\ContactRequest;
 use App\Mail\AdhesionMail;
+use App\Mail\AdhesionWelcomeMail;
 use App\Mail\ContactMail;
 use App\Models\Member;
 use App\Models\MemberPhone;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
 class FormController extends Controller
@@ -65,6 +67,15 @@ class FormController extends Controller
                 'label' => 'mobile',
             ]);
         }
+
+        $rawToken = bin2hex(random_bytes(32));
+        $member->update([
+            'activation_token' => Hash::make($rawToken),
+            'activation_sent_at' => now(),
+        ]);
+
+        $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
+        Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
 
         Mail::send(new AdhesionMail(
             nom: $request->input('nom'),

@@ -115,6 +115,9 @@ CREATE TABLE IF NOT EXISTS `members` (
     `notes` TEXT NULL,
     `is_invitee` TINYINT(1) NOT NULL DEFAULT 0,
     `metadata` JSON NULL,
+    `activation_token` VARCHAR(64) NULL,
+    `activation_sent_at` TIMESTAMP NULL,
+    `email_verified_at` TIMESTAMP NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
     `deleted_at` TIMESTAMP NULL,
@@ -201,6 +204,9 @@ CREATE TABLE IF NOT EXISTS `members_audit` (
     `notes` TEXT NULL,
     `is_invitee` TINYINT(1) DEFAULT 0,
     `metadata` JSON NULL,
+    `activation_token` VARCHAR(64) NULL,
+    `activation_sent_at` TIMESTAMP NULL,
+    `email_verified_at` TIMESTAMP NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
     `deleted_at` TIMESTAMP NULL,
@@ -275,8 +281,8 @@ CREATE TRIGGER `members_before_update`
 BEFORE UPDATE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DROP TRIGGER IF EXISTS `members_before_delete`$$
@@ -284,8 +290,8 @@ CREATE TRIGGER `members_before_delete`
 BEFORE DELETE ON `members`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `members_audit` (`audit_action`, `audit_user_id`, `id`, `first_name`, `last_name`, `email`, `date_of_birth`, `address`, `postal_code`, `city`, `country`, `statuscode`, `membership_start`, `membership_end`, `notes`, `is_invitee`, `metadata`, `activation_token`, `activation_sent_at`, `email_verified_at`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`first_name`, OLD.`last_name`, OLD.`email`, OLD.`date_of_birth`, OLD.`address`, OLD.`postal_code`, OLD.`city`, OLD.`country`, OLD.`statuscode`, OLD.`membership_start`, OLD.`membership_end`, OLD.`notes`, OLD.`is_invitee`, OLD.`metadata`, OLD.`activation_token`, OLD.`activation_sent_at`, OLD.`email_verified_at`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 -- ── Events ──

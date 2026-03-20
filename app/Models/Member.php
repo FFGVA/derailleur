@@ -17,6 +17,7 @@ class Member extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
+        'member_number',
         'first_name',
         'last_name',
         'email',
@@ -31,6 +32,9 @@ class Member extends Model
         'notes',
         'is_invitee',
         'metadata',
+        'activation_token',
+        'activation_sent_at',
+        'email_verified_at',
         'modified_by_id',
     ];
 
@@ -43,7 +47,26 @@ class Member extends Model
             'membership_end' => 'date',
             'is_invitee' => 'boolean',
             'metadata' => 'array',
+            'activation_sent_at' => 'datetime',
+            'email_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Assign a member number using high-watermark. Returns the number.
+     * If already assigned, returns the existing number.
+     */
+    public static function assignMemberNumber(Member $member): string
+    {
+        if ($member->member_number) {
+            return $member->member_number;
+        }
+
+        $maxNumber = (int) static::max('member_number');
+        $next = str_pad((string) ($maxNumber + 1), 4, '0', STR_PAD_LEFT);
+        $member->update(['member_number' => $next]);
+
+        return $next;
     }
 
     public function modifiedBy(): BelongsTo
@@ -54,6 +77,11 @@ class Member extends Model
     public function phones(): HasMany
     {
         return $this->hasMany(MemberPhone::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 
     public function ledEvents(): HasMany
