@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
     <title>Erreur — Fast and Female Geneva</title>
     <style>
         body { font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4; margin: 0; padding: 40px 20px; color: #333; }

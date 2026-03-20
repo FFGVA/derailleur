@@ -46,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn () => new HtmlString('<style>' . file_get_contents(resource_path('css/filament/admin.css')) . '</style>'),
+                fn () => new HtmlString('<meta name="robots" content="noindex, nofollow"><style>' . file_get_contents(resource_path('css/filament/admin.css')) . '</style>'),
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
