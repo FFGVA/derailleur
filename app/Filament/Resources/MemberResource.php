@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -73,6 +74,7 @@ class MemberResource extends Resource
                                     ->placeholder('Mobile, Domicile...'),
                                 Forms\Components\Toggle::make('is_whatsapp')
                                     ->label('WhatsApp')
+                                    ->extraAttributes(['class' => 'ffgva-toggle-align'])
                                     ->live()
                                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $component) {
                                         if ($state) {
@@ -193,38 +195,7 @@ class MemberResource extends Resource
                     ->tooltip('Modifier')
                     ->color('info'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkAction::make('downloadVcards')
-                    ->label('Télécharger vCards')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
-                        $records->load('phones');
-                        $vcf = $records->map(function ($member) {
-                            $lines = [
-                                'BEGIN:VCARD',
-                                'VERSION:3.0',
-                                'N:' . $member->last_name . ';' . $member->first_name . ';;;',
-                                'FN:' . $member->first_name . ' ' . $member->last_name,
-                                'EMAIL:' . $member->email,
-                            ];
-                            foreach ($member->phones as $phone) {
-                                $type = strtoupper($phone->label ?? 'CELL');
-                                $lines[] = 'TEL;TYPE=' . $type . ':' . $phone->phone_number;
-                            }
-                            if ($member->address) {
-                                $lines[] = 'ADR;TYPE=HOME:;;' . str_replace("\n", ' ', $member->address) . ';' . ($member->city ?? '') . ';;' . ($member->postal_code ?? '') . ';' . ($member->country ?? 'CH');
-                            }
-                            $lines[] = 'END:VCARD';
-                            return implode("\r\n", $lines);
-                        })->implode("\r\n");
-
-                        return response()->streamDownload(
-                            function () use ($vcf) { echo $vcf; },
-                            'membres-ffgva.vcf',
-                            ['Content-Type' => 'text/vcard']
-                        );
-                    }),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array

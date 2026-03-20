@@ -29,4 +29,18 @@
     display: flex;
     flex-direction: column;
     gap: 0.125rem;
+    text-align: left;
+}
+
+/* Force left alignment on phone column cell */
+td:has(.ffgva-phones) {
+    text-align: left !important;
+}
+td:has(.ffgva-phones) > div {
+    justify-content: flex-start !important;
+}
+
+/* Align WhatsApp toggle with phone input fields */
+.fi-fo-field-wrp:has(.ffgva-toggle-align) {
+    padding-top: 2.375rem;
 }
