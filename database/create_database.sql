@@ -210,6 +210,23 @@ CREATE TABLE `invoice_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
+-- SECTION 2b: Utility tables
+-- =============================================
+
+CREATE TABLE `member_magic_tokens` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `token_hash` BINARY(32) NOT NULL,
+    `expires_at` DATETIME NOT NULL,
+    `used_at` DATETIME NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_member_magic_token_hash` (`token_hash`),
+    KEY `idx_member_magic_token_member` (`member_id`),
+    KEY `idx_member_magic_token_expires` (`expires_at`),
+    CONSTRAINT `fk_member_magic_token_member` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================
 -- SECTION 3: Cross-table foreign keys
 -- =============================================
 

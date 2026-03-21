@@ -9,4 +9,7 @@ return [
     'creditor_city' => env('FFGVA_CITY', 'Vessy'),
     'creditor_country' => 'CH',
     'activation_expiry_hours' => 72,
+
+    'portal_token_expiry_minutes' => 15,
+    'portal_session_timeout_minutes' => 300,
 ];

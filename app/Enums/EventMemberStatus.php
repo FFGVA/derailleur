@@ -11,9 +11,9 @@ enum EventMemberStatus: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::Inscrit => 'Inscrit',
-            self::Confirme => 'Confirmé',
-            self::Annule => 'Annulé',
+            self::Inscrit => 'Inscrite',
+            self::Confirme => 'Confirmée',
+            self::Annule => 'Annulée',
         };
     }
 

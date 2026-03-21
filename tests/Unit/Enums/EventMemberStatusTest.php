@@ -26,9 +26,9 @@ class EventMemberStatusTest extends TestCase
 
     public function test_get_label_returns_french_labels(): void
     {
-        $this->assertSame('Inscrit', EventMemberStatus::Inscrit->getLabel());
-        $this->assertSame('Confirmé', EventMemberStatus::Confirme->getLabel());
-        $this->assertSame('Annulé', EventMemberStatus::Annule->getLabel());
+        $this->assertSame('Inscrite', EventMemberStatus::Inscrit->getLabel());
+        $this->assertSame('Confirmée', EventMemberStatus::Confirme->getLabel());
+        $this->assertSame('Annulée', EventMemberStatus::Annule->getLabel());
     }
 
     public function test_get_color_returns_valid_values(): void

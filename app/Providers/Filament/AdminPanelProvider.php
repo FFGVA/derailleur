@@ -70,6 +70,10 @@ class AdminPanelProvider extends PanelProvider
                     '<script src="/js/sg-phone.js"></script>'
                 ),
             )
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn () => new HtmlString('<div style="text-align:center;padding:1rem;color:#999;font-size:0.75rem;">&copy; ' . date('Y') . ' Smart Gecko SA</div>'),
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
