@@ -227,7 +227,9 @@ class InvoiceResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('statuscode')
                     ->label('Statut')
-                    ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()])),
+                    ->multiple()
+                    ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
+                    ->default(['N', 'E']),
                 Tables\Filters\TrashedFilter::make()
                     ->label('Supprimées'),
             ])

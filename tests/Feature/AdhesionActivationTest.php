@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Mail\AdhesionConfirmationMail;
+use App\Mail\InvoiceMail;
+use App\Models\Invoice;
 use App\Models\Member;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
@@ -50,13 +52,24 @@ class AdhesionActivationTest extends TestCase
     {
         Mail::fake();
 
-        [$member, $rawToken] = $this->createMemberWithToken();
+        [$member, $rawToken] = $this->createMemberWithToken([
+            'address' => 'Rue Test 1',
+            'postal_code' => '1200',
+            'city' => 'Genève',
+            'country' => 'CH',
+        ]);
 
         $this->get('/adhesion/confirmer?' . http_build_query([
             'token' => $rawToken,
             'email' => $member->email,
         ]));
 
+        // Invoice email sent (same as "Envoyer" on invoice view)
+        Mail::assertSent(InvoiceMail::class, function (InvoiceMail $mail) use ($member) {
+            return $mail->invoice->member_id === $member->id;
+        });
+
+        // Adhesion confirmation email sent
         Mail::assertSent(AdhesionConfirmationMail::class, function (AdhesionConfirmationMail $mail) use ($member) {
             return $mail->hasTo($member->email);
         });
@@ -117,6 +130,31 @@ class AdhesionActivationTest extends TestCase
         ]));
 
         $response->assertSee('déjà');
+    }
+
+    public function test_confirmation_creates_invoice_marked_sent(): void
+    {
+        Mail::fake();
+
+        [$member, $rawToken] = $this->createMemberWithToken([
+            'address' => 'Rue Test 1',
+            'postal_code' => '1200',
+            'city' => 'Genève',
+            'country' => 'CH',
+        ]);
+
+        $this->get('/adhesion/confirmer?' . http_build_query([
+            'token' => $rawToken,
+            'email' => $member->email,
+        ]));
+
+        $invoice = Invoice::where('member_id', $member->id)
+            ->where('type', 'C')
+            ->first();
+
+        $this->assertNotNull($invoice, 'Cotisation invoice should be created');
+        $this->assertEquals('E', $invoice->getRawOriginal('statuscode'), 'Invoice should be marked as Envoyée');
+        $this->assertEquals((int) date('Y'), $invoice->cotisation_year);
     }
 
     public function test_unknown_email_shows_error(): void

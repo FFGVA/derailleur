@@ -16,8 +16,6 @@ class AdhesionConfirmationMail extends Mailable
 
     public function __construct(
         public Member $member,
-        public string $pdfContent,
-        public string $pdfFilename = 'facture.pdf',
     ) {}
 
     public function envelope(): Envelope
@@ -42,9 +40,6 @@ class AdhesionConfirmationMail extends Mailable
 
     public function attachments(): array
     {
-        return [
-            \Illuminate\Mail\Mailables\Attachment::fromData(fn () => $this->pdfContent, $this->pdfFilename)
-                ->withMime('application/pdf'),
-        ];
+        return [];
     }
 }

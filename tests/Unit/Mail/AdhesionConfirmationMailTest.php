@@ -9,7 +9,6 @@ use Tests\TestCase;
 class AdhesionConfirmationMailTest extends TestCase
 {
     private Member $member;
-    private string $pdfContent;
     private AdhesionConfirmationMail $mail;
 
     protected function setUp(): void
@@ -23,9 +22,7 @@ class AdhesionConfirmationMailTest extends TestCase
         ]);
         $this->member->id = 999;
 
-        $this->pdfContent = '%PDF-1.4 fake pdf content for testing';
-
-        $this->mail = new AdhesionConfirmationMail($this->member, $this->pdfContent, 'ffgva_Dupont_Marie-facture-2026-999-001.pdf');
+        $this->mail = new AdhesionConfirmationMail($this->member);
     }
 
     public function test_subject_is_correct(): void
@@ -48,10 +45,8 @@ class AdhesionConfirmationMailTest extends TestCase
         $this->mail->assertSeeInHtml('paiement');
     }
 
-    public function test_has_pdf_attachment(): void
+    public function test_has_no_attachments(): void
     {
-        $this->mail->assertHasAttachedData($this->pdfContent, 'ffgva_Dupont_Marie-facture-2026-999-001.pdf', [
-            'mime' => 'application/pdf',
-        ]);
+        $this->assertEmpty($this->mail->attachments());
     }
 }

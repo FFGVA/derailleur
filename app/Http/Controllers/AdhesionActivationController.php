@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AdhesionConfirmationMail;
+use App\Mail\InvoiceMail;
 use App\Models\Member;
 use App\Services\InvoiceService;
 use Illuminate\Http\Request;
@@ -54,9 +55,22 @@ class AdhesionActivationController extends Controller
             'activation_token' => null,
         ]);
 
-        $invoice = InvoiceService::generate($member);
+        $result = InvoiceService::generate($member);
 
-        Mail::send(new AdhesionConfirmationMail($member, $invoice['pdf'], $invoice['filename']));
+        $invoice = \App\Models\Invoice::where('invoice_number', $result['invoice_number'])->first();
+
+        // Send invoice email (same path as "Envoyer" on invoice view)
+        $qrImage = InvoiceService::generateQrCodeBase64($invoice);
+        Mail::send(new InvoiceMail(
+            invoice: $invoice,
+            pdfContent: $result['pdf'],
+            pdfFilename: $result['filename'],
+            qrImageBase64: $qrImage,
+        ));
+        $invoice->update(['statuscode' => 'E']);
+
+        // Send adhesion confirmation email (welcome message, no PDF)
+        Mail::send(new AdhesionConfirmationMail($member));
 
         return response()->view('adhesion-confirmed', [
             'member' => $member,

@@ -10,7 +10,7 @@
 </p>
 
 <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
-    Tu trouveras en pièce jointe le bulletin de versement pour ta cotisation annuelle.
+    Tu recevras ta facture de cotisation dans un email séparé.
 </p>
 
 <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
