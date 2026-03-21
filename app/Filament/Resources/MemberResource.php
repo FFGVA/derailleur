@@ -158,9 +158,7 @@ class MemberResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            RelationManagers\PhonesRelationManager::class,
-        ];
+        return [];
     }
 
     public static function getPages(): array
