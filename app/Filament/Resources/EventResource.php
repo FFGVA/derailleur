@@ -66,10 +66,12 @@ class EventResource extends Resource
                             ->columnSpan(2),
                         Forms\Components\DateTimePicker::make('starts_at')
                             ->label('Début')
+                            ->displayFormat('d.m.Y H:i')
                             ->required()
                             ->columnSpan(3),
                         Forms\Components\DateTimePicker::make('ends_at')
                             ->label('Fin')
+                            ->displayFormat('d.m.Y H:i')
                             ->columnSpan(3),
                         Forms\Components\Select::make('chef_peloton_id')
                             ->label('Cheffe de peloton')
@@ -85,8 +87,18 @@ class EventResource extends Resource
                                 ->icon('heroicon-o-trash')
                                 ->color('danger')
                                 ->requiresConfirmation()
-                                ->action(fn ($record) => $record?->delete() ?: null)
-                                ->after(fn () => redirect(EventResource::getUrl('index')))
+                                ->action(function ($record) {
+                                    if ($record->members()->count() > 0) {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Suppression impossible')
+                                            ->body('Cet événement a des participantes. Retirez-les d\'abord.')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+                                    $record->delete();
+                                    redirect(EventResource::getUrl('index'));
+                                })
                                 ->visible(fn (?Model $record) => $record !== null && auth()->user()->isAdmin()),
                         ])->alignEnd()->verticallyAlignEnd()->columnSpanFull(),
                     ]),
@@ -104,7 +116,7 @@ class EventResource extends Resource
                     ->limit(50),
                 Tables\Columns\TextColumn::make('starts_at')
                     ->label('Début')
-                    ->dateTime('d/m/Y H:i')
+                    ->dateTime('d.m.Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Lieu')
@@ -135,12 +147,8 @@ class EventResource extends Resource
                 Tables\Filters\TrashedFilter::make()
                     ->label('Supprimés'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('')
-                    ->tooltip('Modifier')
-                    ->color('info'),
-            ])
+            ->recordUrl(fn ($record) => EventResource::getUrl('view', ['record' => $record]))
+            ->actions([])
             ->bulkActions([]);
     }
 
@@ -148,7 +156,6 @@ class EventResource extends Resource
     {
         return [
             RelationManagers\MembersRelationManager::class,
-            RelationManagers\PresencesRelationManager::class,
         ];
     }
 

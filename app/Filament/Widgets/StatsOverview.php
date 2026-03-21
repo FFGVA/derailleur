@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\MemberResource;
 use App\Models\Invoice;
 use App\Models\Member;
 use Filament\Widgets\StatsOverviewWidget;
@@ -22,11 +24,13 @@ class StatsOverview extends StatsOverviewWidget
             Stat::make('Montants ouverts', 'CHF ' . number_format($unpaidTotal, 2, '.', "'"))
                 ->description('Factures non payées')
                 ->icon('heroicon-o-banknotes')
-                ->color('warning'),
+                ->color('warning')
+                ->url(InvoiceResource::getUrl('index')),
             Stat::make('Membres actives', $activeMembers)
                 ->description('Statut actif')
                 ->icon('heroicon-o-users')
-                ->color('success'),
+                ->color('success')
+                ->url(MemberResource::getUrl('index')),
         ];
     }
 }

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MemberSeeder::class,
             EventSeeder::class,
+            InvoiceSeeder::class,
         ]);
 
         // Admin user (no member link)

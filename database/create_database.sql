@@ -175,6 +175,8 @@ CREATE TABLE `member_phones` (
 CREATE TABLE `invoices` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `member_id` BIGINT UNSIGNED NOT NULL,
+    `type` CHAR(1) NOT NULL DEFAULT 'C',
+    `cotisation_year` SMALLINT UNSIGNED NULL,
     `invoice_number` VARCHAR(20) NOT NULL UNIQUE,
     `amount` DECIMAL(8,2) NOT NULL,
     `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
@@ -185,6 +187,26 @@ CREATE TABLE `invoices` (
     `deleted_at` TIMESTAMP NULL,
     CONSTRAINT `invoices_member_id_foreign` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`),
     CONSTRAINT `invoices_modified_by_id_foreign` FOREIGN KEY (`modified_by_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `invoice_lines` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `invoice_id` BIGINT UNSIGNED NOT NULL,
+    `description` TEXT NOT NULL,
+    `amount` DECIMAL(8,2) NOT NULL,
+    `sort_order` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `updated_at` TIMESTAMP NULL,
+    `deleted_at` TIMESTAMP NULL,
+    CONSTRAINT `invoice_lines_invoice_id_foreign` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `invoice_event` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `invoice_id` BIGINT UNSIGNED NOT NULL,
+    `event_id` BIGINT UNSIGNED NOT NULL,
+    UNIQUE KEY `invoice_event_unique` (`invoice_id`, `event_id`),
+    CONSTRAINT `invoice_event_invoice_id_foreign` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`),
+    CONSTRAINT `invoice_event_event_id_foreign` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
@@ -289,6 +311,8 @@ CREATE TABLE `invoices_audit` (
     `audit_timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `id` BIGINT UNSIGNED NOT NULL,
     `member_id` BIGINT UNSIGNED NOT NULL,
+    `type` CHAR(1) DEFAULT 'C',
+    `cotisation_year` SMALLINT UNSIGNED NULL,
     `invoice_number` VARCHAR(20) NOT NULL,
     `amount` DECIMAL(8,2) NOT NULL,
     `statuscode` CHAR(1) DEFAULT 'N',
@@ -384,16 +408,16 @@ CREATE TRIGGER `invoices_before_update`
 BEFORE UPDATE ON `invoices`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 CREATE TRIGGER `invoices_before_delete`
 BEFORE DELETE ON `invoices`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DELIMITER ;

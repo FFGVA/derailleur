@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class InvoiceResourceTest extends TestCase
@@ -41,16 +43,17 @@ class InvoiceResourceTest extends TestCase
     public function test_invoice_list_shows_invoices(): void
     {
         $member = $this->makeMember();
+        $number = Invoice::generateNumber($member);
         Invoice::create([
             'member_id' => $member->id,
-            'invoice_number' => '2026-001-001',
+            'invoice_number' => $number,
             'amount' => 50.00,
             'statuscode' => 'N',
         ]);
 
         $this->actingAs($this->makeAdmin())
             ->get('/admin/invoices')
-            ->assertSee('2026-001-001');
+            ->assertSee($number);
     }
 
     public function test_invoice_navigation_exists(): void
@@ -60,5 +63,81 @@ class InvoiceResourceTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Factures');
+    }
+
+    public function test_mark_paid_accepts_valid_date(): void
+    {
+        $member = $this->makeMember();
+        $invoice = Invoice::create([
+            'member_id' => $member->id,
+            'invoice_number' => Invoice::generateNumber($member),
+            'amount' => 50.00,
+            'statuscode' => 'E',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(ListInvoices::class)
+            ->callTableAction('markPaid', $invoice, data: [
+                'payment_date' => '15.03.2026',
+            ])
+            ->assertHasNoTableActionErrors();
+
+        $invoice->refresh();
+        $this->assertEquals('P', $invoice->getRawOriginal('statuscode'));
+        $this->assertEquals('2026-03-15', $invoice->payment_date->format('Y-m-d'));
+    }
+
+    public function test_mark_paid_rejects_invalid_date(): void
+    {
+        $member = $this->makeMember();
+        $invoice = Invoice::create([
+            'member_id' => $member->id,
+            'invoice_number' => Invoice::generateNumber($member),
+            'amount' => 50.00,
+            'statuscode' => 'E',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(ListInvoices::class)
+            ->callTableAction('markPaid', $invoice, data: [
+                'payment_date' => 'not-a-date',
+            ])
+            ->assertHasTableActionErrors(['payment_date']);
+    }
+
+    public function test_mark_paid_rejects_impossible_date(): void
+    {
+        $member = $this->makeMember();
+        $invoice = Invoice::create([
+            'member_id' => $member->id,
+            'invoice_number' => Invoice::generateNumber($member),
+            'amount' => 50.00,
+            'statuscode' => 'E',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(ListInvoices::class)
+            ->callTableAction('markPaid', $invoice, data: [
+                'payment_date' => '31.02.2026',
+            ])
+            ->assertHasTableActionErrors(['payment_date']);
+    }
+
+    public function test_mark_paid_rejects_empty_date(): void
+    {
+        $member = $this->makeMember();
+        $invoice = Invoice::create([
+            'member_id' => $member->id,
+            'invoice_number' => Invoice::generateNumber($member),
+            'amount' => 50.00,
+            'statuscode' => 'E',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(ListInvoices::class)
+            ->callTableAction('markPaid', $invoice, data: [
+                'payment_date' => '',
+            ])
+            ->assertHasTableActionErrors(['payment_date']);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\MemberStatus;
 use App\Filament\Resources\MemberResource\Pages;
+use App\Filament\Resources\MemberResource\RelationManagers;
 use App\Models\Member;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -49,53 +50,8 @@ class MemberResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true),
                         Forms\Components\DatePicker::make('date_of_birth')
-                            ->label('Date de naissance'),
-                        Forms\Components\Repeater::make('phones')
-                            ->relationship()
-                            ->label('Téléphones')
-                            ->schema([
-                                Forms\Components\TextInput::make('phone_number')
-                                    ->label('Numéro')
-                                    ->tel()
-                                    ->required()
-                                    ->maxLength(20)
-                                    ->rules([
-                                        fn () => function (string $attribute, $value, \Closure $fail) {
-                                            $result = \App\Services\PhoneFormatter::format($value);
-                                            if ($result['error'] !== null) {
-                                                $fail($result['error']);
-                                            }
-                                        },
-                                    ])
-                                    ->extraInputAttributes([
-                                        'x-on:blur' => "if (typeof sgPhoneFormat === 'function') { let r = sgPhoneFormat(\$el.value); if (r.error) { } else { \$el.value = r.formatted; \$dispatch('input', r.formatted) } }",
-                                    ]),
-                                Forms\Components\TextInput::make('label')
-                                    ->label('Type')
-                                    ->maxLength(40)
-                                    ->placeholder('Mobile, Domicile...'),
-                                Forms\Components\Toggle::make('is_whatsapp')
-                                    ->label('WhatsApp')
-                                    ->extraAttributes(['class' => 'ffgva-toggle-align'])
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get, $component) {
-                                        if ($state) {
-                                            $phones = $get('../../phones');
-                                            $currentPath = $component->getStatePath();
-                                            foreach ($phones as $key => $phone) {
-                                                $path = "phones.{$key}.is_whatsapp";
-                                                if (!str_ends_with($currentPath, $path)) {
-                                                    $set("../../phones.{$key}.is_whatsapp", false);
-                                                }
-                                            }
-                                        }
-                                    }),
-                            ])
-                            ->columns(3)
-                            ->defaultItems(0)
-                            ->addActionLabel('Ajouter un téléphone')
-                            ->collapsible()
-                            ->columnSpanFull(),
+                            ->label('Date de naissance')
+                            ->displayFormat('d.m.Y'),
                     ]),
                 Forms\Components\Section::make('Adhésion')
                     ->columns(4)
@@ -107,9 +63,11 @@ class MemberResource extends Resource
                             ->required()
                             ->columnSpan(2),
                         Forms\Components\DatePicker::make('membership_start')
-                            ->label('Début adhésion'),
+                            ->label('Début adhésion')
+                            ->displayFormat('d.m.Y'),
                         Forms\Components\DatePicker::make('membership_end')
-                            ->label('Fin adhésion'),
+                            ->label('Fin adhésion')
+                            ->displayFormat('d.m.Y'),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
@@ -154,7 +112,8 @@ class MemberResource extends Resource
                     ->label('Tél.')
                     ->view('filament.columns.phones')
                     ->grow(false)
-                    ->alignStart(),
+                    ->alignStart()
+                    ->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('Statut')
                     ->badge()
@@ -162,7 +121,8 @@ class MemberResource extends Resource
                     ->color(fn (MemberStatus $state) => $state->getColor())
                     ->sortable()
                     ->grow(false)
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->visibleFrom('sm'),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable()
@@ -173,7 +133,7 @@ class MemberResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('membership_end')
                     ->label('Fin adhésion')
-                    ->date('d/m/Y')
+                    ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -191,18 +151,16 @@ class MemberResource extends Resource
                 Tables\Filters\TrashedFilter::make()
                     ->label('Supprimés'),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('')
-                    ->tooltip('Modifier')
-                    ->color('info'),
-            ])
+            ->recordUrl(fn ($record) => MemberResource::getUrl('view', ['record' => $record]))
+            ->actions([])
             ->bulkActions([]);
     }
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            RelationManagers\PhonesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

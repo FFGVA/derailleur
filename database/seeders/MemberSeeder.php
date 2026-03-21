@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Member;
 use App\Models\MemberPhone;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class MemberSeeder extends Seeder
@@ -267,9 +268,149 @@ class MemberSeeder extends Seeder
             ],
         ];
 
-        foreach ($members as $memberData) {
+        // Members with membership ending relative to now (for widget testing)
+        $expiringMembers = [
+            [
+                'first_name' => 'Aline',
+                'last_name' => 'Thibaud',
+                'email' => 'aline.thibaud@gmail.com',
+                'date_of_birth' => '1991-04-12',
+                'address' => 'Rue de la Terrassière 22',
+                'postal_code' => '1207',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2024-01-01',
+                'membership_end' => Carbon::now()->subMonth()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 79 111 22 33', 'label' => 'Mobile', 'is_whatsapp' => true, 'sort_order' => 0],
+                ],
+            ],
+            [
+                'first_name' => 'Justine',
+                'last_name' => 'Corday',
+                'email' => 'justine.corday@bluewin.ch',
+                'date_of_birth' => '1994-08-05',
+                'address' => 'Chemin du Velours 7',
+                'postal_code' => '1234',
+                'city' => 'Vessy',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2024-06-01',
+                'membership_end' => Carbon::now()->subMonth()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 78 222 33 44', 'label' => 'Mobile', 'is_whatsapp' => false, 'sort_order' => 0],
+                ],
+            ],
+            [
+                'first_name' => 'Mélanie',
+                'last_name' => 'Forestier',
+                'email' => 'melanie.forestier@proton.me',
+                'date_of_birth' => '1989-01-19',
+                'address' => 'Rue des Alpes 16',
+                'postal_code' => '1201',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2023-03-01',
+                'membership_end' => Carbon::now()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 76 333 44 55', 'label' => 'Mobile', 'is_whatsapp' => true, 'sort_order' => 0],
+                ],
+            ],
+            [
+                'first_name' => 'Hélène',
+                'last_name' => 'Dubois',
+                'email' => 'helene.dubois@sunrise.ch',
+                'date_of_birth' => '1982-06-30',
+                'address' => 'Route de Malagnou 44',
+                'postal_code' => '1208',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2024-01-01',
+                'membership_end' => Carbon::now()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 79 444 55 66', 'label' => 'Mobile', 'is_whatsapp' => true, 'sort_order' => 0],
+                    ['phone_number' => '+41 22 444 55 66', 'label' => 'Fixe', 'is_whatsapp' => false, 'sort_order' => 1],
+                ],
+            ],
+            [
+                'first_name' => 'Camille',
+                'last_name' => 'Renaud',
+                'email' => 'camille.renaud@outlook.com',
+                'date_of_birth' => '1997-11-25',
+                'address' => 'Avenue de Frontenex 18',
+                'postal_code' => '1207',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2024-01-01',
+                'membership_end' => Carbon::now()->addMonth()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 78 555 66 77', 'label' => 'Mobile', 'is_whatsapp' => false, 'sort_order' => 0],
+                ],
+            ],
+            [
+                'first_name' => 'Patricia',
+                'last_name' => 'Vautier',
+                'email' => 'patricia.vautier@gmail.com',
+                'date_of_birth' => '1984-03-08',
+                'address' => 'Rue de Monthoux 52',
+                'postal_code' => '1201',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2023-06-01',
+                'membership_end' => Carbon::now()->addMonth()->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 79 666 77 88', 'label' => 'Mobile', 'is_whatsapp' => true, 'sort_order' => 0],
+                ],
+            ],
+            [
+                'first_name' => 'Sylvie',
+                'last_name' => 'Marquis',
+                'email' => 'sylvie.marquis@bluewin.ch',
+                'date_of_birth' => '1978-09-14',
+                'address' => 'Chemin de Roilbot 3',
+                'postal_code' => '1227',
+                'city' => 'Carouge',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2024-01-01',
+                'membership_end' => Carbon::now()->addMonths(2)->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 76 777 88 99', 'label' => 'Mobile', 'is_whatsapp' => true, 'sort_order' => 0],
+                    ['phone_number' => '+41 22 777 88 99', 'label' => 'Domicile', 'is_whatsapp' => false, 'sort_order' => 1],
+                ],
+            ],
+            [
+                'first_name' => 'Brigitte',
+                'last_name' => 'Fontaine',
+                'email' => 'brigitte.fontaine@proton.me',
+                'date_of_birth' => '1980-12-02',
+                'address' => 'Rue du Stand 60',
+                'postal_code' => '1204',
+                'city' => 'Genève',
+                'country' => 'CH',
+                'statuscode' => 'A',
+                'membership_start' => '2023-01-01',
+                'membership_end' => Carbon::now()->addMonths(2)->endOfMonth(),
+                'phones' => [
+                    ['phone_number' => '+41 78 888 99 00', 'label' => 'Mobile', 'is_whatsapp' => false, 'sort_order' => 0],
+                ],
+            ],
+        ];
+
+        $allMembers = array_merge($members, $expiringMembers);
+
+        foreach ($allMembers as $memberData) {
             $phones = $memberData['phones'] ?? [];
             unset($memberData['phones']);
+
+            if (Member::where('email', $memberData['email'])->exists()) {
+                continue;
+            }
 
             $member = Member::create($memberData);
 

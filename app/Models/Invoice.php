@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\InvoiceType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
@@ -15,6 +18,8 @@ class Invoice extends Model
 
     protected $fillable = [
         'member_id',
+        'type',
+        'cotisation_year',
         'invoice_number',
         'amount',
         'statuscode',
@@ -26,8 +31,10 @@ class Invoice extends Model
     protected function casts(): array
     {
         return [
+            'type' => InvoiceType::class,
             'statuscode' => InvoiceStatus::class,
             'amount' => 'decimal:2',
+            'cotisation_year' => 'integer',
             'payment_date' => 'date',
         ];
     }
@@ -37,14 +44,26 @@ class Invoice extends Model
         return $this->belongsTo(Member::class);
     }
 
+    public function events(): BelongsToMany
+    {
+        return $this->belongsToMany(Event::class, 'invoice_event');
+    }
+
     public function modifiedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'modified_by_id');
     }
 
-    /**
-     * Generate invoice number: {year}-{member_id 3 digits}-{sequence 3 digits}
-     */
+    public function lines(): HasMany
+    {
+        return $this->hasMany(InvoiceLine::class)->orderBy('sort_order');
+    }
+
+    public function recalculateAmount(): void
+    {
+        $this->update(['amount' => $this->lines()->sum('amount')]);
+    }
+
     public static function generateNumber(Member $member): string
     {
         $year = date('Y');

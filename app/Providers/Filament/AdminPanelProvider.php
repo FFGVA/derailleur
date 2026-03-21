@@ -36,6 +36,21 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.5rem')
             ->darkModeBrandLogo(asset('images/derailleur.png'))
             ->favicon(asset('favicon.ico'))
+            ->topNavigation()
+            ->userMenuItems([
+                'members' => \Filament\Navigation\MenuItem::make()
+                    ->label('Membres')
+                    ->icon('heroicon-o-users')
+                    ->url(fn () => \App\Filament\Resources\MemberResource::getUrl('index')),
+                'events' => \Filament\Navigation\MenuItem::make()
+                    ->label('Événements')
+                    ->icon('heroicon-o-calendar-days')
+                    ->url(fn () => \App\Filament\Resources\EventResource::getUrl('index')),
+                'invoices' => \Filament\Navigation\MenuItem::make()
+                    ->label('Factures')
+                    ->icon('heroicon-o-document-text')
+                    ->url(fn () => \App\Filament\Resources\InvoiceResource::getUrl('index')),
+            ])
             ->colors([
                 'primary' => Color::hex('#80081C'),
                 'gray' => Color::Zinc,
@@ -61,9 +76,7 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-            ])
+            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

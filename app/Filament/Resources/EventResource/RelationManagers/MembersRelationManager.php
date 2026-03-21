@@ -60,6 +60,33 @@ class MembersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Prénom')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('pivot_present')
+                    ->label('Présence')
+                    ->state(fn ($record) => match ($record->pivot->present) {
+                        true => '✓',
+                        false => '✗',
+                        default => '—',
+                    })
+                    ->color(fn ($record) => match ($record->pivot->present) {
+                        true => 'success',
+                        false => 'danger',
+                        default => 'gray',
+                    })
+                    ->badge()
+                    ->alignCenter()
+                    ->action(
+                        Tables\Actions\Action::make('togglePresence')
+                            ->action(function ($record) {
+                                $current = $record->pivot->present;
+                                $next = match ($current) {
+                                    null => true,
+                                    true => false,
+                                    false => null,
+                                };
+                                $record->pivot->update(['present' => $next]);
+                            })
+                            ->visible(fn () => $this->canManageParticipants())
+                    ),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail'),
                 Tables\Columns\TextColumn::make('pivot_status')
@@ -67,7 +94,19 @@ class MembersRelationManager extends RelationManager
                     ->badge()
                     ->state(fn ($record) => $record->pivot->getRawOriginal('status'))
                     ->formatStateUsing(fn (string $state) => EventMemberStatus::from($state)->getLabel())
-                    ->color(fn (string $state) => EventMemberStatus::from($state)->getColor()),
+                    ->color(fn (string $state) => EventMemberStatus::from($state)->getColor())
+                    ->action(
+                        Tables\Actions\Action::make('changeStatus')
+                            ->form([
+                                Forms\Components\Select::make('status')
+                                    ->label('Statut')
+                                    ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
+                                    ->required(),
+                            ])
+                            ->fillForm(fn ($record) => ['status' => $record->pivot->getRawOriginal('status')])
+                            ->action(fn ($record, array $data) => $record->pivot->update(['status' => $data['status']]))
+                            ->visible(fn () => $this->canManageParticipants())
+                    ),
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
@@ -87,18 +126,6 @@ class MembersRelationManager extends RelationManager
                     ->visible(fn () => $this->canManageParticipants()),
             ])
             ->actions([
-                Tables\Actions\Action::make('changeStatus')
-                    ->label('Statut')
-                    ->icon('heroicon-o-pencil-square')
-                    ->form([
-                        Forms\Components\Select::make('status')
-                            ->label('Statut')
-                            ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->required(),
-                    ])
-                    ->fillForm(fn ($record) => ['status' => $record->pivot->getRawOriginal('status')])
-                    ->action(fn ($record, array $data) => $record->pivot->update(['status' => $data['status']]))
-                    ->visible(fn () => $this->canManageParticipants()),
                 Tables\Actions\DetachAction::make()
                     ->label('Retirer')
                     ->visible(fn () => $this->canManageParticipants()),

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\InvoiceType;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
 use App\Models\Member;
@@ -45,25 +46,70 @@ class InvoiceResource extends Resource
                             ->columnSpan(2),
                         Forms\Components\TextInput::make('invoice_number')
                             ->label('N° facture')
-                            ->disabled()
-                            ->columnSpan(2),
+                            ->disabled(),
+                        Forms\Components\Select::make('type')
+                            ->label('Type')
+                            ->options(collect(InvoiceType::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
+                            ->default('C')
+                            ->required()
+                            ->live(),
                         Forms\Components\Select::make('statuscode')
                             ->label('Statut')
                             ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
                             ->default('N')
                             ->required(),
                         Forms\Components\TextInput::make('amount')
-                            ->label('Montant (CHF)')
+                            ->label('Total (CHF)')
                             ->numeric()
                             ->prefix('CHF')
                             ->default(config('ffgva.cotisation_annuelle'))
-                            ->required(),
+                            ->disabled()
+                            ->dehydrated(),
                         Forms\Components\DatePicker::make('payment_date')
-                            ->label('Date de paiement'),
-                        Forms\Components\Placeholder::make('spacer')->label('')->content(''),
+                            ->label('Date de paiement')
+                            ->displayFormat('d.m.Y'),
+                        Forms\Components\TextInput::make('cotisation_year')
+                            ->label('Année')
+                            ->numeric()
+                            ->default(date('Y'))
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'C'),
+                        Forms\Components\Select::make('events')
+                            ->label('Événements')
+                            ->relationship('events', 'title')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'E'),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
+                    ]),
+                Forms\Components\Section::make('Lignes')
+                    ->schema([
+                        Forms\Components\Repeater::make('lines')
+                            ->relationship()
+                            ->label('')
+                            ->schema([
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Description')
+                                    ->required()
+                                    ->rows(1)
+                                    ->columnSpan(3),
+                                Forms\Components\TextInput::make('amount')
+                                    ->label('Montant (CHF)')
+                                    ->numeric()
+                                    ->prefix('CHF')
+                                    ->required(),
+                            ])
+                            ->columns(4)
+                            ->defaultItems(0)
+                            ->addActionLabel('Ajouter une ligne')
+                            ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get) {
+                                $lines = $get('lines') ?? [];
+                                $total = collect($lines)->sum('amount');
+                                $set('amount', number_format($total, 2, '.', ''));
+                            })
+                            ->live(),
                     ]),
             ]);
     }
@@ -77,6 +123,11 @@ class InvoiceResource extends Resource
                     ->label('N° facture')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')
+                    ->formatStateUsing(fn (InvoiceType $state) => $state->getLabel())
+                    ->sortable()
+                    ->grow(false),
                 Tables\Columns\TextColumn::make('member.last_name')
                     ->label('Nom')
                     ->formatStateUsing(fn ($record) => $record->member->first_name . ' ' . $record->member->last_name)
@@ -94,7 +145,7 @@ class InvoiceResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('payment_date')
                     ->label('Payée le')
-                    ->date('d/m/Y')
+                    ->date('d.m.Y')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('notes')
                     ->label('')
@@ -104,9 +155,74 @@ class InvoiceResource extends Resource
                     ->grow(false),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Modifiée')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->dateTime('d.m.Y H:i')
+                    ->sortable(),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('createAutre')
+                    ->label('')
+                    ->tooltip('Nouvelle facture autre')
+                    ->icon('heroicon-o-plus')
+                    ->color('primary')
+                    ->modalHeading('Nouvelle facture')
+                    ->modalSubmitActionLabel('Créer')
+                    ->modalCancelActionLabel('Annuler')
+                    ->form([
+                        Forms\Components\Select::make('member_id')
+                            ->label('Membre')
+                            ->options(
+                                Member::whereNull('deleted_at')
+                                    ->orderBy('last_name')
+                                    ->get()
+                                    ->mapWithKeys(fn ($m) => [$m->id => $m->first_name . ' ' . $m->last_name])
+                            )
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notes')
+                            ->rows(2),
+                        Forms\Components\Repeater::make('lines')
+                            ->label('Lignes')
+                            ->schema([
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Description')
+                                    ->required()
+                                    ->rows(1)
+                                    ->columnSpan(3),
+                                Forms\Components\TextInput::make('amount')
+                                    ->label('Montant (CHF)')
+                                    ->numeric()
+                                    ->prefix('CHF')
+                                    ->required(),
+                            ])
+                            ->columns(4)
+                            ->defaultItems(1)
+                            ->addActionLabel('Ajouter une ligne')
+                            ->required(),
+                    ])
+                    ->action(function (array $data) {
+                        $member = Member::findOrFail($data['member_id']);
+                        $invoice = \App\Services\InvoiceService::createAutre($member, $data['notes'] ?? null);
+
+                        foreach ($data['lines'] as $i => $line) {
+                            $invoice->lines()->create([
+                                'description' => $line['description'],
+                                'amount' => $line['amount'],
+                                'sort_order' => $i,
+                            ]);
+                        }
+
+                        $invoice->recalculateAmount();
+                        \App\Services\InvoiceService::generatePdf($invoice);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Facture créée')
+                            ->body("Facture {$invoice->invoice_number} créée pour {$member->first_name} {$member->last_name}")
+                            ->success()
+                            ->send();
+
+                        return redirect(InvoiceResource::getUrl('view', ['record' => $invoice]));
+                    }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('statuscode')
@@ -118,57 +234,60 @@ class InvoiceResource extends Resource
             ->actions([
                 Tables\Actions\Action::make('markPaid')
                     ->label('Marquer payée')
-                    ->icon('heroicon-o-check-circle')
+                    ->icon('heroicon-o-banknotes')
                     ->color('success')
-                    ->requiresConfirmation()
+                    ->modalHeading('Marquer payée')
+                    ->modalSubmitActionLabel('OK')
+                    ->modalCancelActionLabel('Annuler')
+                    ->modalWidth('md')
                     ->form([
-                        Forms\Components\DatePicker::make('payment_date')
-                            ->label('Date de paiement')
-                            ->default(now())
-                            ->required(),
+                        Forms\Components\Grid::make(10)
+                            ->schema([
+                        Forms\Components\TextInput::make('payment_date')
+                            ->label('Date banque :')
+                            ->placeholder('jj.mm.aaaa')
+                            ->columnSpan(3)
+                            ->required()
+                            ->rule('regex:/^\d{2}\.\d{2}\.\d{4}$/')
+                            ->rule(static function () {
+                                return static function (string $attribute, $value, \Closure $fail) {
+                                    if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
+                                        return;
+                                    }
+                                    $parsed = \DateTime::createFromFormat('d.m.Y', $value);
+                                    if (!$parsed || $parsed->format('d.m.Y') !== $value) {
+                                        $fail('Date invalide.');
+                                    }
+                                };
+                            })
+                            ->live()
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $state),
+                            ]),
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Commentaire')
+                            ->rows(2),
                     ])
                     ->action(function (Invoice $record, array $data) {
-                        $record->update([
+                        $date = \DateTime::createFromFormat('d.m.Y', $data['payment_date']);
+                        $updates = [
                             'statuscode' => 'P',
-                            'payment_date' => $data['payment_date'],
-                        ]);
+                            'payment_date' => $date->format('Y-m-d'),
+                        ];
+                        if (!empty($data['notes'])) {
+                            $existing = $record->notes;
+                            $updates['notes'] = $existing
+                                ? $existing . "\n" . $data['notes']
+                                : $data['notes'];
+                        }
+                        $record->update($updates);
                         // Assign member number on payment
                         Member::assignMemberNumber($record->member);
+                        // Extend membership for cotisation invoices
+                        \App\Services\InvoiceService::onCotisationPaid($record);
                     })
                     ->visible(fn (Invoice $record) => $record->statuscode !== InvoiceStatus::Paid && $record->statuscode !== InvoiceStatus::Cancelled),
-                Tables\Actions\Action::make('download')
-                    ->label('')
-                    ->tooltip('Télécharger')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('gray')
-                    ->action(function (Invoice $record) {
-                        $member = $record->member;
-                        $nameSlug = str_replace(' ', '_', $member->last_name . '_' . $member->first_name);
-                        $nameSlug = preg_replace('/[^a-zA-Z0-9_àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ-]/u', '', $nameSlug);
-                        $filename = "ffgva_{$nameSlug}-facture-{$record->invoice_number}.pdf";
-                        $storagePath = "invoices/{$filename}";
-
-                        if (\Illuminate\Support\Facades\Storage::exists($storagePath)) {
-                            return response()->streamDownload(
-                                fn () => print(\Illuminate\Support\Facades\Storage::get($storagePath)),
-                                $filename,
-                                ['Content-Type' => 'application/pdf']
-                            );
-                        }
-
-                        // Regenerate if file missing
-                        $result = \App\Services\InvoiceService::generate($member);
-                        return response()->streamDownload(
-                            fn () => print($result['pdf']),
-                            $result['filename'],
-                            ['Content-Type' => 'application/pdf']
-                        );
-                    }),
-                Tables\Actions\EditAction::make()
-                    ->label('')
-                    ->tooltip('Modifier')
-                    ->color('info'),
             ])
+            ->recordUrl(fn ($record) => InvoiceResource::getUrl('view', ['record' => $record]))
             ->bulkActions([]);
     }
 
@@ -176,6 +295,7 @@ class InvoiceResource extends Resource
     {
         return [
             'index' => Pages\ListInvoices::route('/'),
+            'view' => Pages\ViewInvoice::route('/{record}'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }
