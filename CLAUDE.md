@@ -47,6 +47,7 @@
 - Run `php artisan test` after every change
 - Do not rely on Laravel migrations for production — use database/create_database.sql directly
 - Migrations exist for local dev convenience only
+- **Wiki**: GitHub wiki (https://github.com/FFGVA/derailleur/wiki) contains functional and technical documentation. Update the wiki on every push when changes affect documented behavior. Wiki repo is at /tmp/derailleur.wiki (clone with `git clone https://github.com/FFGVA/derailleur.wiki.git /tmp/derailleur.wiki`). Functional pages: Membres, Événements, Facturation, Parcours adhésion, Rôles et permissions, Tableau de bord. Technical pages: Architecture, Modèle de données, API, Emails, Déploiement.
 
 ## Data model
 - **Member**: member_number (4-digit high-watermark), first_name, last_name, email, statuscode (D/A/I/P), is_invitee, metadata (JSON), activation_token, membership_start/end, modified_by_id → users
