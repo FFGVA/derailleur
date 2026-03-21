@@ -12,7 +12,7 @@ enum InvoiceStatus: string
     public function getLabel(): string
     {
         return match ($this) {
-            self::New => 'Nouvelle',
+            self::New => 'Émise',
             self::Sent => 'Envoyée',
             self::Paid => 'Payée',
             self::Cancelled => 'Annulée',

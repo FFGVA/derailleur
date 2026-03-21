@@ -72,6 +72,34 @@ class MemberResource extends Resource
                             ->label('Notes')
                             ->columnSpanFull(),
                     ]),
+                Forms\Components\Section::make('Téléphones')
+                    ->schema([
+                        Forms\Components\Repeater::make('phones')
+                            ->relationship()
+                            ->label('')
+                            ->schema([
+                                Forms\Components\TextInput::make('phone_number')
+                                    ->label('Numéro')
+                                    ->tel()
+                                    ->required()
+                                    ->maxLength(20)
+                                    ->columnSpan(2),
+                                Forms\Components\TextInput::make('label')
+                                    ->label('Type')
+                                    ->maxLength(40)
+                                    ->placeholder('Mobile, Domicile...')
+                                    ->columnSpan(2),
+                                Forms\Components\Toggle::make('is_whatsapp')
+                                    ->label('WhatsApp')
+                                    ->inline(false)
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(5)
+                            ->defaultItems(0)
+                            ->addActionLabel('Ajouter un téléphone')
+                            ->reorderable()
+                            ->orderColumn('sort_order'),
+                    ]),
                 Forms\Components\Section::make('Adresse')
                     ->columns(20)
                     ->schema([

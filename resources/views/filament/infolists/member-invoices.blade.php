@@ -21,11 +21,11 @@
                 <td class="py-1.5 pr-2 text-xs text-gray-500">
                     {{ $invoice->type->getLabel() }}
                 </td>
-                <td class="py-1.5 pr-2 text-right whitespace-nowrap">
+                <td class="py-1.5 text-right whitespace-nowrap" style="padding-right: 2rem;">
                     CHF {{ number_format($invoice->amount, 2, '.', '') }}
                 </td>
-                <td class="py-1.5 pl-2 w-1 whitespace-nowrap">
-                    <x-filament::badge :color="$invoice->statuscode->getColor()" size="sm">
+                <td class="py-1.5 whitespace-nowrap">
+                    <x-filament::badge :color="$invoice->statuscode->getColor()" size="xs">
                         {{ $invoice->statuscode->getLabel() }}
                     </x-filament::badge>
                 </td>

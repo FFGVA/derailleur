@@ -13,6 +13,11 @@ class ViewMember extends ViewRecord
 {
     protected static string $resource = MemberResource::class;
 
+    public function getRelationManagers(): array
+    {
+        return [];
+    }
+
     public function getTitle(): string
     {
         return $this->record->first_name . ' ' . $this->record->last_name;
