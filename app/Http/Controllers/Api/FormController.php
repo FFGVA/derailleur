@@ -40,18 +40,18 @@ class FormController extends Controller
         $email = $request->input('email');
         $member = Member::where('email', $email)->first();
 
-        if (! $member) {
-            $metadata = array_filter([
-                'type_velo' => $request->input('type_velo'),
-                'sorties' => $request->input('sorties'),
-                'atelier' => $request->input('atelier'),
-                'instagram' => $request->input('instagram'),
-                'strava' => $request->input('strava'),
-                'statuts_ok' => $request->input('statuts_ok'),
-                'cotisation_ok' => $request->input('cotisation_ok'),
-                'photo_ok' => $request->input('photo_ok'),
-            ]);
+        $metadata = array_filter([
+            'type_velo' => $request->input('type_velo'),
+            'sorties' => $request->input('sorties'),
+            'atelier' => $request->input('atelier'),
+            'instagram' => $request->input('instagram'),
+            'strava' => $request->input('strava'),
+            'statuts_ok' => $request->input('statuts_ok'),
+            'cotisation_ok' => $request->input('cotisation_ok'),
+            'photo_ok' => $request->input('photo_ok'),
+        ]);
 
+        if (! $member) {
             $member = Member::create([
                 'first_name' => $request->input('prenom'),
                 'last_name' => $request->input('nom'),
@@ -66,6 +66,23 @@ class FormController extends Controller
                 'phone_number' => $request->input('telephone'),
                 'label' => 'mobile',
             ]);
+        } elseif ($member->getRawOriginal('statuscode') === 'P') {
+            $member->update([
+                'first_name' => $request->input('prenom'),
+                'last_name' => $request->input('nom'),
+                'metadata' => $metadata ?: null,
+            ]);
+
+            $phone = $member->phones()->first();
+            if ($phone) {
+                $phone->update(['phone_number' => $request->input('telephone')]);
+            } else {
+                MemberPhone::create([
+                    'member_id' => $member->id,
+                    'phone_number' => $request->input('telephone'),
+                    'label' => 'mobile',
+                ]);
+            }
         }
 
         $rawToken = bin2hex(random_bytes(32));

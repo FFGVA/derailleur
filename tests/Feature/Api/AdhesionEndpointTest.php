@@ -144,6 +144,66 @@ class AdhesionEndpointTest extends TestCase
         $this->assertEquals(1, $countAfterSecond);
     }
 
+    public function test_resubmission_overwrites_pending_member(): void
+    {
+        Mail::fake();
+
+        $email = 'adhesion-overwrite-' . uniqid() . '@example.com';
+
+        $this->postJson('/api/adhesion', $this->validPayload([
+            'email' => $email,
+            'nom' => 'Ancien',
+            'prenom' => 'Nom',
+            'telephone' => '+41 79 111 11 11',
+        ]), $this->headers);
+
+        $member = Member::where('email', $email)->first();
+        $this->assertEquals('Ancien', $member->last_name);
+
+        // Re-submit with new data
+        $this->postJson('/api/adhesion', $this->validPayload([
+            'email' => $email,
+            'nom' => 'Nouveau',
+            'prenom' => 'Prénom',
+            'telephone' => '+41 79 222 22 22',
+        ]), $this->headers);
+
+        // Still only one member
+        $this->assertEquals(1, Member::where('email', $email)->count());
+
+        $member->refresh();
+        $this->assertEquals('Nouveau', $member->last_name);
+        $this->assertEquals('Prénom', $member->first_name);
+
+        // Phone updated
+        $phone = $member->phones()->first();
+        $this->assertEquals('+41 79 222 22 22', $phone->phone_number);
+    }
+
+    public function test_resubmission_does_not_overwrite_active_member(): void
+    {
+        Mail::fake();
+
+        $email = 'adhesion-active-' . uniqid() . '@example.com';
+
+        $member = Member::create([
+            'first_name' => 'Active',
+            'last_name' => 'Member',
+            'email' => $email,
+            'statuscode' => 'A',
+        ]);
+
+        $this->postJson('/api/adhesion', $this->validPayload([
+            'email' => $email,
+            'nom' => 'Nouveau',
+            'prenom' => 'Nom',
+        ]), $this->headers);
+
+        $member->refresh();
+        $this->assertEquals('Member', $member->last_name);
+        $this->assertEquals('Active', $member->first_name);
+    }
+
     public function test_honeypot_works(): void
     {
         Mail::fake();
