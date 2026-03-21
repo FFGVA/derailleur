@@ -52,6 +52,27 @@
     }
     .portal-badge-green { background-color: #dcfce7; color: #166534; }
     .portal-badge-orange { background-color: #fff7ed; color: #9a3412; }
+    .portal-contact-btn {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.875rem;
+        background-color: #80081C;
+        color: white;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        border: none;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.2s;
+    }
+    .portal-contact-btn:hover {
+        background-color: #660614;
+    }
 @endsection
 
 @section('header')
@@ -113,4 +134,11 @@
             </div>
         @endif
     </div>
+
+    <a href="mailto:{{ config('ffgva.contact_email') }}" class="portal-contact-btn">
+        <svg style="width:1.125rem;height:1.125rem;flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        Envoyer un message au comité
+    </a>
 @endsection

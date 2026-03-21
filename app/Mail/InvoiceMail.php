@@ -20,6 +20,8 @@ class InvoiceMail extends Mailable
         public string $pdfContent,
         public string $pdfFilename,
         public ?string $qrImageBase64 = null,
+        public ?string $icalContent = null,
+        public ?string $icalFilename = null,
     ) {}
 
     public function envelope(): Envelope
@@ -47,9 +49,16 @@ class InvoiceMail extends Mailable
 
     public function attachments(): array
     {
-        return [
+        $attachments = [
             Attachment::fromData(fn () => $this->pdfContent, $this->pdfFilename)
                 ->withMime('application/pdf'),
         ];
+
+        if ($this->icalContent && $this->icalFilename) {
+            $attachments[] = Attachment::fromData(fn () => $this->icalContent, $this->icalFilename)
+                ->withMime('text/calendar');
+        }
+
+        return $attachments;
     }
 }

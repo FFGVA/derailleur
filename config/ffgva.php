@@ -8,6 +8,7 @@ return [
     'creditor_postal_code' => env('FFGVA_POSTAL_CODE', '1234'),
     'creditor_city' => env('FFGVA_CITY', 'Vessy'),
     'creditor_country' => 'CH',
+    'contact_email' => 'fastandfemalegva@etik.com',
     'activation_expiry_hours' => 72,
 
     'portal_token_expiry_minutes' => 15,

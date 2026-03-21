@@ -108,16 +108,11 @@ class ViewInvoice extends ViewRecord
                                             ->color('primary')
                                             ->action(function () {
                                                 $record = $this->record;
-                                                $member = $record->member;
-                                                $nameSlug = str_replace(' ', '_', $member->last_name . '_' . $member->first_name);
-                                                $nameSlug = preg_replace('/[^a-zA-Z0-9_àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ-]/u', '', $nameSlug);
-                                                $filename = "ffgva_{$nameSlug}-facture-{$record->invoice_number}.pdf";
-                                                $storagePath = "invoices/{$filename}";
 
-                                                if (Storage::exists($storagePath)) {
+                                                if ($record->pdf_filename && Storage::exists('invoices/' . $record->pdf_filename)) {
                                                     return response()->streamDownload(
-                                                        fn () => print(Storage::get($storagePath)),
-                                                        $filename,
+                                                        fn () => print(Storage::get('invoices/' . $record->pdf_filename)),
+                                                        $record->pdf_filename,
                                                         ['Content-Type' => 'application/pdf']
                                                     );
                                                 }
@@ -141,13 +136,9 @@ class ViewInvoice extends ViewRecord
                                                 $member = $record->member;
 
                                                 // Get or generate PDF
-                                                $nameSlug = str_replace(' ', '_', $member->last_name . '_' . $member->first_name);
-                                                $nameSlug = preg_replace('/[^a-zA-Z0-9_àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ-]/u', '', $nameSlug);
-                                                $filename = "ffgva_{$nameSlug}-facture-{$record->invoice_number}.pdf";
-                                                $storagePath = "invoices/{$filename}";
-
-                                                if (Storage::exists($storagePath)) {
-                                                    $pdfContent = Storage::get($storagePath);
+                                                $filename = $record->pdf_filename;
+                                                if ($filename && Storage::exists('invoices/' . $filename)) {
+                                                    $pdfContent = Storage::get('invoices/' . $filename);
                                                 } else {
                                                     $result = \App\Services\InvoiceService::generatePdf($record);
                                                     $pdfContent = $result['pdf'];

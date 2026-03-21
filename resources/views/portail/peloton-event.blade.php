@@ -311,7 +311,7 @@
             <div class="portal-info-row">
                 <span class="portal-info-label">Lieu</span>
                 <span class="portal-info-value">
-                    <a href="https://maps.google.com/?q={{ urlencode($event->location) }}" target="_blank" rel="noopener">{{ $event->location }}</a>
+                    <a href="#" onclick="openMaps('{{ urlencode($event->location) }}');return false;">{{ $event->location }}</a>
                 </span>
             </div>
         @endif

@@ -6,6 +6,7 @@ use App\Http\Requests\PortalMagicLinkRequest;
 use App\Mail\PortalMagicLinkMail;
 use App\Models\Member;
 use App\Models\MemberMagicToken;
+use App\Services\PortalAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -72,11 +73,21 @@ class PortalAuthController extends Controller
 
         request()->session()->regenerate();
 
+        PortalAudit::log(request(), $member, 'login');
+
         return redirect()->route('portail.dashboard');
     }
 
     public function logout(Request $request)
     {
+        $memberId = $request->session()->get('portal_member_id');
+        if ($memberId) {
+            $member = Member::find($memberId);
+            if ($member) {
+                PortalAudit::log($request, $member, 'logout');
+            }
+        }
+
         $request->session()->forget(['portal_member_id', 'portal_last_activity']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

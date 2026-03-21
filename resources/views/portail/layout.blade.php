@@ -75,6 +75,18 @@
         <div>&copy; {{ date('Y') }} Smart Gecko SA</div>
     </footer>
 
+    <script>
+    function openMaps(q) {
+        var ua = navigator.userAgent || '';
+        if (/iPhone|iPad|iPod/i.test(ua)) {
+            window.location = 'maps:?q=' + q;
+        } else if (/Android/i.test(ua)) {
+            window.location = 'geo:0,0?q=' + q;
+        } else {
+            window.open('https://www.google.com/maps/search/?api=1&query=' + q, '_blank');
+        }
+    }
+    </script>
     @yield('scripts')
 </body>
 </html>

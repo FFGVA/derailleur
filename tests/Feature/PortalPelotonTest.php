@@ -537,7 +537,9 @@ class PortalPelotonTest extends TestCase
         $this->assertEquals('E', $invoice->getRawOriginal('statuscode'));
 
         Mail::assertSent(InvoiceMail::class, function ($mail) use ($rider) {
-            return $mail->invoice->member_id === $rider->id;
+            return $mail->invoice->member_id === $rider->id
+                && $mail->icalContent !== null
+                && $mail->icalFilename !== null;
         });
     }
 

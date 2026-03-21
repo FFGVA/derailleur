@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
+use App\Mail\EventConfirmationMail;
 use App\Mail\InvoiceMail;
 use App\Models\Event;
 use App\Models\EventMember;
 use App\Models\Invoice;
 use App\Models\Member;
+use App\Services\ICalService;
 use App\Services\InvoiceService;
+use App\Services\PortalAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -63,6 +66,100 @@ class PortalController extends Controller
         ]);
     }
 
+    public function evenement(Request $request, Event $event)
+    {
+        $member = $request->attributes->get('portal_member');
+        $event->load('chefPeloton.phones');
+
+        $pivot = $member->events()
+            ->where('events.id', $event->id)
+            ->first();
+
+        // Treat cancelled as not registered
+        $registration = $pivot?->pivot;
+        if ($registration && $registration->status->value === 'X') {
+            $registration = null;
+        }
+
+        return view('portail.evenement', [
+            'member' => $member,
+            'event' => $event,
+            'registration' => $registration,
+        ]);
+    }
+
+    public function evenementIcal(Request $request, Event $event)
+    {
+        $ical = ICalService::generate($event);
+        $filename = ICalService::filename($event);
+
+        return response($ical, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    public function inscrire(Request $request, Event $event)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        $pivot = EventMember::where('event_id', $event->id)
+            ->where('member_id', $member->id)
+            ->first();
+
+        // Already actively registered — do nothing
+        if ($pivot && $pivot->getRawOriginal('status') !== 'X') {
+            return redirect()->route('portail.evenement', $event);
+        }
+
+        $newStatus = $event->price > 0 ? 'N' : 'C';
+
+        if ($pivot) {
+            $pivot->update(['status' => $newStatus]);
+        } else {
+            EventMember::create([
+                'event_id' => $event->id,
+                'member_id' => $member->id,
+                'status' => $newStatus,
+            ]);
+        }
+
+        if ($event->price > 0) {
+            $result = InvoiceService::createEvent($member, $event);
+            $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+            $invoice->update(['statuscode' => 'E']);
+
+            $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+            $ical = ICalService::generate($event);
+            $icalFilename = ICalService::filename($event);
+            Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+        } else {
+            Mail::send(new EventConfirmationMail($member, $event));
+        }
+
+        PortalAudit::log($request, $member, 'inscription', "Événement #{$event->id} — {$event->title}");
+
+        return redirect()->route('portail.evenement', $event);
+    }
+
+    public function annuler(Request $request, Event $event)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        $pivot = EventMember::where('event_id', $event->id)
+            ->where('member_id', $member->id)
+            ->whereIn('status', ['N', 'C'])
+            ->whereNull('deleted_at')
+            ->first();
+
+        if ($pivot) {
+            $pivot->update(['status' => 'X']);
+            PortalAudit::log($request, $member, 'annulation', "Événement #{$event->id} — {$event->title}");
+        }
+
+        return redirect()->route('portail.evenement', $event);
+    }
+
     public function facturePdf(Request $request, Invoice $invoice)
     {
         $member = $request->attributes->get('portal_member');
@@ -71,17 +168,25 @@ class PortalController extends Controller
             abort(403);
         }
 
-        $nameSlug = str_replace(' ', '_', $member->last_name . '_' . $member->first_name);
-        $nameSlug = preg_replace('/[^a-zA-Z0-9_àâäéèêëïîôùûüçÀÂÄÉÈÊËÏÎÔÙÛÜÇ-]/u', '', $nameSlug);
-        $filename = "ffgva_{$nameSlug}-facture-{$invoice->invoice_number}.pdf";
-        $path = storage_path('app/invoices/' . $filename);
+        $filename = $invoice->pdf_filename;
 
-        if (!file_exists($path)) {
-            abort(404);
+        // Try to find existing file
+        if ($filename) {
+            $path = storage_path('app/private/invoices/' . $filename);
+            if (!file_exists($path)) {
+                $path = storage_path('app/invoices/' . $filename);
+            }
+            if (file_exists($path)) {
+                return response()->file($path, ['Content-Type' => 'application/pdf']);
+            }
         }
 
-        return response()->file($path, [
+        // Generate on the fly if missing
+        $result = InvoiceService::generatePdf($invoice);
+
+        return response($result['pdf'], 200, [
             'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $result['filename'] . '"',
         ]);
     }
 
@@ -153,6 +258,13 @@ class PortalController extends Controller
         };
         $pivot->save();
 
+        $presenceLabel = match ($pivot->getRawOriginal('present')) {
+            1, true => 'présente',
+            0, false => 'absente',
+            default => 'non défini',
+        };
+        PortalAudit::log($request, $member, 'présence', "Événement #{$event->id} — {$targetMember->first_name} {$targetMember->last_name}: {$presenceLabel}");
+
         return redirect()->route('portail.peloton.event', $event);
     }
 
@@ -189,8 +301,13 @@ class PortalController extends Controller
                 $invoice->update(['statuscode' => 'E']);
 
                 $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-                Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64));
+                $ical = ICalService::generate($event);
+                $icalFilename = ICalService::filename($event);
+                Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
             }
+
+            $addedMember = Member::find($targetMemberId);
+            PortalAudit::log($request, $member, 'ajout participante', "Événement #{$event->id} — {$addedMember->first_name} {$addedMember->last_name}");
         }
 
         return redirect()->route('portail.peloton.event', $event);

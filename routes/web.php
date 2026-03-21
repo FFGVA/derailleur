@@ -23,6 +23,10 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/', [PortalController::class, 'dashboard'])->name('portail.dashboard');
     Route::get('/adhesion', [PortalController::class, 'adhesion'])->name('portail.adhesion');
     Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
+    Route::get('/evenement/{event}', [PortalController::class, 'evenement'])->name('portail.evenement');
+    Route::post('/evenement/{event}/inscrire', [PortalController::class, 'inscrire'])->name('portail.evenement.inscrire');
+    Route::post('/evenement/{event}/annuler', [PortalController::class, 'annuler'])->name('portail.evenement.annuler');
+    Route::get('/evenement/{event}/ical', [PortalController::class, 'evenementIcal'])->name('portail.evenement.ical');
     Route::get('/factures/{invoice}/pdf', [PortalController::class, 'facturePdf'])->name('portail.facture.pdf');
     Route::get('/peloton', [PortalController::class, 'peloton'])->name('portail.peloton');
     Route::get('/peloton/{event}', [PortalController::class, 'pelotonEvent'])->name('portail.peloton.event');

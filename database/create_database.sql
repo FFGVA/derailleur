@@ -182,6 +182,7 @@ CREATE TABLE `invoices` (
     `amount` DECIMAL(8,2) NOT NULL,
     `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
     `payment_date` DATE NULL,
+    `pdf_filename` VARCHAR(255) NULL,
     `notes` TEXT NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
@@ -213,6 +214,19 @@ CREATE TABLE `invoice_event` (
 -- =============================================
 -- SECTION 2b: Utility tables
 -- =============================================
+
+CREATE TABLE `portal_audit_log` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `member_id` BIGINT UNSIGNED NOT NULL,
+    `member_number` VARCHAR(4) NULL,
+    `action` VARCHAR(50) NOT NULL,
+    `detail` TEXT NULL,
+    `ip_address` VARCHAR(45) NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    KEY `idx_portal_audit_member` (`member_id`),
+    KEY `idx_portal_audit_created` (`created_at`),
+    CONSTRAINT `fk_portal_audit_member` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `member_magic_tokens` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -336,6 +350,7 @@ CREATE TABLE `invoices_audit` (
     `amount` DECIMAL(8,2) NOT NULL,
     `statuscode` CHAR(1) DEFAULT 'N',
     `payment_date` DATE NULL,
+    `pdf_filename` VARCHAR(255) NULL,
     `notes` TEXT NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
@@ -427,16 +442,16 @@ CREATE TRIGGER `invoices_before_update`
 BEFORE UPDATE ON `invoices`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `pdf_filename`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`pdf_filename`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 CREATE TRIGGER `invoices_before_delete`
 BEFORE DELETE ON `invoices`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `invoices_audit` (`audit_action`, `audit_user_id`, `id`, `member_id`, `type`, `cotisation_year`, `invoice_number`, `amount`, `statuscode`, `payment_date`, `pdf_filename`, `notes`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`member_id`, OLD.`type`, OLD.`cotisation_year`, OLD.`invoice_number`, OLD.`amount`, OLD.`statuscode`, OLD.`payment_date`, OLD.`pdf_filename`, OLD.`notes`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 DELIMITER ;

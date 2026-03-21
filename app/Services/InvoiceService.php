@@ -236,6 +236,9 @@ class InvoiceService
         $storagePath = "invoices/{$filename}";
         \Illuminate\Support\Facades\Storage::put($storagePath, $pdfContent);
 
+        // Store filename on invoice record
+        $invoice->update(['pdf_filename' => $filename]);
+
         return [
             'pdf' => $pdfContent,
             'filename' => $filename,

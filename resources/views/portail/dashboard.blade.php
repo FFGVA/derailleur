@@ -60,11 +60,18 @@
         margin-bottom: 0.75rem;
     }
     .portal-event-card {
+        display: block;
         background: white;
         border-radius: 0.5rem;
         padding: 1rem 1.25rem;
         margin-bottom: 0.625rem;
         box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        text-decoration: none;
+        color: inherit;
+        transition: box-shadow 0.2s;
+    }
+    .portal-event-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     }
     .portal-event-title {
         font-size: 0.9375rem;
@@ -107,16 +114,14 @@
 @endsection
 
 @section('content')
-    <div class="portal-welcome-card">
+    <a href="{{ route('portail.adhesion') }}" class="portal-welcome-card" style="text-decoration: none; color: inherit; display: block;">
         <div class="portal-welcome-name">{{ $member->first_name }} {{ $member->last_name }}</div>
         @if($member->phones->isNotEmpty())
             <div class="portal-welcome-phone">
-                <a href="tel:{{ $member->phones->first()->phone_number }}" style="color: #666; text-decoration: none;">
-                    {{ $member->phones->first()->phone_number }}
-                </a>
+                {{ $member->phones->first()->phone_number }}
             </div>
         @endif
-    </div>
+    </a>
 
     <div class="portal-nav-buttons{{ $isChef ? ' cols-3' : '' }}">
         @if($isChef)
@@ -144,14 +149,16 @@
     <h2 class="portal-section-title">Prochains événements</h2>
 
     @forelse($upcomingEvents as $event)
-        <div class="portal-event-card">
+        <a href="{{ route('portail.evenement', $event) }}" class="portal-event-card">
             <div class="portal-event-title">{{ $event->title }}</div>
             <div class="portal-event-meta">
                 {{ $event->starts_at->format('d.m.Y') }}
                 @if($event->location) · {{ $event->location }}@endif
-                · <span class="portal-badge {{ match($event->pivot->status->value) { 'C' => 'portal-badge-green', 'N' => 'portal-badge-orange', 'X' => 'portal-badge-red', default => '' } }}">{{ $event->pivot->status->getLabel() }}</span>
             </div>
-        </div>
+            <div class="portal-event-meta">
+                Mon statut : <span class="portal-badge {{ match($event->pivot->status->value) { 'C' => 'portal-badge-green', 'N' => 'portal-badge-orange', 'X' => 'portal-badge-red', default => '' } }}">{{ $event->pivot->status->getLabel() }}</span>
+            </div>
+        </a>
     @empty
         <div class="portal-empty">Aucun événement à venir.</div>
     @endforelse

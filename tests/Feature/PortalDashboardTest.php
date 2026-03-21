@@ -118,6 +118,239 @@ class PortalDashboardTest extends TestCase
         $response->assertDontSee('Ancien événement');
     }
 
+    public function test_event_detail_page_shows_info(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie Salève',
+            'description' => 'Belle montée avec vue sur le lac',
+            'starts_at' => now()->addDays(7)->setTime(9, 0),
+            'ends_at' => now()->addDays(7)->setTime(12, 0),
+            'location' => 'Collonges-sous-Salève',
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertOk();
+        $response->assertSee('Sortie Salève');
+        $response->assertSee('Belle montée avec vue sur le lac');
+        $response->assertSee('Collonges-sous-Salève');
+        $response->assertSee('Confirmée');
+    }
+
+    public function test_event_detail_shows_register_button_when_not_registered(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie ouverte',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Je m\'inscris', false);
+    }
+
+    public function test_event_detail_hides_register_button_when_registered(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie inscrite',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertDontSee('Je m\'inscris', false);
+    }
+
+    public function test_register_free_event_sets_confirmed_and_sends_confirmation(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie gratuite',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        $response = $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/inscrire');
+
+        $response->assertRedirect('/portail/evenement/' . $event->id);
+
+        $pivot = EventMember::where('event_id', $event->id)
+            ->where('member_id', $member->id)
+            ->first();
+
+        $this->assertNotNull($pivot);
+        $this->assertEquals('C', $pivot->getRawOriginal('status'));
+
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\EventConfirmationMail::class, function ($mail) use ($member, $event) {
+            return $mail->member->id === $member->id && $mail->event->id === $event->id;
+        });
+    }
+
+    public function test_register_paid_event_sets_inscrite_and_sends_invoice_with_ical(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie payante',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 25.00,
+        ]);
+
+        $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/inscrire');
+
+        $pivot = EventMember::where('event_id', $event->id)
+            ->where('member_id', $member->id)
+            ->first();
+
+        $this->assertNotNull($pivot);
+        $this->assertEquals('N', $pivot->getRawOriginal('status'));
+
+        $invoice = Invoice::where('member_id', $member->id)->where('type', 'E')->first();
+        $this->assertNotNull($invoice);
+        $this->assertEquals(25.00, (float) $invoice->amount);
+
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\InvoiceMail::class, function ($mail) {
+            return $mail->icalContent !== null && $mail->icalFilename !== null;
+        });
+    }
+
+    public function test_register_ignores_duplicate(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/inscrire');
+
+        $response->assertRedirect('/portail/evenement/' . $event->id);
+        $this->assertEquals(1, EventMember::where('event_id', $event->id)->where('member_id', $member->id)->count());
+    }
+
+    public function test_cancel_registration_sets_annulee(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie annulable',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/annuler');
+
+        $response->assertRedirect('/portail/evenement/' . $event->id);
+
+        $pivot = EventMember::where('event_id', $event->id)
+            ->where('member_id', $member->id)
+            ->first();
+
+        $this->assertEquals('X', $pivot->getRawOriginal('status'));
+    }
+
+    public function test_cancelled_registration_shows_register_button(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie réinscription',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'X',
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Je m\'inscris', false);
+        $response->assertDontSee('Annulée');
+    }
+
+    public function test_event_detail_shows_cancel_button_when_registered(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie avec annulation',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $member->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Je ne peux pas venir', false);
+    }
+
     public function test_dashboard_shows_empty_state(): void
     {
         $member = $this->createAuthenticatedMember();

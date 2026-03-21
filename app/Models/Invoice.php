@@ -24,6 +24,7 @@ class Invoice extends Model
         'amount',
         'statuscode',
         'payment_date',
+        'pdf_filename',
         'notes',
         'modified_by_id',
     ];
