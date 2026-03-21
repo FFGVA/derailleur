@@ -24,7 +24,7 @@
                 <td class="py-1.5 pr-2 text-right whitespace-nowrap">
                     CHF {{ number_format($invoice->amount, 2, '.', '') }}
                 </td>
-                <td class="py-1.5 pl-2">
+                <td class="py-1.5 pl-2 w-1 whitespace-nowrap">
                     <x-filament::badge :color="$invoice->statuscode->getColor()" size="sm">
                         {{ $invoice->statuscode->getLabel() }}
                     </x-filament::badge>
