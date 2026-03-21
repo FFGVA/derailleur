@@ -48,8 +48,9 @@ class FormController extends Controller
             'strava' => $request->input('strava'),
             'statuts_ok' => $request->input('statuts_ok'),
             'cotisation_ok' => $request->input('cotisation_ok'),
-            'photo_ok' => $request->input('photo_ok'),
         ]);
+
+        $photoOk = $request->input('photo_ok') !== 'non';
 
         if (! $member) {
             $member = Member::create([
@@ -57,6 +58,7 @@ class FormController extends Controller
                 'last_name' => $request->input('nom'),
                 'email' => $email,
                 'is_invitee' => false,
+                'photo_ok' => $photoOk,
                 'statuscode' => 'P',
                 'metadata' => $metadata ?: null,
             ]);
@@ -70,6 +72,7 @@ class FormController extends Controller
             $member->update([
                 'first_name' => $request->input('prenom'),
                 'last_name' => $request->input('nom'),
+                'photo_ok' => $photoOk,
                 'metadata' => $metadata ?: null,
             ]);
 

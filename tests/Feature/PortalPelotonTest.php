@@ -212,6 +212,57 @@ class PortalPelotonTest extends TestCase
         $response->assertSee('+41 79 111 22 33');
     }
 
+    public function test_peloton_event_shows_no_photo_icon(): void
+    {
+        $chef = $this->createChef();
+        $rider = Member::create([
+            'first_name' => 'Nora',
+            'last_name' => 'Timide',
+            'email' => 'nora-' . uniqid() . '@example.com',
+            'statuscode' => 'A',
+            'is_invitee' => false,
+            'photo_ok' => false,
+        ]);
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+            'chef_peloton_id' => $chef->id,
+        ]);
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $rider->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($chef, '/portail/peloton/' . $event->id);
+
+        $response->assertSee('Pas de photo');
+    }
+
+    public function test_peloton_event_hides_no_photo_icon_when_ok(): void
+    {
+        $chef = $this->createChef();
+        $rider = $this->createMember('Léa', 'Souriante');
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+            'chef_peloton_id' => $chef->id,
+        ]);
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $rider->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($chef, '/portail/peloton/' . $event->id);
+
+        $response->assertDontSee('Pas de photo');
+    }
+
     public function test_peloton_event_forbidden_for_non_chef(): void
     {
         $chef = $this->createChef();

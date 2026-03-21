@@ -96,7 +96,7 @@ class AdhesionEndpointTest extends TestCase
         $this->assertEquals('jean_dupont', $member->metadata['strava']);
         $this->assertEquals('oui', $member->metadata['statuts_ok']);
         $this->assertEquals('oui', $member->metadata['cotisation_ok']);
-        $this->assertEquals('oui', $member->metadata['photo_ok']);
+        $this->assertTrue($member->photo_ok);
     }
 
     public function test_member_statuscode_is_p(): void
