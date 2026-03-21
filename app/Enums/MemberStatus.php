@@ -13,8 +13,8 @@ enum MemberStatus: string
     {
         return match ($this) {
             self::Brouillon => 'Brouillon',
-            self::Actif => 'Actif',
-            self::Inactif => 'Inactif',
+            self::Actif => 'Active',
+            self::Inactif => 'Inactive',
             self::EnAttente => 'En attente',
         };
     }

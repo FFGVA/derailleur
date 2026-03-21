@@ -370,7 +370,7 @@ class PortalDashboardTest extends TestCase
         $response->assertSee('Marie');
         $response->assertSee('Dashboard');
         $response->assertSee('15.01.2025');
-        $response->assertSee('Actif');
+        $response->assertSee('Active');
     }
 
     public function test_adhesion_page_shows_pending_status(): void

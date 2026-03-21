@@ -29,8 +29,8 @@ class MemberStatusTest extends TestCase
     public function test_get_label_returns_french_labels(): void
     {
         $this->assertSame('Brouillon', MemberStatus::Brouillon->getLabel());
-        $this->assertSame('Actif', MemberStatus::Actif->getLabel());
-        $this->assertSame('Inactif', MemberStatus::Inactif->getLabel());
+        $this->assertSame('Active', MemberStatus::Actif->getLabel());
+        $this->assertSame('Inactive', MemberStatus::Inactif->getLabel());
         $this->assertSame('En attente', MemberStatus::EnAttente->getLabel());
     }
 

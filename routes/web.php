@@ -22,6 +22,8 @@ Route::post('/deconnexion', [PortalAuthController::class, 'logout'])->name('port
 Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/', [PortalController::class, 'dashboard'])->name('portail.dashboard');
     Route::get('/adhesion', [PortalController::class, 'adhesion'])->name('portail.adhesion');
+    Route::get('/adhesion/modifier', [PortalController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
+    Route::post('/adhesion/modifier', [PortalController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
     Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
     Route::get('/evenement/{event}', [PortalController::class, 'evenement'])->name('portail.evenement');
     Route::post('/evenement/{event}/inscrire', [PortalController::class, 'inscrire'])->name('portail.evenement.inscrire');
@@ -32,6 +34,7 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/peloton/{event}', [PortalController::class, 'pelotonEvent'])->name('portail.peloton.event');
     Route::post('/peloton/{event}/presence/{targetMember}', [PortalController::class, 'togglePresence'])->name('portail.peloton.presence');
     Route::post('/peloton/{event}/ajouter', [PortalController::class, 'addParticipant'])->name('portail.peloton.add');
+    Route::get('/peloton/{event}/membre/{targetMember}', [PortalController::class, 'pelotonMember'])->name('portail.peloton.member');
 });
 
 if (app()->environment('local')) {

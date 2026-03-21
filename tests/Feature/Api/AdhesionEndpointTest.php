@@ -76,7 +76,7 @@ class AdhesionEndpointTest extends TestCase
         $this->assertDatabaseHas('member_phones', [
             'member_id' => $member->id,
             'phone_number' => '+41 79 123 45 67',
-            'label' => 'mobile',
+            'label' => 'Mobile principal',
         ]);
     }
 

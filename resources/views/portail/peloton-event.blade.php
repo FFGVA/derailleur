@@ -142,6 +142,8 @@
         flex-shrink: 0;
         width: 1.25rem;
         color: #991b1b;
+        display: flex;
+        align-items: center;
     }
     .portal-no-photo svg {
         width: 1.125rem;
@@ -151,24 +153,15 @@
         flex-shrink: 0;
         width: 1.25rem;
     }
-    .portal-participant-status {
+    .portal-status-dot {
         flex-shrink: 0;
-        width: 4.5rem;
-        text-align: center;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 50%;
     }
-    .portal-status-badge {
-        display: inline-block;
-        font-size: 0.625rem;
-        font-weight: 600;
-        padding: 0.0625rem 0.375rem;
-        border-radius: 0.1875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        white-space: nowrap;
-    }
-    .portal-badge-green { background-color: #dcfce7; color: #166534; }
-    .portal-badge-orange { background-color: #fff7ed; color: #9a3412; }
-    .portal-badge-red { background-color: #fef2f2; color: #991b1b; }
+    .portal-dot-green { background-color: #22c55e; }
+    .portal-dot-orange { background-color: #f59e0b; }
+    .portal-dot-red { background-color: #ef4444; }
     .portal-participant-icons {
         display: flex;
         gap: 1.25rem;
@@ -328,14 +321,16 @@
 
         @forelse($participants as $participant)
             @php
-                $phone = $participant->phones->first();
+                $sortedPhones = \App\Enums\PhoneLabel::sortPhones($participant->phones);
+                $phone = $sortedPhones->first();
                 $whatsappPhone = $participant->phones->firstWhere('is_whatsapp', true);
                 $rawPresent = $participant->pivot->getRawOriginal('present');
             @endphp
             <div class="portal-participant">
+                <span class="portal-status-dot {{ match($participant->pivot->status->value) { 'C' => 'portal-dot-green', 'N' => 'portal-dot-orange', 'X' => 'portal-dot-red', default => '' } }}" title="{{ $participant->pivot->status->getLabel() }}"></span>
                 <div class="portal-participant-info">
                     <div class="portal-participant-name">
-                        <a href="mailto:{{ $participant->email }}">{{ $participant->first_name }} {{ $participant->last_name }}</a>
+                        <a href="{{ route('portail.peloton.member', [$event, $participant]) }}">{{ $participant->first_name }} {{ $participant->last_name }}</a>
                     </div>
                 </div>
                 @if(!$participant->photo_ok)
@@ -348,10 +343,12 @@
                 @else
                     <div class="portal-photo-spacer"></div>
                 @endif
-                <div class="portal-participant-status">
-                    <span class="portal-status-badge {{ match($participant->pivot->status->value) { 'C' => 'portal-badge-green', 'N' => 'portal-badge-orange', 'X' => 'portal-badge-red', default => '' } }}">{{ $participant->pivot->status->getLabel() }}</span>
-                </div>
                 <div class="portal-participant-icons">
+                    <a href="mailto:{{ $participant->email }}" aria-label="E-mail">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                    </a>
                     @if($phone)
                         <a href="tel:{{ $phone->phone_number }}" aria-label="Appeler">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

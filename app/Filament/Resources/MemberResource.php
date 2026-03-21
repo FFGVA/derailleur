@@ -84,10 +84,10 @@ class MemberResource extends Resource
                                     ->required()
                                     ->maxLength(20)
                                     ->columnSpan(2),
-                                Forms\Components\TextInput::make('label')
+                                Forms\Components\Select::make('label')
                                     ->label('Type')
-                                    ->maxLength(40)
-                                    ->placeholder('Mobile, Domicile...')
+                                    ->options(\App\Enums\PhoneLabel::class)
+                                    ->default('Mobile')
                                     ->columnSpan(2),
                                 Forms\Components\Toggle::make('is_whatsapp')
                                     ->label('WhatsApp')

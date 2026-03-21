@@ -34,13 +34,13 @@ class MemberNumberTest extends TestCase
     public function test_assign_member_number_uses_high_watermark(): void
     {
         // Create a member with an existing number
-        $this->makeMember(['member_number' => '0010']);
+        $this->makeMember(['member_number' => '9990']);
 
         $member = $this->makeMember();
         $number = Member::assignMemberNumber($member);
 
-        $this->assertEquals('0011', $number);
-        $this->assertEquals('0011', $member->fresh()->member_number);
+        $this->assertEquals('9991', $number);
+        $this->assertEquals('9991', $member->fresh()->member_number);
     }
 
     public function test_assign_member_number_starts_at_0001(): void
@@ -57,11 +57,11 @@ class MemberNumberTest extends TestCase
 
     public function test_assign_member_number_skips_already_assigned(): void
     {
-        $member = $this->makeMember(['member_number' => '0005']);
+        $member = $this->makeMember(['member_number' => '9995']);
         $result = Member::assignMemberNumber($member);
 
         // Should return existing number, not assign a new one
-        $this->assertEquals('0005', $result);
+        $this->assertEquals('9995', $result);
     }
 
     public function test_invoice_number_uses_member_id_not_member_number(): void

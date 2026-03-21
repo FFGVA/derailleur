@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
 use App\Mail\EventConfirmationMail;
+use App\Mail\ExpiredMemberRegistrationMail;
 use App\Mail\InvoiceMail;
+use App\Mail\MemberUpdateRequestMail;
 use App\Models\Event;
 use App\Models\EventMember;
 use App\Models\Invoice;
@@ -44,10 +46,50 @@ class PortalController extends Controller
     public function adhesion(Request $request)
     {
         $member = $request->attributes->get('portal_member');
+        $member->load('phones');
 
         return view('portail.adhesion', [
             'member' => $member,
         ]);
+    }
+
+    public function adhesionEdit(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+        $member->load('phones');
+
+        return view('portail.adhesion-edit', [
+            'member' => $member,
+        ]);
+    }
+
+    public function adhesionUpdate(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+        $member->load('phones');
+
+        $request->validate([
+            'first_name' => ['required', 'string', 'max:40'],
+            'last_name' => ['required', 'string', 'max:60'],
+            'email' => ['required', 'email', 'max:255'],
+            'address' => ['nullable', 'string'],
+            'postal_code' => ['nullable', 'string', 'max:10'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.number' => ['required', 'string', 'max:20'],
+            'phones.*.label' => ['nullable', 'string', 'max:40'],
+            'phones.*.whatsapp' => ['nullable'],
+        ]);
+
+        $changes = $request->only(['first_name', 'last_name', 'email', 'address', 'postal_code', 'city']);
+        $changes['phones'] = $request->input('phones', []);
+
+        Mail::send(new MemberUpdateRequestMail($member, $changes));
+
+        PortalAudit::log($request, $member, 'modification', 'Demande de modification envoyée au comité');
+
+        return redirect()->route('portail.adhesion')
+            ->with('success', 'Ta demande de modification a été envoyée au comité.');
     }
 
     public function factures(Request $request)
@@ -137,6 +179,10 @@ class PortalController extends Controller
             Mail::send(new EventConfirmationMail($member, $event));
         }
 
+        if ($member->membership_end && $member->membership_end->isPast()) {
+            Mail::send(new ExpiredMemberRegistrationMail($member, $event));
+        }
+
         PortalAudit::log($request, $member, 'inscription', "Événement #{$event->id} — {$event->title}");
 
         return redirect()->route('portail.evenement', $event);
@@ -187,6 +233,23 @@ class PortalController extends Controller
         return response($result['pdf'], 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="' . $result['filename'] . '"',
+        ]);
+    }
+
+    public function pelotonMember(Request $request, Event $event, Member $targetMember)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        if ($event->chef_peloton_id !== $member->id) {
+            abort(403);
+        }
+
+        $targetMember->load('phones');
+
+        return view('portail.peloton-member', [
+            'member' => $member,
+            'event' => $event,
+            'target' => $targetMember,
         ]);
     }
 

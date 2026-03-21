@@ -66,7 +66,7 @@ class FormController extends Controller
             MemberPhone::create([
                 'member_id' => $member->id,
                 'phone_number' => $request->input('telephone'),
-                'label' => 'mobile',
+                'label' => 'Mobile principal',
             ]);
         } elseif ($member->getRawOriginal('statuscode') === 'P') {
             $member->update([
@@ -83,7 +83,7 @@ class FormController extends Controller
                 MemberPhone::create([
                     'member_id' => $member->id,
                     'phone_number' => $request->input('telephone'),
-                    'label' => 'mobile',
+                    'label' => 'Mobile principal',
                 ]);
             }
         }
