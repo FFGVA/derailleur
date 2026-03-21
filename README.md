@@ -3,7 +3,7 @@
 
 ## Infrastructure
 - Production URL: derailleur.ffgva.ch → points to /public
-- Hosted on Hostpoint (PHP 8.4, MariaDB)
+- Hosted on Hostpoint (PHP 8.4, MariaDB 10)
 - Local dev: Laravel Herd (macOS) / PHP 8.4 (Debian)
 - GitHub: shared repo
 
