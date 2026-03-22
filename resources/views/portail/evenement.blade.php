@@ -289,7 +289,7 @@
     @endif
 
     @if(!$registration)
-        @if($event->price > 0)
+        @if($applicablePrice > 0)
             <button type="button" class="portal-register-btn" onclick="document.getElementById('confirmPopup').classList.add('active')">Je m'inscris</button>
         @else
             <form method="POST" action="{{ route('portail.evenement.inscrire', $event) }}">
@@ -317,12 +317,12 @@
         </div>
     @endif
 
-    @if(!$registration && $event->price > 0)
+    @if(!$registration && $applicablePrice > 0)
         <div id="confirmPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
             <div class="portal-popup">
                 <div class="portal-popup-title">Confirmer l'inscription</div>
                 <div class="portal-popup-body">
-                    L'événement <strong>{{ $event->title }}</strong> coûte <strong>CHF {{ number_format($event->price, 2, '.', '') }}</strong>. Une facture te sera envoyée par e-mail.
+                    L'événement <strong>{{ $event->title }}</strong> coûte <strong>CHF {{ number_format($applicablePrice, 2, '.', '') }}</strong>. Une facture te sera envoyée par e-mail.
                 </div>
                 <form method="POST" action="{{ route('portail.evenement.inscrire', $event) }}">
                     @csrf

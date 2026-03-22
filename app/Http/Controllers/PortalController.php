@@ -128,6 +128,7 @@ class PortalController extends Controller
             'member' => $member,
             'event' => $event,
             'registration' => $registration,
+            'applicablePrice' => (float) $event->priceForMember($member),
         ]);
     }
 
@@ -155,7 +156,8 @@ class PortalController extends Controller
             return redirect()->route('portail.evenement', $event);
         }
 
-        $newStatus = $event->price > 0 ? 'N' : 'C';
+        $applicablePrice = (float) $event->priceForMember($member);
+        $newStatus = $applicablePrice > 0 ? 'N' : 'C';
 
         if ($pivot) {
             $pivot->update(['status' => $newStatus]);
@@ -167,7 +169,7 @@ class PortalController extends Controller
             ]);
         }
 
-        if ($event->price > 0) {
+        if ($applicablePrice > 0) {
             $result = InvoiceService::createEvent($member, $event);
             $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
             $invoice->update(['statuscode' => 'E']);
@@ -358,8 +360,10 @@ class PortalController extends Controller
                 'present' => true,
             ]);
 
-            if ($event->price > 0) {
-                $targetMember = Member::findOrFail($targetMemberId);
+            $targetMember = Member::findOrFail($targetMemberId);
+            $applicablePrice = (float) $event->priceForMember($targetMember);
+
+            if ($applicablePrice > 0) {
                 $result = InvoiceService::createEvent($targetMember, $event);
                 $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
                 $invoice->update(['statuscode' => 'E']);
@@ -370,8 +374,7 @@ class PortalController extends Controller
                 Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
             }
 
-            $addedMember = Member::find($targetMemberId);
-            PortalAudit::log($request, $member, 'ajout participante', "Événement #{$event->id} — {$addedMember->first_name} {$addedMember->last_name}");
+            PortalAudit::log($request, $member, 'ajout participante', "Événement #{$event->id} — {$targetMember->first_name} {$targetMember->last_name}");
         }
 
         return redirect()->route('portail.peloton.event', $event);

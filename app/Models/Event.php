@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EventStatus;
 use App\Enums\EventType;
+use App\Enums\MemberStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -52,6 +53,30 @@ class Event extends Model
     public function chefPeloton(): BelongsTo
     {
         return $this->belongsTo(Member::class, 'chef_peloton_id');
+    }
+
+    /**
+     * Get the applicable price for a member: active members pay price, others pay price_non_member (fallback to price).
+     */
+    public function priceForMember(Member $member): string
+    {
+        if ($member->statuscode === MemberStatus::Actif) {
+            return $this->price;
+        }
+
+        return $this->price_non_member ?? $this->price;
+    }
+
+    public function isFull(): bool
+    {
+        if (is_null($this->max_participants)) {
+            return false;
+        }
+
+        return $this->members()
+            ->whereIn('event_member.status', ['N', 'C'])
+            ->whereNull('event_member.deleted_at')
+            ->count() >= $this->max_participants;
     }
 
     public function members(): BelongsToMany

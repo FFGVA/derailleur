@@ -59,7 +59,7 @@ class InvoiceService
     public static function createEvent(Member $member, Event|array $events): array
     {
         $events = is_array($events) ? $events : [$events];
-        $totalAmount = collect($events)->sum('price');
+        $totalAmount = collect($events)->sum(fn ($e) => (float) $e->priceForMember($member));
 
         $invoice = Invoice::create([
             'member_id' => $member->id,
@@ -76,7 +76,7 @@ class InvoiceService
             InvoiceLine::create([
                 'invoice_id' => $invoice->id,
                 'description' => $event->title . ' — ' . $event->starts_at->format('d.m.Y'),
-                'amount' => $event->price,
+                'amount' => $event->priceForMember($member),
                 'sort_order' => $i,
             ]);
         }

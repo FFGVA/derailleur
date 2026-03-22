@@ -3,11 +3,17 @@
 namespace App\Filament\Resources\EventResource\RelationManagers;
 
 use App\Enums\EventMemberStatus;
+use App\Mail\InvoiceMail;
+use App\Models\Invoice;
+use App\Models\Member;
+use App\Services\ICalService;
+use App\Services\InvoiceService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
 
 class MembersRelationManager extends RelationManager
 {
@@ -123,6 +129,22 @@ class MembersRelationManager extends RelationManager
                             ->default('N')
                             ->required(),
                     ])
+                    ->after(function ($record) {
+                        $event = $this->getOwnerRecord();
+                        $member = $record;
+                        $applicablePrice = (float) $event->priceForMember($member);
+
+                        if ($applicablePrice > 0) {
+                            $result = InvoiceService::createEvent($member, $event);
+                            $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+                            $invoice->update(['statuscode' => 'E']);
+
+                            $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+                            $ical = ICalService::generate($event);
+                            $icalFilename = ICalService::filename($event);
+                            Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+                        }
+                    })
                     ->visible(fn () => $this->canManageParticipants()),
             ])
             ->actions([

@@ -2,6 +2,7 @@
 
 use App\Enums\EventStatus;
 use App\Http\Controllers\AdhesionActivationController;
+use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\PortalController;
 use App\Models\Event;
@@ -9,6 +10,16 @@ use App\Services\ICalService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/adhesion/confirmer', [AdhesionActivationController::class, 'confirm'])->name('adhesion.confirm');
+
+// Event registration (from website)
+Route::get('/inscription-event/confirmer', [EventRegistrationController::class, 'confirmer'])
+    ->middleware('throttle:10,1')
+    ->name('inscription-event.confirmer');
+Route::get('/inscription-event/nouveau', [EventRegistrationController::class, 'nouveauForm'])
+    ->name('inscription-event.nouveau');
+Route::post('/inscription-event/nouveau', [EventRegistrationController::class, 'nouveauStore'])
+    ->middleware('throttle:5,1')
+    ->name('inscription-event.nouveau.store');
 
 Route::get('/events/ical', function () {
     $events = Event::whereIn('statuscode', [EventStatus::Publie, EventStatus::Termine])
