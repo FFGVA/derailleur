@@ -11,7 +11,7 @@ Route::middleware('throttle:form-submissions')->group(function () {
     Route::post('/inscription-event', [EventRegistrationController::class, 'store']);
 });
 
-Route::get('/events', function () {
+Route::withoutMiddleware('throttle:api')->get('/events', function () {
     $events = Event::where('statuscode', 'P')
         ->where('starts_at', '>=', now()->startOfDay())
         ->whereNull('deleted_at')

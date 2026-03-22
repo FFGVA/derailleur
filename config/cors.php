@@ -10,11 +10,12 @@ return [
 
     'paths' => ['api/*'],
 
-    'allowed_methods' => ['POST', 'OPTIONS'],
+    'allowed_methods' => ['GET', 'POST', 'OPTIONS'],
 
     'allowed_origins' => [
         'https://ffgva.ch',
         'https://www.ffgva.ch',
+        'http://ffgva.local',
     ],
 
     'allowed_origins_patterns' => [],

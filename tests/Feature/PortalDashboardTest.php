@@ -353,6 +353,11 @@ class PortalDashboardTest extends TestCase
 
     public function test_dashboard_shows_empty_state(): void
     {
+        // Ensure no published future events exist
+        \App\Models\Event::where('statuscode', 'P')
+            ->where('starts_at', '>=', now())
+            ->update(['statuscode' => 'N']);
+
         $member = $this->createAuthenticatedMember();
 
         $response = $this->authenticatedGet($member, '/portail');
