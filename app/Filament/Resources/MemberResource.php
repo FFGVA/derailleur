@@ -136,13 +136,13 @@ class MemberResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('last_name')
-                    ->label('Nom')
+                Tables\Columns\TextColumn::make('first_name')
+                    ->label('Prénom')
                     ->searchable()
                     ->sortable()
                     ->grow(false),
-                Tables\Columns\TextColumn::make('first_name')
-                    ->label('Prénom')
+                Tables\Columns\TextColumn::make('last_name')
+                    ->label('Nom')
                     ->searchable()
                     ->sortable()
                     ->grow(false),
@@ -152,6 +152,10 @@ class MemberResource extends Resource
                     ->grow(false)
                     ->alignStart()
                     ->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('metadata.instagram')
+                    ->label('Instagram')
+                    ->grow(false)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('Statut')
                     ->badge()
@@ -174,10 +178,8 @@ class MemberResource extends Resource
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('metadata.instagram')
-                    ->label('Instagram')
-                    ->toggleable(),
             ])
+            ->defaultSort('updated_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('statuscode')
                     ->label('Statut')
