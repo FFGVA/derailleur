@@ -52,18 +52,23 @@ class EventResource extends Resource
                             ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
                             ->default('N')
                             ->required()
-                            ->columnSpan(2),
+                            ->columnSpan(3),
                         Forms\Components\TextInput::make('max_participants')
                             ->label('Places')
                             ->numeric()
                             ->minValue(1)
-                            ->columnSpan(2),
+                            ->columnSpan(3),
                         Forms\Components\TextInput::make('price')
-                            ->label('Prix (CHF)')
+                            ->label('Prix membre')
                             ->numeric()
                             ->prefix('CHF')
                             ->default(0)
-                            ->columnSpan(2),
+                            ->columnSpan(3),
+                        Forms\Components\TextInput::make('price_non_member')
+                            ->label('Prix non-membre')
+                            ->numeric()
+                            ->prefix('CHF')
+                            ->columnSpan(3),
                         Forms\Components\DateTimePicker::make('starts_at')
                             ->label('Début')
                             ->displayFormat('d.m.Y H:i')

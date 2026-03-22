@@ -85,6 +85,22 @@ class EventTest extends TestCase
         $this->assertSame('29.99', $event->price);
     }
 
+    public function test_price_non_member_casts_to_decimal(): void
+    {
+        $event = $this->makeEvent(['price_non_member' => 35.00]);
+        $event->refresh();
+
+        $this->assertSame('35.00', $event->price_non_member);
+    }
+
+    public function test_price_non_member_defaults_to_null(): void
+    {
+        $event = $this->makeEvent();
+        $event->refresh();
+
+        $this->assertNull($event->price_non_member);
+    }
+
     public function test_starts_at_and_ends_at_cast_to_datetime(): void
     {
         $event = $this->makeEvent([

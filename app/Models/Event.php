@@ -23,6 +23,7 @@ class Event extends Model
         'ends_at',
         'max_participants',
         'price',
+        'price_non_member',
         'statuscode',
         'gpx_file',
         'chef_peloton_id',
@@ -36,6 +37,7 @@ class Event extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'price' => 'decimal:2',
+            'price_non_member' => 'decimal:2',
         ];
     }
 

@@ -82,9 +82,14 @@ class ViewEvent extends ViewRecord
                                         ->state(fn ($record) => $record->members()->count())
                                         ->icon('heroicon-o-user-group'),
                                     Components\TextEntry::make('price')
-                                        ->label('Prix')
+                                        ->label('Prix membre')
                                         ->money('CHF', locale: 'de_CH')
                                         ->icon('heroicon-o-banknotes'),
+                                    Components\TextEntry::make('price_non_member')
+                                        ->label('Prix non-membre')
+                                        ->money('CHF', locale: 'de_CH')
+                                        ->icon('heroicon-o-banknotes')
+                                        ->placeholder('—'),
                                     Components\TextEntry::make('max_participants')
                                         ->label('Places max.')
                                         ->placeholder('—')
