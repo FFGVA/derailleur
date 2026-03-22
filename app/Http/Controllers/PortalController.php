@@ -25,12 +25,21 @@ class PortalController extends Controller
         $member = $request->attributes->get('portal_member');
         $member->load('phones');
 
-        $upcomingEvents = $member->events()
-            ->where('starts_at', '>=', now())
-            ->where('events.statuscode', EventStatus::Publie)
-            ->whereNull('events.deleted_at')
+        $upcomingEvents = Event::where('starts_at', '>=', now())
+            ->where('statuscode', EventStatus::Publie)
+            ->whereNull('deleted_at')
             ->orderBy('starts_at')
             ->get();
+
+        // Load member's registration status for each event
+        $registrations = $member->events()
+            ->whereIn('events.id', $upcomingEvents->pluck('id'))
+            ->get()
+            ->keyBy('id');
+
+        foreach ($upcomingEvents as $event) {
+            $event->memberRegistration = $registrations->get($event->id)?->pivot;
+        }
 
         $isChef = $member->ledEvents()
             ->whereNull('deleted_at')

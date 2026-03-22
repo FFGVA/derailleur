@@ -155,9 +155,11 @@
                 {{ $event->starts_at->format('d.m.Y') }}
                 @if($event->location) · {{ $event->location }}@endif
             </div>
-            <div class="portal-event-meta">
-                Mon statut : <span class="portal-badge {{ match($event->pivot->status->value) { 'C' => 'portal-badge-green', 'N' => 'portal-badge-orange', 'X' => 'portal-badge-red', default => '' } }}">{{ $event->pivot->status->getLabel() }}</span>
-            </div>
+            @if($event->memberRegistration && $event->memberRegistration->status->value !== 'X')
+                <div class="portal-event-meta">
+                    Mon statut : <span class="portal-badge {{ match($event->memberRegistration->status->value) { 'C' => 'portal-badge-green', 'N' => 'portal-badge-orange', default => '' } }}">{{ $event->memberRegistration->status->getLabel() }}</span>
+                </div>
+            @endif
         </a>
     @empty
         <div class="portal-empty">Aucun événement à venir.</div>
