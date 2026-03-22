@@ -11,12 +11,13 @@ class MemberStatusTest extends TestCase
     {
         $cases = MemberStatus::cases();
 
-        $this->assertCount(5, $cases);
+        $this->assertCount(6, $cases);
         $this->assertNotNull(MemberStatus::from('D'));
         $this->assertNotNull(MemberStatus::from('A'));
         $this->assertNotNull(MemberStatus::from('I'));
         $this->assertNotNull(MemberStatus::from('P'));
         $this->assertNotNull(MemberStatus::from('N'));
+        $this->assertNotNull(MemberStatus::from('E'));
     }
 
     public function test_case_values(): void
@@ -26,6 +27,7 @@ class MemberStatusTest extends TestCase
         $this->assertSame('I', MemberStatus::Inactif->value);
         $this->assertSame('P', MemberStatus::EnAttente->value);
         $this->assertSame('N', MemberStatus::NonMembre->value);
+        $this->assertSame('E', MemberStatus::Enfant->value);
     }
 
     public function test_get_label_returns_french_labels(): void
@@ -35,6 +37,7 @@ class MemberStatusTest extends TestCase
         $this->assertSame('Inactive', MemberStatus::Inactif->getLabel());
         $this->assertSame('En attente', MemberStatus::EnAttente->getLabel());
         $this->assertSame('Non-membre', MemberStatus::NonMembre->getLabel());
+        $this->assertSame('Active (mineure)', MemberStatus::Enfant->getLabel());
     }
 
     public function test_get_color_returns_valid_values(): void
@@ -44,5 +47,6 @@ class MemberStatusTest extends TestCase
         $this->assertSame('danger', MemberStatus::Inactif->getColor());
         $this->assertSame('warning', MemberStatus::EnAttente->getColor());
         $this->assertSame('info', MemberStatus::NonMembre->getColor());
+        $this->assertSame('success', MemberStatus::Enfant->getColor());
     }
 }
