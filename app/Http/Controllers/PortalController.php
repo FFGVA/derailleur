@@ -286,7 +286,7 @@ class PortalController extends Controller
             ->get();
 
         $participantIds = $participants->pluck('id');
-        $availableMembers = Member::whereIn('statuscode', ['A', 'P'])
+        $availableMembers = Member::whereIn('statuscode', ['A', 'P', 'N'])
             ->whereNull('deleted_at')
             ->whereNotIn('id', $participantIds)
             ->orderBy('first_name')

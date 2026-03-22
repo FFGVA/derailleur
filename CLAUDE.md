@@ -50,7 +50,7 @@
 - **Wiki**: GitHub wiki (https://github.com/FFGVA/derailleur/wiki) contains functional and technical documentation. Update the wiki on every push when changes affect documented behavior. Wiki repo is at /tmp/derailleur.wiki (clone with `git clone https://github.com/FFGVA/derailleur.wiki.git /tmp/derailleur.wiki`). Functional pages: Membres, Événements, Facturation, Parcours adhésion, Rôles et permissions, Tableau de bord. Technical pages: Architecture, Modèle de données, API, Emails, Déploiement.
 
 ## Data model
-- **Member**: member_number (4-digit high-watermark), first_name, last_name, email, statuscode (D/A/I/P), is_invitee, metadata (JSON), activation_token, membership_start/end, modified_by_id → users
+- **Member**: member_number (4-digit high-watermark), first_name, last_name, email, statuscode (D/A/I/P/N), is_invitee, metadata (JSON), activation_token, membership_start/end, modified_by_id → users
 - **MemberPhone**: phone_number, label, is_whatsapp, sort_order. Phone formatting on save via PhoneFormatter.
 - **Event**: title, starts_at, ends_at, location, chef_peloton_id → members, statuscode (N/P/X/T), price, max_participants
 - **EventMember** (pivot): status (N/C/X), present (boolean nullable)

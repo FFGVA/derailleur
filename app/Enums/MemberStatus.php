@@ -8,6 +8,7 @@ enum MemberStatus: string
     case Actif = 'A';
     case Inactif = 'I';
     case EnAttente = 'P';
+    case NonMembre = 'N';
 
     public function getLabel(): string
     {
@@ -16,6 +17,7 @@ enum MemberStatus: string
             self::Actif => 'Active',
             self::Inactif => 'Inactive',
             self::EnAttente => 'En attente',
+            self::NonMembre => 'Non-membre',
         };
     }
 
@@ -26,6 +28,7 @@ enum MemberStatus: string
             self::Actif => 'success',
             self::Inactif => 'danger',
             self::EnAttente => 'warning',
+            self::NonMembre => 'info',
         };
     }
 }

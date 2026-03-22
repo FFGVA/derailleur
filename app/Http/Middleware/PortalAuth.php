@@ -29,7 +29,7 @@ class PortalAuth
         }
 
         $member = Member::where('id', $memberId)
-            ->whereIn('statuscode', ['A', 'P'])
+            ->whereIn('statuscode', ['A', 'P', 'N'])
             ->first();
 
         if (!$member) {
