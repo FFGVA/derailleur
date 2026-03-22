@@ -126,8 +126,12 @@ class EventRegistrationController extends Controller
 
         $email = $request->input('email');
 
-        // If member already exists (race condition or admin-created), just register them
-        $member = Member::where('email', $email)->first();
+        // If member already exists (including soft-deleted), reuse them
+        $member = Member::withTrashed()->where('email', $email)->first();
+
+        if ($member && $member->trashed()) {
+            $member->restore();
+        }
 
         if (!$member) {
             $metadata = array_filter([
