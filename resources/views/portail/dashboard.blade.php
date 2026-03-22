@@ -114,14 +114,21 @@
 @endsection
 
 @section('content')
-    <a href="{{ route('portail.adhesion') }}" class="portal-welcome-card" style="text-decoration: none; color: inherit; display: block;">
+    <div class="portal-welcome-card" style="position: relative;">
+        <a href="{{ route('portail.carte') }}" style="position: absolute; top: 1rem; right: 1rem; color: #80081C;" title="Ma carte de membre">
+            <svg width="1.5rem" height="1.5rem" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h4v4H3V3zm14 0h4v4h-4V3zM3 17h4v4H3v-4zm10-10h1v1h-1V7zm2 0h2v1h-2V7zm-2 2h1v2h-1V9zm4 0h1v1h-1V9zm-6 4h1v1h-1v-1zm2 0h1v2h-1v-2zm2 1h2v1h-2v-1zm0 2h1v2h-1v-2zm2 0h2v1h-2v-1zm0 2h1v1h-1v-1z"/>
+            </svg>
+        </a>
+        <a href="{{ route('portail.adhesion') }}" style="text-decoration: none; color: inherit; display: block;">
         <div class="portal-welcome-name">{{ $member->first_name }} {{ $member->last_name }}</div>
         @if($member->phones->isNotEmpty())
             <div class="portal-welcome-phone">
                 {{ $member->phones->first()->phone_number }}
             </div>
         @endif
-    </a>
+        </a>
+    </div>
 
     <div class="portal-nav-buttons{{ $isChef ? ' cols-3' : '' }}">
         @if($isChef)

@@ -33,6 +33,9 @@ Route::get('/events/ical', function () {
     ]);
 })->name('events.ical');
 
+// Membership card validation (public)
+Route::get('/carte/valider', [PortalController::class, 'carteValider'])->name('carte.valider');
+
 // Portal auth (public)
 Route::get('/login', [PortalAuthController::class, 'login'])->name('portail.login');
 Route::post('/auth/send-link', [PortalAuthController::class, 'sendLink'])
@@ -50,6 +53,8 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/adhesion', [PortalController::class, 'adhesion'])->name('portail.adhesion');
     Route::get('/adhesion/modifier', [PortalController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
     Route::post('/adhesion/modifier', [PortalController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
+    Route::get('/carte', [PortalController::class, 'carte'])->name('portail.carte');
+    Route::get('/carte/qr-url', [PortalController::class, 'carteQrUrl'])->name('portail.carte.qr-url');
     Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
     Route::get('/evenement/{event}', [PortalController::class, 'evenement'])->name('portail.evenement');
     Route::post('/evenement/{event}/inscrire', [PortalController::class, 'inscrire'])->name('portail.evenement.inscrire');

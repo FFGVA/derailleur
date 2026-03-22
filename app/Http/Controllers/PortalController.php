@@ -14,9 +14,11 @@ use App\Models\Member;
 use App\Services\ICalService;
 use App\Services\InvoiceService;
 use App\Services\PortalAudit;
+use App\Enums\MemberStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class PortalController extends Controller
 {
@@ -100,6 +102,70 @@ class PortalController extends Controller
 
         return redirect()->route('portail.adhesion')
             ->with('success', 'Ta demande de modification a été envoyée au comité.');
+    }
+
+    public function carte(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        // QR URL valid for 10 minutes, regenerated every 5 on the page via JS
+        $qrUrl = URL::temporarySignedRoute(
+            'carte.valider',
+            now()->addMinutes(10),
+            ['member' => $member->id],
+        );
+
+        $isActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E'])
+            && (!$member->membership_end || !$member->membership_end->isPast());
+
+        return view('portail.carte', [
+            'member' => $member,
+            'qrUrl' => $qrUrl,
+            'isActive' => $isActive,
+        ]);
+    }
+
+    public function carteQrUrl(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        $qrUrl = URL::temporarySignedRoute(
+            'carte.valider',
+            now()->addMinutes(10),
+            ['member' => $member->id],
+        );
+
+        return response()->json(['url' => $qrUrl]);
+    }
+
+    public function carteValider(Request $request)
+    {
+        if (!$request->hasValidSignature()) {
+            return view('portail.carte-valider', [
+                'valid' => false,
+                'member' => null,
+                'reason' => 'Ce lien a expiré. Demande un nouveau QR code.',
+            ]);
+        }
+
+        $member = Member::find($request->query('member'));
+
+        if (!$member) {
+            return view('portail.carte-valider', [
+                'valid' => false,
+                'member' => null,
+                'reason' => 'Membre introuvable.',
+            ]);
+        }
+
+        $isActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E'])
+            && (!$member->membership_end || !$member->membership_end->isPast());
+
+        return view('portail.carte-valider', [
+            'valid' => $isActive,
+            'member' => $member,
+            'reason' => $isActive ? null : 'Adhésion inactive ou expirée.',
+        ]);
     }
 
     public function factures(Request $request)
