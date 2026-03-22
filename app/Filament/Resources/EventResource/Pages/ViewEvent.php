@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\EventResource\Pages;
 
 use App\Enums\EventStatus;
+use App\Enums\EventType;
 use App\Filament\Resources\EventResource;
 use App\Filament\Resources\EventResource\RelationManagers;
 use Filament\Actions;
@@ -72,6 +73,11 @@ class ViewEvent extends ViewRecord
                             Components\Section::make()
                                 ->columns(2)
                                 ->schema([
+                                    Components\TextEntry::make('event_type')
+                                        ->label('Type')
+                                        ->badge()
+                                        ->formatStateUsing(fn (?EventType $state) => $state?->getLabel() ?? '—')
+                                        ->color(fn (?EventType $state) => $state ? \Filament\Support\Colors\Color::hex($state->getColor()) : 'gray'),
                                     Components\TextEntry::make('statuscode')
                                         ->label('Statut')
                                         ->badge()

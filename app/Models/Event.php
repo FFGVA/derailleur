@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EventStatus;
+use App\Enums\EventType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -16,6 +17,7 @@ class Event extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
+        'event_type',
         'title',
         'description',
         'location',
@@ -33,6 +35,7 @@ class Event extends Model
     protected function casts(): array
     {
         return [
+            'event_type' => EventType::class,
             'statuscode' => EventStatus::class,
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

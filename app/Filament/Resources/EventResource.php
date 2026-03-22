@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\EventStatus;
+use App\Enums\EventType;
 use App\Filament\Resources\EventResource\Pages;
 use App\Filament\Resources\EventResource\RelationManagers;
 use App\Models\Event;
@@ -36,11 +37,15 @@ class EventResource extends Resource
                 Forms\Components\Section::make('Détails de l\'événement')
                     ->columns(12)
                     ->schema([
+                        Forms\Components\Select::make('event_type')
+                            ->label('Type')
+                            ->options(collect(EventType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()]))
+                            ->columnSpan(4),
                         Forms\Components\TextInput::make('title')
                             ->label('Titre')
                             ->required()
                             ->maxLength(200)
-                            ->columnSpanFull(),
+                            ->columnSpan(8),
                         Forms\Components\RichEditor::make('description')
                             ->label('Description')
                             ->columnSpanFull(),
@@ -121,6 +126,12 @@ class EventResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('event_type')
+                    ->label('Type')
+                    ->badge()
+                    ->formatStateUsing(fn (?EventType $state) => $state?->getLabel() ?? '—')
+                    ->color(fn (?EventType $state) => $state ? \Filament\Support\Colors\Color::hex($state->getColor()) : 'gray')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Titre')
                     ->searchable()
@@ -153,6 +164,9 @@ class EventResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('event_type')
+                    ->label('Type')
+                    ->options(collect(EventType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])),
                 Tables\Filters\SelectFilter::make('statuscode')
                     ->label('Statut')
                     ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()])),
