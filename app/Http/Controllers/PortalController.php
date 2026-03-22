@@ -16,6 +16,7 @@ use App\Services\InvoiceService;
 use App\Services\PortalAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class PortalController extends Controller
 {
@@ -372,6 +373,33 @@ class PortalController extends Controller
             $addedMember = Member::find($targetMemberId);
             PortalAudit::log($request, $member, 'ajout participante', "Événement #{$event->id} — {$addedMember->first_name} {$addedMember->last_name}");
         }
+
+        return redirect()->route('portail.peloton.event', $event);
+    }
+
+    public function uploadGpx(Request $request, Event $event)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        if ($event->chef_peloton_id !== $member->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'gpx_file' => ['required', 'file', 'max:5120'],
+        ]);
+
+        $file = $request->file('gpx_file');
+
+        // Delete old file if exists
+        if ($event->gpx_file && Storage::disk('public')->exists($event->gpx_file)) {
+            Storage::disk('public')->delete($event->gpx_file);
+        }
+
+        $path = $file->store('gpx', 'public');
+        $event->update(['gpx_file' => $path]);
+
+        PortalAudit::log($request, $member, 'upload gpx', "Événement #{$event->id} — {$event->title}");
 
         return redirect()->route('portail.peloton.event', $event);
     }

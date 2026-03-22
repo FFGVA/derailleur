@@ -24,6 +24,7 @@ class Event extends Model
         'max_participants',
         'price',
         'statuscode',
+        'gpx_file',
         'chef_peloton_id',
         'modified_by_id',
     ];

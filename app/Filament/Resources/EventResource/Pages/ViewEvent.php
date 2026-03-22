@@ -56,6 +56,15 @@ class ViewEvent extends ViewRecord
                                         ->color('primary')
                                         ->placeholder('—')
                                         ->columnSpanFull(),
+                                    Components\TextEntry::make('gpx_file')
+                                        ->label('Fichier GPX')
+                                        ->icon('heroicon-o-map')
+                                        ->state(fn ($record) => $record->gpx_file ? basename($record->gpx_file) : null)
+                                        ->url(fn ($record) => $record->gpx_file ? asset('storage/' . $record->gpx_file) : null)
+                                        ->openUrlInNewTab()
+                                        ->color('primary')
+                                        ->placeholder('—')
+                                        ->columnSpanFull(),
                                 ]),
                         ])->columnSpan(2),
 

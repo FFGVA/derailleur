@@ -136,6 +136,7 @@ CREATE TABLE `events` (
     `max_participants` INT UNSIGNED NULL,
     `price` DECIMAL(8,2) NOT NULL DEFAULT 0,
     `statuscode` CHAR(1) NOT NULL DEFAULT 'N',
+    `gpx_file` VARCHAR(255) NULL,
     `chef_peloton_id` BIGINT UNSIGNED NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
@@ -297,6 +298,7 @@ CREATE TABLE `events_audit` (
     `max_participants` INT UNSIGNED NULL,
     `price` DECIMAL(8,2) DEFAULT 0,
     `statuscode` CHAR(1) DEFAULT 'N',
+    `gpx_file` VARCHAR(255) NULL,
     `chef_peloton_id` BIGINT UNSIGNED NULL,
     `modified_by_id` BIGINT UNSIGNED NULL,
     `updated_at` TIMESTAMP NULL,
@@ -388,16 +390,16 @@ CREATE TRIGGER `events_before_update`
 BEFORE UPDATE ON `events`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `gpx_file`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('U', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`gpx_file`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 CREATE TRIGGER `events_before_delete`
 BEFORE DELETE ON `events`
 FOR EACH ROW
 BEGIN
-    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
-    VALUES ('D', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
+    INSERT INTO `events_audit` (`audit_action`, `audit_user_id`, `id`, `title`, `description`, `location`, `starts_at`, `ends_at`, `max_participants`, `price`, `statuscode`, `gpx_file`, `chef_peloton_id`, `modified_by_id`, `updated_at`, `deleted_at`)
+    VALUES ('D', @current_user_id, OLD.`id`, OLD.`title`, OLD.`description`, OLD.`location`, OLD.`starts_at`, OLD.`ends_at`, OLD.`max_participants`, OLD.`price`, OLD.`statuscode`, OLD.`gpx_file`, OLD.`chef_peloton_id`, OLD.`modified_by_id`, OLD.`updated_at`, OLD.`deleted_at`);
 END$$
 
 -- ── Event-Member ──

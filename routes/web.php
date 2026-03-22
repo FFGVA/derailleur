@@ -1,11 +1,26 @@
 <?php
 
+use App\Enums\EventStatus;
 use App\Http\Controllers\AdhesionActivationController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\PortalController;
+use App\Models\Event;
+use App\Services\ICalService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/adhesion/confirmer', [AdhesionActivationController::class, 'confirm'])->name('adhesion.confirm');
+
+Route::get('/events/ical', function () {
+    $events = Event::whereIn('statuscode', [EventStatus::Publie, EventStatus::Termine])
+        ->where('starts_at', '>=', now()->subYear())
+        ->whereNull('deleted_at')
+        ->orderBy('starts_at')
+        ->get();
+
+    return response(ICalService::generateFeed($events), 200, [
+        'Content-Type' => 'text/calendar; charset=UTF-8',
+    ]);
+})->name('events.ical');
 
 // Portal auth (public)
 Route::get('/login', [PortalAuthController::class, 'login'])->name('portail.login');
@@ -34,6 +49,7 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/peloton/{event}', [PortalController::class, 'pelotonEvent'])->name('portail.peloton.event');
     Route::post('/peloton/{event}/presence/{targetMember}', [PortalController::class, 'togglePresence'])->name('portail.peloton.presence');
     Route::post('/peloton/{event}/ajouter', [PortalController::class, 'addParticipant'])->name('portail.peloton.add');
+    Route::post('/peloton/{event}/gpx', [PortalController::class, 'uploadGpx'])->name('portail.peloton.gpx');
     Route::get('/peloton/{event}/membre/{targetMember}', [PortalController::class, 'pelotonMember'])->name('portail.peloton.member');
 });
 

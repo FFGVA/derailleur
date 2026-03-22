@@ -30,6 +30,8 @@ DROP TABLE IF EXISTS `invoices_audit`;
 ALTER TABLE `users` DROP FOREIGN KEY `users_member_id_foreign`;
 
 -- Domain tables
+DROP TABLE IF EXISTS `member_magic_tokens`;
+DROP TABLE IF EXISTS `portal_audit_log`;
 DROP TABLE IF EXISTS `invoice_lines`;
 DROP TABLE IF EXISTS `invoice_event`;
 DROP TABLE IF EXISTS `invoices`;

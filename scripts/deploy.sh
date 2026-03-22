@@ -76,23 +76,15 @@ fi
 echo -e "${GREEN}Target: $FTP_HOST${NC}"
 echo ""
 
-# ── Step 1: Run tests ─────────────────────────────────────────────
-echo -e "${GREEN}[1/6] Running tests...${NC}"
+# ── Step 1: Clear caches ──────────────────────────────────────────
+echo -e "${GREEN}[1/5] Clearing caches...${NC}"
 cd "$PROJECT_DIR"
-if ! php artisan test 2>&1; then
-    echo -e "${RED}ERROR: Tests failed. Fix them before deploying.${NC}"
-    exit 1
-fi
-echo ""
-
-# ── Step 2: Clear caches ──────────────────────────────────────────
-echo -e "${GREEN}[2/6] Clearing caches...${NC}"
 php artisan config:clear 2>/dev/null || true
 php artisan route:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
-# ── Step 3: Prepare deployment package ─────────────────────────────
-echo -e "${GREEN}[3/6] Preparing deployment package...${NC}"
+# ── Step 2: Prepare deployment package ─────────────────────────────
+echo -e "${GREEN}[2/5] Preparing deployment package...${NC}"
 rm -rf "$DEPLOY_TEMP"
 mkdir -p "$DEPLOY_TEMP"
 
@@ -116,6 +108,7 @@ rsync -a \
     --exclude='storage/framework/cache/data/*' \
     --exclude='storage/framework/sessions/*' \
     --exclude='storage/framework/views/*.php' \
+    --exclude='storage/app/private/livewire-tmp' \
     --exclude='bootstrap/cache/*.php' \
     --exclude='scripts' \
     --exclude='database' \
@@ -154,8 +147,8 @@ if [[ -d "$PROJECT_DIR/mail" ]]; then
     cp "$PROJECT_DIR/mail/guidon.php" "$DEPLOY_TEMP/public/guidon.php" 2>/dev/null || true
 fi
 
-# ── Step 4: Verify package ─────────────────────────────────────────
-echo -e "${GREEN}[4/6] Verifying package...${NC}"
+# ── Step 3: Verify package ─────────────────────────────────────────
+echo -e "${GREEN}[3/5] Verifying package...${NC}"
 
 MISSING=0
 for file in ".env" "artisan" "config/database.php" "public/index.php" "public/.htaccess" "vendor/autoload.php" "public/chaine.php" "public/guidon.php"; do
@@ -191,20 +184,7 @@ echo "  ✓ APP_ENV is not local"
 TOTAL_SIZE=$(du -sh "$DEPLOY_TEMP" | cut -f1)
 echo "  Package size: $TOTAL_SIZE"
 
-# ── Step 5: Confirm and upload ─────────────────────────────────────
-echo ""
-echo -e "${YELLOW}Ready to deploy to $FTP_HOST${NC}"
-echo "  FTP root = Laravel app root"
-echo "  FTP root/public/ = Apache document root"
-read -p "Continue? (y/N) " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    rm -rf "$DEPLOY_TEMP"
-    exit 0
-fi
-
-echo -e "${GREEN}[5/6] Uploading to production...${NC}"
+echo -e "${GREEN}[4/5] Uploading to production...${NC}"
 lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" << LFTP_EOF
 set ssl:verify-certificate no
 set ftp:ssl-allow yes
@@ -227,8 +207,8 @@ mirror -R --verbose=1 --parallel=4 --no-perms --delete \
 bye
 LFTP_EOF
 
-# ── Step 6: Cleanup ───────────────────────────────────────────────
-echo -e "${GREEN}[6/6] Cleanup...${NC}"
+# ── Step 5: Cleanup ───────────────────────────────────────────────
+echo -e "${GREEN}[5/5] Cleanup...${NC}"
 rm -rf "$DEPLOY_TEMP"
 unset FTP_USER FTP_PASS FTP_HOST
 

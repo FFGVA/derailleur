@@ -38,6 +38,49 @@ class ICalService
         ])) . "\r\n";
     }
 
+    public static function generateFeed(iterable $events): string
+    {
+        $lines = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//FFGVA//Derailleur//FR',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'X-WR-CALNAME:Fast and Female Geneva',
+        ];
+
+        $now = gmdate('Ymd\THis\Z');
+
+        foreach ($events as $event) {
+            $dtstart = $event->starts_at->utc()->format('Ymd\THis\Z');
+            $dtend = $event->ends_at
+                ? $event->ends_at->utc()->format('Ymd\THis\Z')
+                : $event->starts_at->copy()->addHours(2)->utc()->format('Ymd\THis\Z');
+
+            $summary = self::escape($event->title);
+            $description = self::escape($event->description ?? '');
+            $location = self::escape($event->location ?? '');
+
+            $lines[] = 'BEGIN:VEVENT';
+            $lines[] = 'UID:event-' . $event->id . '@ffgva.ch';
+            $lines[] = 'DTSTAMP:' . $now;
+            $lines[] = 'DTSTART:' . $dtstart;
+            $lines[] = 'DTEND:' . $dtend;
+            $lines[] = 'SUMMARY:' . $summary;
+            if ($description) {
+                $lines[] = 'DESCRIPTION:' . $description;
+            }
+            if ($location) {
+                $lines[] = 'LOCATION:' . $location;
+            }
+            $lines[] = 'END:VEVENT';
+        }
+
+        $lines[] = 'END:VCALENDAR';
+
+        return implode("\r\n", $lines) . "\r\n";
+    }
+
     public static function filename(Event $event): string
     {
         $slug = strtolower($event->title);

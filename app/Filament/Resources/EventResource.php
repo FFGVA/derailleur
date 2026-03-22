@@ -81,6 +81,13 @@ class EventResource extends Resource
                             ->preload()
                             ->nullable()
                             ->columnSpan(6),
+                        Forms\Components\FileUpload::make('gpx_file')
+                            ->label('Fichier GPX')
+                            ->disk('public')
+                            ->directory('gpx')
+                            ->preserveFilenames()
+                            ->maxSize(5120)
+                            ->columnSpan(6),
                         Forms\Components\Actions::make([
                             Forms\Components\Actions\Action::make('delete')
                                 ->label('Supprimer')
