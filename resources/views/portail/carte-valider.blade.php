@@ -72,6 +72,7 @@
 </head>
 <body>
     <div class="card">
+        <img src="{{ asset('images/logo-ffgva.png') }}" alt="Fast and Female Geneva" style="max-width: 160px; margin-bottom: 1.5rem;">
         @if($valid && $member)
             <div class="circle circle-valid">
                 <svg fill="none" stroke="#22c55e" viewBox="0 0 24 24" stroke-width="3">
@@ -80,9 +81,13 @@
             </div>
             <div class="member-name">{{ $member->first_name }} {{ $member->last_name }}</div>
             <div class="member-info member-info-valid">Membre active</div>
-            @if($member->membership_end)
-                <div class="member-date">Valide jusqu'au {{ $member->membership_end->format('d.m.Y') }}</div>
-            @endif
+            <div class="member-date">
+                @if($member->membership_end)
+                    Valide jusqu'au {{ $member->membership_end->format('d.m.Y') }}
+                @else
+                    Adhésion en cours
+                @endif
+            </div>
         @else
             <div class="circle circle-invalid">
                 <svg fill="none" stroke="#ef4444" viewBox="0 0 24 24" stroke-width="3">

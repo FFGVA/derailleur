@@ -53,12 +53,17 @@
 
 @section('content')
     <div class="carte-card">
+        <img src="{{ asset('images/logo-ffgva.png') }}" alt="Fast and Female Geneva" style="max-width: 160px; margin-bottom: 1rem;">
         <div class="carte-name">{{ $member->first_name }} {{ $member->last_name }}</div>
         @if($isActive)
             <div class="carte-status carte-status-active">Membre active</div>
-            @if($member->membership_end)
-                <div class="carte-date">Valide jusqu'au {{ $member->membership_end->format('d.m.Y') }}</div>
-            @endif
+            <div class="carte-date">
+                @if($member->membership_end)
+                    Valide jusqu'au {{ $member->membership_end->format('d.m.Y') }}
+                @else
+                    Adhésion en cours
+                @endif
+            </div>
         @else
             <div class="carte-status carte-status-inactive">Adhésion inactive</div>
         @endif
