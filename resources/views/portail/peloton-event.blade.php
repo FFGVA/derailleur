@@ -421,7 +421,7 @@
         <div id="descPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
             <div class="portal-popup">
                 <div class="portal-popup-title">Description</div>
-                <div class="portal-popup-body">{{ $event->description }}</div>
+                <div class="portal-popup-body">{!! $event->description !!}</div>
                 <button class="portal-popup-close" onclick="document.getElementById('descPopup').classList.remove('active')">Fermer</button>
             </div>
         </div>
