@@ -249,7 +249,7 @@ fetch('https://derailleur.ffgva.ch/api/inscription-event', {
 ### Étape 4 — L'utilisateur reçoit un e-mail
 
 - **Membre connue** : e-mail avec bouton « Confirmer mon inscription ». Le clic inscrit automatiquement et connecte au portail membre (`derailleur.ffgva.ch/portail`).
-- **Nouvelle personne** : e-mail avec bouton « M'inscrire ». Le clic ouvre un formulaire (prénom, nom, e-mail, téléphone, WhatsApp). Après soumission → compte créé, inscription confirmée, connexion au portail.
+- **Nouvelle personne** : e-mail avec bouton « M'inscrire ». Le clic ouvre un formulaire (prénom, nom, e-mail, téléphone, WhatsApp, Instagram). Après soumission → compte créé, inscription confirmée, connexion au portail.
 
 Si l'événement est payant, une facture avec QR de paiement est envoyée par e-mail.
 

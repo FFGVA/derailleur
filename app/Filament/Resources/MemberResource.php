@@ -164,6 +164,9 @@ class MemberResource extends Resource
                     ->date('d.m.Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('metadata.instagram')
+                    ->label('Instagram')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('statuscode')

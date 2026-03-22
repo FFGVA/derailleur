@@ -141,6 +141,10 @@
                     <label for="whatsapp">Ce numéro est aussi WhatsApp</label>
                 </div>
 
+                <div class="portal-field-label">Instagram (optionnel)</div>
+                <input type="text" name="instagram" class="portal-input" value="{{ old('instagram') }}" placeholder="@compte">
+
+
                 <button type="submit" class="portal-submit">M'inscrire</button>
             </form>
         </div>

@@ -107,6 +107,13 @@ class ViewMember extends ViewRecord
                                         ->icon('heroicon-o-cake')
                                         ->date('d.m.Y')
                                         ->placeholder('—'),
+                                    Components\TextEntry::make('metadata.instagram')
+                                        ->label('Instagram')
+                                        ->icon('heroicon-o-at-symbol')
+                                        ->url(fn ($record) => $record->metadata['instagram'] ?? false ? 'https://instagram.com/' . ltrim($record->metadata['instagram'], '@') : null)
+                                        ->openUrlInNewTab()
+                                        ->color('primary')
+                                        ->placeholder('—'),
                                 ]),
                         ])->columnSpan(1),
                     ]),

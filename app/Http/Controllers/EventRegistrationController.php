@@ -105,6 +105,7 @@ class EventRegistrationController extends Controller
             'email' => ['required', 'email'],
             'telephone' => ['required', 'string', 'max:20'],
             'whatsapp' => ['nullable'],
+            'instagram' => ['nullable', 'string', 'max:50'],
             'event_id' => ['required', 'integer'],
         ], [
             'prenom.required' => 'Le prénom est obligatoire.',
@@ -129,12 +130,17 @@ class EventRegistrationController extends Controller
         $member = Member::where('email', $email)->first();
 
         if (!$member) {
+            $metadata = array_filter([
+                'instagram' => $request->input('instagram'),
+            ]) ?: null;
+
             $member = Member::create([
                 'first_name' => $request->input('prenom'),
                 'last_name' => $request->input('nom'),
                 'email' => $email,
                 'statuscode' => 'N',
                 'is_invitee' => false,
+                'metadata' => $metadata,
             ]);
 
             MemberPhone::create([
