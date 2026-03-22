@@ -16,6 +16,16 @@ class Member extends Model
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
 
+    protected static function booted(): void
+    {
+        static::updating(function (Member $member) {
+            if ($member->isDirty('statuscode') && $member->getRawOriginal('statuscode') !== 'A' && $member->statuscode === MemberStatus::Actif && !$member->member_number) {
+                $maxNumber = (int) static::max('member_number');
+                $member->member_number = str_pad((string) ($maxNumber + 1), 4, '0', STR_PAD_LEFT);
+            }
+        });
+    }
+
     protected $fillable = [
         'member_number',
         'first_name',

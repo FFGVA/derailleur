@@ -119,6 +119,16 @@ class MemberResource extends Resource
                             ->maxLength(2)
                             ->columnSpan(2),
                     ]),
+                Forms\Components\Section::make('Métadonnées')
+                    ->schema([
+                        Forms\Components\KeyValue::make('metadata')
+                            ->label('')
+                            ->keyLabel('Clé')
+                            ->valueLabel('Valeur')
+                            ->addActionLabel('Ajouter')
+                            ->reorderable(),
+                    ])
+                    ->collapsed(),
             ]);
     }
 
@@ -166,7 +176,7 @@ class MemberResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('metadata.instagram')
                     ->label('Instagram')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('statuscode')

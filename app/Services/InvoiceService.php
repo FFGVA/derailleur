@@ -33,14 +33,14 @@ class InvoiceService
             'statuscode' => 'N',
         ]);
 
-        // Next period: starts day after current membership_end, lasts 1 year
+        // Period: membership runs until 31.12 of the cotisation year
+        // First period starting in Nov/Dec extends to end of next year
         if ($member->membership_end) {
             $periodStart = $member->membership_end->copy()->addDay();
-            $periodEnd = $periodStart->copy()->addYear()->subDay();
         } else {
             $periodStart = now();
-            $periodEnd = now()->addYear();
         }
+        $periodEnd = self::computeMembershipEnd($periodStart);
 
         InvoiceLine::create([
             'invoice_id' => $invoice->id,
@@ -316,8 +316,23 @@ class InvoiceService
     }
 
     /**
+     * Compute membership end date: 31.12 of the start year,
+     * unless start is in Nov/Dec → 31.12 of the following year.
+     */
+    public static function computeMembershipEnd(\DateTimeInterface $periodStart): \Carbon\Carbon
+    {
+        $month = (int) $periodStart->format('m');
+        $year = (int) $periodStart->format('Y');
+
+        if ($month >= 11) {
+            $year++;
+        }
+
+        return \Carbon\Carbon::create($year, 12, 31);
+    }
+
+    /**
      * Update member's membership_end when a cotisation invoice is paid.
-     * New end = current membership_end + 1 year (or 1 year from today if no end date).
      */
     public static function onCotisationPaid(Invoice $invoice): void
     {
@@ -328,12 +343,17 @@ class InvoiceService
         $member = $invoice->member;
 
         if ($member->membership_end) {
-            $newEnd = $member->membership_end->copy()->addDay()->addYear()->subDay();
+            $periodStart = $member->membership_end->copy()->addDay();
         } else {
-            $newEnd = now()->addYear();
+            $periodStart = now();
         }
 
-        $member->update(['membership_end' => $newEnd]);
+        $newEnd = self::computeMembershipEnd($periodStart);
+
+        $member->update([
+            'membership_end' => $newEnd,
+            'statuscode' => 'A',
+        ]);
     }
 
     public static function utf8(string $text): string

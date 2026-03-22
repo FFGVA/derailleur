@@ -127,6 +127,14 @@ class ViewMember extends ViewRecord
                             ->columnSpanFull(),
                     ])
                     ->hidden(fn ($record) => empty($record->notes)),
+
+                Components\Section::make('Métadonnées')
+                    ->schema([
+                        Components\ViewEntry::make('metadata_display')
+                            ->label('')
+                            ->view('filament.infolists.member-metadata'),
+                    ])
+                    ->hidden(fn ($record) => empty($record->metadata)),
             ]);
     }
 

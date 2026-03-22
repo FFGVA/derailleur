@@ -132,9 +132,9 @@ class InvoiceTest extends TestCase
         $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $line = $invoice->lines->first();
 
-        // Next period starts day after current membership_end
+        // Next period starts day after current membership_end, ends 31.12 of that year
         $this->assertStringContainsString('01.04.2026', $line->description);
-        $this->assertStringContainsString('31.03.2027', $line->description);
+        $this->assertStringContainsString('31.12.2026', $line->description);
     }
 
     public function test_cotisation_invoice_line_defaults_next_period_when_no_end(): void
@@ -153,9 +153,10 @@ class InvoiceTest extends TestCase
         $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $line = $invoice->lines->first();
 
-        // When no membership_end, start from today, end 1 year later
+        // When no membership_end, start from today, end 31.12 of current year
+        // (unless Nov/Dec, then end of next year)
         $expectedStart = now()->format('d.m.Y');
-        $expectedEnd = now()->addYear()->format('d.m.Y');
+        $expectedEnd = InvoiceService::computeMembershipEnd(now())->format('d.m.Y');
         $this->assertStringContainsString($expectedStart, $line->description);
         $this->assertStringContainsString($expectedEnd, $line->description);
     }
@@ -186,6 +187,7 @@ class InvoiceTest extends TestCase
         InvoiceService::onCotisationPaid($invoice);
 
         $member->refresh();
-        $this->assertEquals('2027-03-31', $member->membership_end->format('Y-m-d'));
+        // membership_end was 2026-03-31, next period starts 2026-04-01, ends 31.12.2026
+        $this->assertEquals('2026-12-31', $member->membership_end->format('Y-m-d'));
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Feature\Filament;
 
 use App\Filament\Pages\Cotisations;
 use App\Models\Invoice;
+use App\Services\InvoiceService;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -101,7 +102,7 @@ class CotisationsPageTest extends TestCase
         $invoice = Invoice::where('member_id', $member->id)->where('type', 'C')->first();
         $line = $invoice->lines->first();
         $nextStart = $member->membership_end->addDay()->format('d.m.Y');
-        $nextEnd = $member->membership_end->addDay()->addYear()->subDay()->format('d.m.Y');
+        $nextEnd = InvoiceService::computeMembershipEnd($member->membership_end->addDay())->format('d.m.Y');
         $this->assertStringContainsString($nextStart, $line->description);
         $this->assertStringContainsString($nextEnd, $line->description);
 
@@ -189,7 +190,7 @@ class CotisationsPageTest extends TestCase
         $this->assertEquals('2026-03-18', $invoice->payment_date->format('Y-m-d'));
 
         $member->refresh();
-        $expectedEnd = $originalEnd->addDay()->addYear()->subDay();
+        $expectedEnd = InvoiceService::computeMembershipEnd($originalEnd->addDay());
         $this->assertEquals($expectedEnd->format('Y-m-d'), $member->membership_end->format('Y-m-d'));
     }
 
