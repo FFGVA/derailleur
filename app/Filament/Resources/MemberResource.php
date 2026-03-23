@@ -136,6 +136,14 @@ class MemberResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('statuscode')
+                    ->label('')
+                    ->formatStateUsing(fn () => '●')
+                    ->color(fn (MemberStatus $state) => $state->getColor())
+                    ->sortable()
+                    ->grow(false)
+                    ->alignCenter()
+                    ->tooltip(fn (MemberStatus $state) => $state->getLabel()),
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Prénom')
                     ->searchable()
@@ -164,15 +172,13 @@ class MemberResource extends Resource
                     ->label('Instagram')
                     ->grow(false)
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('statuscode')
-                    ->label('Statut')
-                    ->badge()
-                    ->formatStateUsing(fn (MemberStatus $state) => $state->getLabel())
-                    ->color(fn (MemberStatus $state) => $state->getColor())
+                Tables\Columns\TextColumn::make('member_number')
+                    ->label('N°')
                     ->sortable()
+                    ->searchable()
                     ->grow(false)
-                    ->alignCenter()
-                    ->visibleFrom('sm'),
+                    ->alignEnd()
+                    ->placeholder('—'),
                 Tables\Columns\TextColumn::make('city')
                     ->label('Ville')
                     ->sortable()
