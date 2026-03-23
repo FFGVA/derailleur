@@ -138,7 +138,7 @@ class MemberResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('')
-                    ->formatStateUsing(fn () => '●')
+                    ->formatStateUsing(fn () => '⬤')
                     ->color(fn (MemberStatus $state) => $state->getColor())
                     ->sortable()
                     ->grow(false)
