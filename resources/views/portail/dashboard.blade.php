@@ -137,8 +137,8 @@
         <div style="background: linear-gradient(135deg, #80081C 0%, #a30d25 100%); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; color: white; box-shadow: 0 2px 8px rgba(128,8,28,0.3);">
             <div style="font-weight: 700; font-size: 1.0625rem; margin-bottom: 0.375rem;">Deviens membre !</div>
             <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.75rem;">Soutiens notre association et profite des événements et avantages réservés aux membres.</div>
-            <a href="{{ route('portail.adhesion') }}" style="display: inline-block; background: white; color: #80081C; font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
-                En savoir plus
+            <a href="{{ route('portail.adhesion.inscription') }}" style="display: inline-block; background: white; color: #80081C; font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
+                Je m'inscris !
             </a>
         </div>
     @endif

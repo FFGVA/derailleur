@@ -7,15 +7,19 @@ use App\Mail\EventConfirmationMail;
 use App\Mail\ExpiredMemberRegistrationMail;
 use App\Mail\InvoiceMail;
 use App\Mail\MemberUpdateRequestMail;
+use App\Mail\AdhesionMail;
+use App\Mail\AdhesionWelcomeMail;
 use App\Models\Event;
 use App\Models\EventMember;
 use App\Models\Invoice;
 use App\Models\Member;
+use App\Models\MemberPhone;
 use App\Services\ICalService;
 use App\Services\InvoiceService;
 use App\Services\PortalAudit;
 use App\Enums\MemberStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -107,6 +111,108 @@ class PortalController extends Controller
 
         return redirect()->route('portail.adhesion')
             ->with('success', 'Ta demande de modification a été envoyée au comité.');
+    }
+
+    public function adhesionInscription(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        if (!in_array($member->getRawOriginal('statuscode'), ['N', 'D'])) {
+            return redirect()->route('portail.dashboard');
+        }
+
+        $member->load('phones');
+
+        return view('portail.adhesion-inscription', [
+            'member' => $member,
+        ]);
+    }
+
+    public function adhesionInscriptionStore(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        if (!in_array($member->getRawOriginal('statuscode'), ['N', 'D'])) {
+            return redirect()->route('portail.dashboard');
+        }
+
+        $request->validate([
+            'prenom' => ['required', 'string', 'max:40'],
+            'nom' => ['required', 'string', 'max:60'],
+            'telephone' => ['required', 'string', 'max:20'],
+            'photo_ok' => ['required', 'string'],
+            'statuts_ok' => ['required'],
+            'cotisation_ok' => ['required'],
+            'type_velo' => ['nullable', 'string'],
+            'sorties' => ['nullable', 'string'],
+            'atelier' => ['nullable', 'string'],
+            'instagram' => ['nullable', 'string'],
+            'strava' => ['nullable', 'string'],
+        ], [
+            'prenom.required' => 'Le prénom est obligatoire.',
+            'nom.required' => 'Le nom est obligatoire.',
+            'telephone.required' => 'Le numéro de téléphone est obligatoire.',
+            'photo_ok.required' => 'L\'autorisation photos/vidéos est obligatoire.',
+            'statuts_ok.required' => 'Tu dois accepter les statuts de l\'association.',
+            'cotisation_ok.required' => 'Tu dois accepter la cotisation annuelle.',
+        ]);
+
+        $metadata = array_filter([
+            'type_velo' => $request->input('type_velo'),
+            'sorties' => $request->input('sorties'),
+            'atelier' => $request->input('atelier'),
+            'instagram' => $request->input('instagram'),
+            'strava' => $request->input('strava'),
+            'statuts_ok' => $request->input('statuts_ok'),
+            'cotisation_ok' => $request->input('cotisation_ok'),
+        ]);
+
+        $member->update([
+            'first_name' => $request->input('prenom'),
+            'last_name' => $request->input('nom'),
+            'photo_ok' => $request->input('photo_ok') !== 'non',
+            'statuscode' => 'P',
+            'metadata' => $metadata ?: null,
+        ]);
+
+        $phone = $member->phones()->first();
+        if ($phone) {
+            $phone->update(['phone_number' => $request->input('telephone')]);
+        } else {
+            MemberPhone::create([
+                'member_id' => $member->id,
+                'phone_number' => $request->input('telephone'),
+                'label' => 'Mobile principal',
+            ]);
+        }
+
+        $rawToken = bin2hex(random_bytes(32));
+        $member->update([
+            'activation_token' => Hash::make($rawToken),
+            'activation_sent_at' => now(),
+        ]);
+
+        $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
+        Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
+
+        Mail::send(new AdhesionMail(
+            nom: $request->input('nom'),
+            prenom: $request->input('prenom'),
+            email: $member->email,
+            telephone: $request->input('telephone'),
+            photo_ok: $request->input('photo_ok'),
+            type_velo: $request->input('type_velo'),
+            sorties: $request->input('sorties'),
+            atelier: $request->input('atelier'),
+            instagram: $request->input('instagram'),
+            strava: $request->input('strava'),
+            statuts_ok: $request->input('statuts_ok'),
+            cotisation_ok: $request->input('cotisation_ok'),
+        ));
+
+        PortalAudit::log($request, $member, 'inscription', 'Demande d\'adhésion soumise via le portail');
+
+        return redirect()->route('portail.dashboard');
     }
 
     public function carte(Request $request)

@@ -55,6 +55,8 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/protection-des-donnees', [PortalController::class, 'protectionDesDonnees'])->name('portail.lpd');
     Route::get('/adhesion/modifier', [PortalController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
     Route::post('/adhesion/modifier', [PortalController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
+    Route::get('/adhesion/inscription', [PortalController::class, 'adhesionInscription'])->name('portail.adhesion.inscription');
+    Route::post('/adhesion/inscription', [PortalController::class, 'adhesionInscriptionStore'])->name('portail.adhesion.inscription.store');
     Route::get('/carte', [PortalController::class, 'carte'])->name('portail.carte');
     Route::get('/carte/qr-url', [PortalController::class, 'carteQrUrl'])->name('portail.carte.qr-url');
     Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
