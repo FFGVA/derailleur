@@ -24,5 +24,11 @@
         @endif
     </table>
 
+    <p style="text-align: center; margin-bottom: 20px;">
+        <a href="{{ route('portail.evenement', $event) }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+            Voir mon inscription sur le portail
+        </a>
+    </p>
+
     <p style="font-size: 13px; color: #666;">Tu trouveras en pièce jointe un fichier calendrier à ajouter à ton agenda.</p>
 @endsection

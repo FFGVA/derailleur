@@ -267,7 +267,6 @@
             <div class="portal-chef-info">
                 <div class="portal-chef-label">Cheffe de peloton</div>
                 <div class="portal-chef-name">{{ $chef->first_name }} {{ $chef->last_name }}</div>
-                <a href="mailto:{{ $chef->email }}" class="portal-chef-email">{{ $chef->email }}</a>
             </div>
             <div class="portal-chef-icons">
                 @if($chefPhone)

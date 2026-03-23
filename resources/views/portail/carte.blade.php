@@ -69,34 +69,37 @@
         @endif
     </div>
 
-    <div class="carte-card">
-        <div class="carte-qr" id="qrcode"></div>
-        <div class="carte-hint">Le QR code se renouvelle automatiquement</div>
-    </div>
+    @if($isActive)
+        <div class="carte-card">
+            <div class="carte-qr" id="qrcode"></div>
+            <div class="carte-hint">Le QR code se renouvelle automatiquement</div>
+        </div>
+    @endif
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script>
-        let currentUrl = @json($qrUrl);
+    @if($isActive)
+        <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+        <script>
+            let currentUrl = @json($qrUrl);
 
-        function renderQr(url) {
-            const qr = qrcode(0, 'M');
-            qr.addData(url);
-            qr.make();
-            document.getElementById('qrcode').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4 });
-        }
+            function renderQr(url) {
+                const qr = qrcode(0, 'M');
+                qr.addData(url);
+                qr.make();
+                document.getElementById('qrcode').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 4 });
+            }
 
-        renderQr(currentUrl);
+            renderQr(currentUrl);
 
-        // Refresh QR URL every 5 minutes
-        setInterval(function() {
-            fetch('{{ route("portail.carte.qr-url") }}', {
-                credentials: 'same-origin'
-            })
-            .then(r => r.json())
-            .then(data => {
-                currentUrl = data.url;
-                renderQr(currentUrl);
-            });
-        }, 5 * 60 * 1000);
-    </script>
+            setInterval(function() {
+                fetch('{{ route("portail.carte.qr-url") }}', {
+                    credentials: 'same-origin'
+                })
+                .then(r => r.json())
+                .then(data => {
+                    currentUrl = data.url;
+                    renderQr(currentUrl);
+                });
+            }, 60 * 1000);
+        </script>
+    @endif
 @endsection

@@ -40,6 +40,14 @@
     </div>
     @endif
 
+    @if($invoice->getRawOriginal('type') === 'E' && $invoice->events->first())
+        <p style="text-align: center; margin: 20px 0;">
+            <a href="{{ route('portail.evenement', $invoice->events->first()) }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+                Voir mon inscription sur le portail
+            </a>
+        </p>
+    @endif
+
     <p style="font-size: 14px; line-height: 1.6; margin: 20px 0 0; color: #666;">
         Le bulletin de versement complet se trouve en pièce jointe.
     </p>

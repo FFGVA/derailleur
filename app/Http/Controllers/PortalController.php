@@ -111,7 +111,7 @@ class PortalController extends Controller
         // QR URL valid for 10 minutes, regenerated every 5 on the page via JS
         $qrUrl = URL::temporarySignedRoute(
             'carte.valider',
-            now()->addMinutes(10),
+            now()->addMinutes(5),
             ['member' => $member->id],
         );
 
@@ -131,7 +131,7 @@ class PortalController extends Controller
 
         $qrUrl = URL::temporarySignedRoute(
             'carte.valider',
-            now()->addMinutes(10),
+            now()->addMinutes(5),
             ['member' => $member->id],
         );
 
