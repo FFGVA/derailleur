@@ -152,6 +152,14 @@ class MemberResource extends Resource
                     ->grow(false)
                     ->alignStart()
                     ->visibleFrom('md'),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('E-mail')
+                    ->searchable()
+                    ->sortable()
+                    ->url(fn ($record) => 'mailto:' . $record->email)
+                    ->color('primary')
+                    ->grow(false)
+                    ->visibleFrom('md'),
                 Tables\Columns\TextColumn::make('metadata.instagram')
                     ->label('Instagram')
                     ->grow(false)
@@ -165,10 +173,6 @@ class MemberResource extends Resource
                     ->grow(false)
                     ->alignCenter()
                     ->visibleFrom('sm'),
-                Tables\Columns\TextColumn::make('email')
-                    ->label('E-mail')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('city')
                     ->label('Ville')
                     ->sortable()
