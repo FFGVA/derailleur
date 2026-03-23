@@ -99,6 +99,7 @@ rsync -a \
     --exclude='.env.example' \
     --exclude='node_modules' \
     --exclude='tests' \
+    --exclude='test-results' \
     --exclude='phpunit.xml' \
     --exclude='storage/logs/*.log' \
     --exclude='storage/framework/cache/data/*' \
