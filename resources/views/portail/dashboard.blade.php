@@ -133,6 +133,39 @@
         </a>
     </div>
 
+    @if($member->getRawOriginal('statuscode') === 'N')
+        <div style="background: linear-gradient(135deg, #80081C 0%, #a30d25 100%); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; color: white; box-shadow: 0 2px 8px rgba(128,8,28,0.3);">
+            <div style="font-weight: 700; font-size: 1.0625rem; margin-bottom: 0.375rem;">Deviens membre !</div>
+            <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.75rem;">Soutiens notre association et profite des événements et avantages réservés aux membres.</div>
+            <a href="{{ route('portail.adhesion') }}" style="display: inline-block; background: white; color: #80081C; font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
+                En savoir plus
+            </a>
+        </div>
+    @endif
+
+    @if($member->getRawOriginal('statuscode') === 'P')
+        @php
+            $pendingInvoice = $member->invoices()
+                ->where('type', 'C')
+                ->whereIn('statuscode', ['N', 'E'])
+                ->whereNull('deleted_at')
+                ->orderByDesc('cotisation_year')
+                ->first();
+        @endphp
+        <div style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+            <div style="font-weight: 700; font-size: 1rem; color: #92400e; margin-bottom: 0.375rem;">Adhésion en cours de traitement</div>
+            <div style="font-size: 0.875rem; color: #78350f; margin-bottom: 0.5rem;">Ta demande d'adhésion a été reçue. Le paiement de la cotisation est en attente.</div>
+            @if($pendingInvoice && $pendingInvoice->pdf_filename)
+                <a href="{{ route('portail.facture.pdf', $pendingInvoice) }}" style="display: inline-flex; align-items: center; gap: 0.375rem; color: #80081C; font-weight: 600; font-size: 0.875rem; text-decoration: none;">
+                    <svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Télécharger la facture
+                </a>
+            @endif
+        </div>
+    @endif
+
     <div class="portal-nav-buttons{{ $isChef ? ' cols-3' : '' }}">
         @if($isChef)
             <a href="{{ route('portail.peloton') }}" class="portal-nav-btn">
