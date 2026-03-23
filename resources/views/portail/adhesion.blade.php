@@ -195,4 +195,8 @@
         </svg>
         Modifier mes informations
     </a>
+
+    <div style="text-align: center; margin-top: 1.5rem;">
+        <a href="{{ route('portail.lpd') }}" style="color: #999; font-size: 0.8125rem; text-decoration: none;">Protection des données</a>
+    </div>
 @endsection

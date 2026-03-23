@@ -227,8 +227,7 @@ CREATE TABLE `portal_audit_log` (
     `ip_address` VARCHAR(45) NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_portal_audit_member` (`member_id`),
-    KEY `idx_portal_audit_created` (`created_at`),
-    CONSTRAINT `fk_portal_audit_member` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE RESTRICT
+    KEY `idx_portal_audit_created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `member_magic_tokens` (

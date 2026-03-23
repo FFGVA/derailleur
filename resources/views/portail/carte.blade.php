@@ -55,6 +55,9 @@
     <div class="carte-card">
         <img src="{{ asset('images/logo-ffgva.png') }}" alt="Fast and Female Geneva" style="max-width: 160px; margin-bottom: 1rem;">
         <div class="carte-name">{{ $member->first_name }} {{ $member->last_name }}</div>
+        @if($member->member_number)
+            <div style="font-size: 0.875rem; color: #666; margin-bottom: 0.5rem;">N° {{ $member->member_number }}</div>
+        @endif
         @if($isActive)
             <div class="carte-status carte-status-active">Membre active</div>
             <div class="carte-date">

@@ -65,6 +65,11 @@ class PortalController extends Controller
         ]);
     }
 
+    public function protectionDesDonnees()
+    {
+        return view('portail.protection-des-donnees');
+    }
+
     public function adhesionEdit(Request $request)
     {
         $member = $request->attributes->get('portal_member');
@@ -319,6 +324,16 @@ class PortalController extends Controller
         $member = $request->attributes->get('portal_member');
 
         if ($event->chef_peloton_id !== $member->id) {
+            abort(403);
+        }
+
+        // Ensure target is either a participant of this event or the chef herself
+        $isParticipant = $event->members()
+            ->whereNull('event_member.deleted_at')
+            ->where('members.id', $targetMember->id)
+            ->exists();
+
+        if (!$isParticipant && $targetMember->id !== $member->id) {
             abort(403);
         }
 

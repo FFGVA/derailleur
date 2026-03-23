@@ -280,6 +280,66 @@ class PortalPelotonTest extends TestCase
         $response->assertStatus(403);
     }
 
+    // ── Member detail page ──
+
+    public function test_peloton_member_shows_participant(): void
+    {
+        $chef = $this->createChef();
+        $rider = $this->createMember('Léa', 'Cycliste');
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+            'chef_peloton_id' => $chef->id,
+        ]);
+        EventMember::create([
+            'event_id' => $event->id,
+            'member_id' => $rider->id,
+            'status' => 'C',
+        ]);
+
+        $response = $this->authenticatedGet($chef, "/portail/peloton/{$event->id}/membre/{$rider->id}");
+
+        $response->assertOk();
+        $response->assertSee('Léa');
+        $response->assertSee('Cycliste');
+    }
+
+    public function test_peloton_member_allows_chef_to_view_herself(): void
+    {
+        $chef = $this->createChef();
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+            'chef_peloton_id' => $chef->id,
+        ]);
+
+        $response = $this->authenticatedGet($chef, "/portail/peloton/{$event->id}/membre/{$chef->id}");
+
+        $response->assertOk();
+        $response->assertSee('Sophie');
+    }
+
+    public function test_peloton_member_forbidden_for_non_participant(): void
+    {
+        $chef = $this->createChef();
+        $outsider = $this->createMember('Externe', 'Personne');
+        $event = Event::create([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+            'chef_peloton_id' => $chef->id,
+        ]);
+
+        $response = $this->authenticatedGet($chef, "/portail/peloton/{$event->id}/membre/{$outsider->id}");
+
+        $response->assertStatus(403);
+    }
+
     // ── Toggle presence ──
 
     public function test_toggle_presence_null_to_true(): void

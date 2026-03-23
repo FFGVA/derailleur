@@ -51,6 +51,7 @@ Route::post('/deconnexion', [PortalAuthController::class, 'logout'])->name('port
 Route::middleware('portal')->prefix('portail')->group(function () {
     Route::get('/', [PortalController::class, 'dashboard'])->name('portail.dashboard');
     Route::get('/adhesion', [PortalController::class, 'adhesion'])->name('portail.adhesion');
+    Route::get('/protection-des-donnees', [PortalController::class, 'protectionDesDonnees'])->name('portail.lpd');
     Route::get('/adhesion/modifier', [PortalController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
     Route::post('/adhesion/modifier', [PortalController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
     Route::get('/carte', [PortalController::class, 'carte'])->name('portail.carte');

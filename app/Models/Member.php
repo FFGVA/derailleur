@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\QueryException;
 
 class Member extends Model
 {
@@ -20,10 +21,31 @@ class Member extends Model
     {
         static::updating(function (Member $member) {
             if ($member->isDirty('statuscode') && $member->getRawOriginal('statuscode') !== 'A' && $member->statuscode === MemberStatus::Actif && !$member->member_number) {
-                $maxNumber = (int) static::max('member_number');
-                $member->member_number = str_pad((string) ($maxNumber + 1), 4, '0', STR_PAD_LEFT);
+                $member->member_number = static::nextMemberNumber();
             }
         });
+    }
+
+    public static function nextMemberNumber(): string
+    {
+        $maxNumber = (int) static::max('member_number');
+
+        return str_pad((string) ($maxNumber + 1), 4, '0', STR_PAD_LEFT);
+    }
+
+    public function save(array $options = []): bool
+    {
+        try {
+            return parent::save($options);
+        } catch (QueryException $e) {
+            // Retry once on duplicate member_number (race condition)
+            if ($e->errorInfo[1] === 1062 && str_contains($e->getMessage(), 'uk_member_number')) {
+                $this->member_number = static::nextMemberNumber();
+
+                return parent::save($options);
+            }
+            throw $e;
+        }
     }
 
     protected $fillable = [

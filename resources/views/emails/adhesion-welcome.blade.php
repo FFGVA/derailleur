@@ -20,6 +20,6 @@
 </p>
 
 <p style="font-size: 13px; line-height: 1.6; margin: 24px 0 0; padding: 16px; background-color: #f8f8f8; border-radius: 4px; color: #666666;">
-    Tes données personnelles sont traitées conformément à la Loi fédérale sur la protection des données (LPD). Elles sont utilisées exclusivement dans le cadre de la gestion de l'association et ne seront pas transmises à des tiers.
+    Tes données personnelles sont traitées conformément à la Loi fédérale sur la protection des données (LPD). Elles sont utilisées exclusivement dans le cadre de la gestion de l'association.
 </p>
 @endsection
