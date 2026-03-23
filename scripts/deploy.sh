@@ -114,6 +114,7 @@ rsync -a \
     --exclude='scripts/deploy.sh' \
     --exclude='scripts/ftp.conf' \
     --exclude='database' \
+    --exclude='technical_documentation' \
     --exclude='resources/css/app.css' \
     --exclude='resources/js/app.js' \
     --exclude='resources/js/bootstrap.js' \
