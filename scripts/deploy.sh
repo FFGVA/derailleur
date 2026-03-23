@@ -109,6 +109,7 @@ rsync -a \
     --exclude='storage/framework/sessions/*' \
     --exclude='storage/framework/views/*.php' \
     --exclude='storage/app/private/livewire-tmp' \
+    --exclude='storage/app/private/invoices' \
     --exclude='bootstrap/cache/*.php' \
     --exclude='scripts' \
     --exclude='database' \
@@ -203,6 +204,7 @@ mirror -R --verbose=1 --parallel=4 --no-perms --delete \
     --exclude-glob storage/framework/cache/data/* \
     --exclude-glob storage/framework/views/*.php \
     --exclude-glob public/rate/*.json \
+    --exclude-glob storage/app/private/invoices/* \
     "$DEPLOY_TEMP" "/"
 bye
 LFTP_EOF
