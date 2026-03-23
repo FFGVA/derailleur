@@ -8,7 +8,6 @@ use App\Mail\ExpiredMemberRegistrationMail;
 use App\Mail\InvoiceMail;
 use App\Mail\MemberUpdateRequestMail;
 use App\Mail\AdhesionMail;
-use App\Mail\AdhesionWelcomeMail;
 use App\Models\Event;
 use App\Models\EventMember;
 use App\Models\Invoice;
@@ -19,7 +18,6 @@ use App\Services\InvoiceService;
 use App\Services\PortalAudit;
 use App\Enums\MemberStatus;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -186,15 +184,23 @@ class PortalController extends Controller
             ]);
         }
 
-        $rawToken = bin2hex(random_bytes(32));
-        $member->update([
-            'activation_token' => Hash::make($rawToken),
-            'activation_sent_at' => now(),
-        ]);
+        // Email already verified (member is logged in)
+        $member->update(['email_verified_at' => $member->email_verified_at ?? now()]);
 
-        $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
-        Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
+        // Create cotisation invoice + send by email
+        $result = InvoiceService::generate($member);
+        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
 
+        $qrImage = InvoiceService::generateQrCodeBase64($invoice);
+        Mail::send(new InvoiceMail(
+            invoice: $invoice,
+            pdfContent: $result['pdf'],
+            pdfFilename: $result['filename'],
+            qrImageBase64: $qrImage,
+        ));
+        $invoice->update(['statuscode' => 'E']);
+
+        // Notify admin
         Mail::send(new AdhesionMail(
             nom: $request->input('nom'),
             prenom: $request->input('prenom'),
@@ -210,7 +216,7 @@ class PortalController extends Controller
             cotisation_ok: $request->input('cotisation_ok'),
         ));
 
-        PortalAudit::log($request, $member, 'inscription', 'Demande d\'adhésion soumise via le portail');
+        PortalAudit::log($request, $member, 'inscription', 'Adhésion soumise via le portail — facture ' . $result['invoice_number']);
 
         return redirect()->route('portail.dashboard');
     }
