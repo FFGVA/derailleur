@@ -28,6 +28,8 @@ class Event extends Model
         'price',
         'price_non_member',
         'statuscode',
+        'strava_event_id',
+        'strava_route_id',
         'gpx_file',
         'chef_peloton_id',
         'modified_by_id',

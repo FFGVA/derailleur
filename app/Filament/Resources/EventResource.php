@@ -98,6 +98,19 @@ class EventResource extends Resource
                             ->preserveFilenames()
                             ->maxSize(5120)
                             ->columnSpan(6),
+                        Forms\Components\TextInput::make('strava_event_id')
+                            ->label('ID événement Strava')
+                            ->numeric()
+                            ->nullable()
+                            ->helperText('Coller l\'ID depuis l\'URL Strava du group event')
+                            ->columnSpan(6),
+                        Forms\Components\TextInput::make('strava_route_id')
+                            ->label('ID parcours Strava')
+                            ->numeric()
+                            ->nullable()
+                            ->helperText('Rempli automatiquement lors de la sync')
+                            ->disabled()
+                            ->columnSpan(6),
                         Forms\Components\Actions::make([
                             Forms\Components\Actions\Action::make('delete')
                                 ->label('Supprimer')

@@ -116,6 +116,19 @@ class ViewEvent extends ViewRecord
                                         ->color('primary')
                                         ->placeholder('—'),
                                 ]),
+                            Components\Section::make('Strava')
+                                ->schema([
+                                    Components\TextEntry::make('strava_event_id')
+                                        ->label('Événement Strava')
+                                        ->icon('heroicon-o-link')
+                                        ->placeholder('Non lié'),
+                                    Components\TextEntry::make('strava_route_id')
+                                        ->label('Parcours Strava')
+                                        ->icon('heroicon-o-map')
+                                        ->placeholder('—'),
+                                ])
+                                ->collapsible()
+                                ->collapsed(fn ($record) => !$record->strava_event_id),
                         ])->columnSpan(1),
                     ]),
             ]);

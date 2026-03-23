@@ -13,4 +13,6 @@ return [
 
     'portal_token_expiry_minutes' => 15,
     'portal_session_timeout_minutes' => 300,
+
+    'strava_enabled' => env('FFGVA_STRAVA_ENABLED', false),
 ];
