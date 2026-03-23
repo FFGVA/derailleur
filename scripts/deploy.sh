@@ -14,10 +14,6 @@
 #   FTP root (/)        = Laravel app root (app/, config/, vendor/, etc.)
 #   FTP root /public/   = Apache document root (index.php, .htaccess, assets)
 #
-# The standalone mail scripts (chaine.php, guidon.php) stay in public/
-# alongside the Laravel front controller until the Hugo site switches
-# to the /api/ endpoints. The rate/ folder is inside public/.
-#
 # IMPORTANT: public/.htaccess on Hostpoint has a managed header line
 # ("Use php-fpm latest") that must NOT be overwritten. The script
 # preserves it by excluding .htaccess from the mirror.
@@ -144,17 +140,12 @@ done
 # Ensure rate directory has deny .htaccess
 echo "Require all denied" > "$DEPLOY_TEMP/public/rate/.htaccess"
 
-# Copy standalone mail scripts into public/ (kept until Hugo switches to /api/)
-if [[ -d "$PROJECT_DIR/mail" ]]; then
-    cp "$PROJECT_DIR/mail/chaine.php" "$DEPLOY_TEMP/public/chaine.php" 2>/dev/null || true
-    cp "$PROJECT_DIR/mail/guidon.php" "$DEPLOY_TEMP/public/guidon.php" 2>/dev/null || true
-fi
 
 # ── Step 3: Verify package ─────────────────────────────────────────
 echo -e "${GREEN}[3/5] Verifying package...${NC}"
 
 MISSING=0
-for file in ".env" "artisan" "config/database.php" "public/index.php" "public/.htaccess" "vendor/autoload.php" "public/chaine.php" "public/guidon.php"; do
+for file in ".env" "artisan" "config/database.php" "public/index.php" "public/.htaccess" "vendor/autoload.php"; do
     if [[ -f "$DEPLOY_TEMP/$file" ]]; then
         echo "  ✓ $file"
     else

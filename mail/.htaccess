@@ -1,7 +1,0 @@
-Use php-fpm latest
-
-
-#@__HCP_END__@#
-# Anything after the comment above is left alone
-
-Options -Indexes
