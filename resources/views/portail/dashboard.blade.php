@@ -144,25 +144,9 @@
     @endif
 
     @if($member->getRawOriginal('statuscode') === 'P')
-        @php
-            $pendingInvoice = $member->invoices()
-                ->where('type', 'C')
-                ->whereIn('statuscode', ['N', 'E'])
-                ->whereNull('deleted_at')
-                ->orderByDesc('cotisation_year')
-                ->first();
-        @endphp
         <div style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
             <div style="font-weight: 700; font-size: 1rem; color: #92400e; margin-bottom: 0.375rem;">Adhésion en cours de traitement</div>
-            <div style="font-size: 0.875rem; color: #78350f; margin-bottom: 0.5rem;">Ta demande d'adhésion a été reçue. Le paiement de la cotisation est en attente.</div>
-            @if($pendingInvoice && $pendingInvoice->pdf_filename)
-                <a href="{{ route('portail.facture.pdf', $pendingInvoice) }}" style="display: inline-flex; align-items: center; gap: 0.375rem; color: #80081C; font-weight: 600; font-size: 0.875rem; text-decoration: none;">
-                    <svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    Télécharger la facture
-                </a>
-            @endif
+            <div style="font-size: 0.875rem; color: #78350f;">Ta demande d'adhésion a été reçue. Le paiement de la cotisation est en attente.</div>
         </div>
     @endif
 
@@ -181,10 +165,21 @@
             </svg>
             Adhésion
         </a>
+        @php
+            $openAmount = $member->invoices()
+                ->whereIn('statuscode', ['N', 'E'])
+                ->whereNull('deleted_at')
+                ->sum('amount');
+        @endphp
         <a href="{{ route('portail.factures') }}" class="portal-nav-btn">
-            <svg class="portal-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <svg class="portal-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                @if($openAmount > 0)
+                    <span style="font-size: 1.25rem; font-weight: 700; color: #80081C;">CHF {{ number_format((float) $openAmount, 2, '.', '') }}</span>
+                @endif
+            </div>
             Factures
         </a>
     </div>
