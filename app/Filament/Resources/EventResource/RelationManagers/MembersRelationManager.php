@@ -120,9 +120,14 @@ class MembersRelationManager extends RelationManager
                     ->icon('heroicon-o-plus')
                     ->color('primary')
                     ->preloadRecordSelect()
+                    ->recordSelectSearchColumns(['first_name', 'last_name', 'member_number'])
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
-                            ->label('Membre'),
+                            ->label('Membre')
+                            ->getOptionLabelFromRecordUsing(fn (Member $record) =>
+                                $record->first_name . ' ' . $record->last_name .
+                                ($record->member_number ? ' (#' . $record->member_number . ')' : '')
+                            ),
                         Forms\Components\Select::make('status')
                             ->label('Statut')
                             ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
