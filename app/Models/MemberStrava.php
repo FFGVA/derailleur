@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MemberStrava extends Model
@@ -36,6 +37,11 @@ class MemberStrava extends Model
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'strava_id');
     }
 
     public function modifiedBy(): BelongsTo

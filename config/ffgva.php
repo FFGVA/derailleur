@@ -15,4 +15,7 @@ return [
     'portal_session_timeout_minutes' => 300,
 
     'strava_enabled' => env('FFGVA_STRAVA_ENABLED', false),
+    'strava_client_id' => env('STRAVA_CLIENT_ID'),
+    'strava_client_secret' => env('STRAVA_CLIENT_SECRET'),
+    'strava_club_id' => env('STRAVA_CLUB_ID'),
 ];

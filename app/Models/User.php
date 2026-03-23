@@ -30,6 +30,7 @@ class User extends Authenticatable implements FilamentUser
         'role',
         'member_id',
         'is_locked',
+        'strava_id',
     ];
 
     /**
@@ -60,6 +61,11 @@ class User extends Authenticatable implements FilamentUser
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function strava(): BelongsTo
+    {
+        return $this->belongsTo(MemberStrava::class, 'strava_id');
     }
 
     public function isAdmin(): bool

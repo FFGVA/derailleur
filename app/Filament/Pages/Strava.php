@@ -3,10 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Models\Event;
+use App\Models\Member;
 use App\Models\MemberStrava;
 use Filament\Pages\Page;
-use Filament\Infolists\Infolist;
-use Filament\Infolists\Components;
+use Filament\Notifications\Notification;
 
 class Strava extends Page
 {
@@ -27,7 +27,19 @@ class Strava extends Page
 
     public function mount(): void
     {
-        abort_unless(config('ffgva.strava_enabled', false), 404);
+        if (session('strava_success')) {
+            Notification::make()
+                ->title(session('strava_success'))
+                ->success()
+                ->send();
+        }
+
+        if (session('strava_error')) {
+            Notification::make()
+                ->title(session('strava_error'))
+                ->danger()
+                ->send();
+        }
     }
 
     public function getLinkedEventsCount(): int
@@ -37,9 +49,11 @@ class Strava extends Page
             ->count();
     }
 
-    public function getLinkedMembersCount(): int
+    public function getStravaAccounts(): \Illuminate\Support\Collection
     {
-        return MemberStrava::whereNull('deleted_at')->count();
+        return MemberStrava::with(['member', 'user'])
+            ->whereNull('deleted_at')
+            ->get();
     }
 
     public function getLinkedEvents(): \Illuminate\Support\Collection
@@ -50,10 +64,16 @@ class Strava extends Page
             ->get();
     }
 
-    public function getLinkedMembers(): \Illuminate\Support\Collection
+    public function getMembers(): \Illuminate\Support\Collection
     {
-        return MemberStrava::with('member')
-            ->whereNull('deleted_at')
+        return Member::whereNull('deleted_at')
+            ->orderBy('last_name')
             ->get();
+    }
+
+    public function isConfigured(): bool
+    {
+        return !empty(config('ffgva.strava_client_id'))
+            && !empty(config('ffgva.strava_client_secret'));
     }
 }

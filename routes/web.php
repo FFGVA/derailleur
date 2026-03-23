@@ -5,6 +5,7 @@ use App\Http\Controllers\AdhesionActivationController;
 use App\Http\Controllers\EventRegistrationController;
 use App\Http\Controllers\PortalAuthController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\StravaController;
 use App\Models\Event;
 use App\Services\ICalService;
 use Illuminate\Support\Facades\Route;
@@ -68,6 +69,13 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::post('/peloton/{event}/ajouter', [PortalController::class, 'addParticipant'])->name('portail.peloton.add');
     Route::post('/peloton/{event}/gpx', [PortalController::class, 'uploadGpx'])->name('portail.peloton.gpx');
     Route::get('/peloton/{event}/membre/{targetMember}', [PortalController::class, 'pelotonMember'])->name('portail.peloton.member');
+});
+
+// Strava OAuth (admin only, requires auth)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/strava/redirect', [StravaController::class, 'redirect'])->name('strava.redirect');
+    Route::get('/strava/callback', [StravaController::class, 'callback'])->name('strava.callback');
+    Route::post('/strava/disconnect', [StravaController::class, 'disconnect'])->name('strava.disconnect');
 });
 
 if (app()->environment('local')) {
