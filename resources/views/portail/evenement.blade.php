@@ -222,7 +222,7 @@
         <div class="portal-detail-title">{{ $event->title }}</div>
 
         @if($event->description)
-            <div class="portal-detail-description">{!! $event->description !!}</div>
+            <div class="portal-detail-description">{!! clean($event->description) !!}</div>
         @endif
 
         <div class="portal-info-row">

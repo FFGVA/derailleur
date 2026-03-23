@@ -33,6 +33,7 @@ class ViewEvent extends ViewRecord
                                     Components\TextEntry::make('description')
                                         ->label('')
                                         ->html()
+                                        ->formatStateUsing(fn (?string $state) => $state ? clean($state) : null)
                                         ->placeholder('Pas de description'),
                                 ])
                                 ->hidden(fn ($record) => empty($record->description)),
