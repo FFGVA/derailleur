@@ -25,7 +25,7 @@ class EventPolicy
 
     public function update(User $user, Event $event): bool
     {
-        return $user->isAdmin() || ($user->isChefPeloton() && $user->member_id === $event->chef_peloton_id);
+        return $user->isAdmin() || ($user->isChefPeloton() && $user->member_id && $event->chefs->contains('id', $user->member_id));
     }
 
     public function delete(User $user, Event $event): bool

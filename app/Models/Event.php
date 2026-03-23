@@ -8,6 +8,7 @@ use App\Enums\MemberStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
@@ -16,6 +17,20 @@ class Event extends Model
 
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
+
+    protected static function booted(): void
+    {
+        // Sync chef_peloton_id → event_chef pivot for backward compatibility
+        static::saved(function (Event $event) {
+            if ($event->chef_peloton_id && !$event->eventChefs()->where('member_id', $event->chef_peloton_id)->exists()) {
+                EventChef::create([
+                    'event_id' => $event->id,
+                    'member_id' => $event->chef_peloton_id,
+                    'sort_order' => 0,
+                ]);
+            }
+        });
+    }
 
     protected $fillable = [
         'event_type',
@@ -79,6 +94,19 @@ class Event extends Model
             ->whereIn('event_member.status', ['N', 'C'])
             ->whereNull('event_member.deleted_at')
             ->count() >= $this->max_participants;
+    }
+
+    public function chefs(): BelongsToMany
+    {
+        return $this->belongsToMany(Member::class, 'event_chef')
+            ->whereNull('event_chef.deleted_at')
+            ->withPivot('sort_order')
+            ->orderByPivot('sort_order');
+    }
+
+    public function eventChefs(): HasMany
+    {
+        return $this->hasMany(EventChef::class);
     }
 
     public function members(): BelongsToMany

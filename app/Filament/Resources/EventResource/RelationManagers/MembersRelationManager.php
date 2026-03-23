@@ -52,7 +52,7 @@ class MembersRelationManager extends RelationManager
         $user = auth()->user();
 
         return $user->isAdmin()
-            || $user->member_id === $this->getOwnerRecord()->chef_peloton_id;
+            || ($user->member_id && $this->getOwnerRecord()->chefs->contains('id', $user->member_id));
     }
 
     public function table(Table $table): Table

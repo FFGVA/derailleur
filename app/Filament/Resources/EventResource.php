@@ -158,10 +158,9 @@ class EventResource extends Resource
                 Tables\Columns\TextColumn::make('location')
                     ->label('Lieu')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('chefPeloton.first_name')
-                    ->label('Cheffe de peloton')
-                    ->formatStateUsing(fn ($record) => $record->chefPeloton ? $record->chefPeloton->first_name . ' ' . $record->chefPeloton->last_name : '—')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('chefs_list')
+                    ->label('Cheffes de peloton')
+                    ->state(fn ($record) => $record->chefs->map(fn ($c) => $c->first_name . ' ' . $c->last_name)->join(', ') ?: '—'),
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('Statut')
                     ->badge()

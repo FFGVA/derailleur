@@ -120,11 +120,11 @@ class MemberTest extends TestCase
         $this->assertInstanceOf(BelongsToMany::class, $member->events());
     }
 
-    public function test_led_events_relationship_returns_has_many(): void
+    public function test_led_events_relationship_returns_belongs_to_many(): void
     {
         $member = $this->makeMember();
 
-        $this->assertInstanceOf(HasMany::class, $member->ledEvents());
+        $this->assertInstanceOf(BelongsToMany::class, $member->ledEvents());
 
         Event::create([
             'title' => 'Sortie test',

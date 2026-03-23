@@ -44,7 +44,7 @@ class PortalController extends Controller
         }
 
         $isChef = $member->ledEvents()
-            ->whereNull('deleted_at')
+            ->whereNull('events.deleted_at')
             ->where('starts_at', '>=', now()->subWeek())
             ->exists();
 
@@ -323,7 +323,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if ($event->chef_peloton_id !== $member->id) {
+        if (!$event->chefs->contains('id', $member->id)) {
             abort(403);
         }
 
@@ -351,7 +351,7 @@ class PortalController extends Controller
         $member = $request->attributes->get('portal_member');
 
         $events = $member->ledEvents()
-            ->whereNull('deleted_at')
+            ->whereNull('events.deleted_at')
             ->where('starts_at', '>=', now()->subWeek())
             ->orderBy('starts_at')
             ->get();
@@ -366,7 +366,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if ($event->chef_peloton_id !== $member->id) {
+        if (!$event->chefs->contains('id', $member->id)) {
             abort(403);
         }
 
@@ -397,7 +397,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if ($event->chef_peloton_id !== $member->id) {
+        if (!$event->chefs->contains('id', $member->id)) {
             abort(403);
         }
 
@@ -428,7 +428,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if ($event->chef_peloton_id !== $member->id) {
+        if (!$event->chefs->contains('id', $member->id)) {
             abort(403);
         }
 
@@ -474,7 +474,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if ($event->chef_peloton_id !== $member->id) {
+        if (!$event->chefs->contains('id', $member->id)) {
             abort(403);
         }
 

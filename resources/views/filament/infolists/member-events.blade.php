@@ -24,7 +24,7 @@
                     {{ $event->starts_at->format('d.m.Y') }}
                 </td>
                 <td class="py-1.5 pl-2 w-5">
-                    @if($event->chef_peloton_id === $member->id)
+                    @if($member->ledEvents->contains('id', $event->id))
                         <x-heroicon-s-star class="w-4 h-4 text-warning-500" title="Cheffe de peloton" />
                     @endif
                 </td>

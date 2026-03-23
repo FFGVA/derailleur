@@ -104,16 +104,21 @@ class ViewEvent extends ViewRecord
                                 ]),
                             Components\Section::make()
                                 ->schema([
-                                    Components\TextEntry::make('chefPeloton.full_name')
-                                        ->label('Cheffe de peloton')
+                                    Components\TextEntry::make('chefs_display')
+                                        ->label('Cheffes de peloton')
                                         ->icon('heroicon-o-star')
-                                        ->state(fn ($record) => $record->chefPeloton
-                                            ? $record->chefPeloton->first_name . ' ' . $record->chefPeloton->last_name
-                                            : null)
-                                        ->url(fn ($record) => $record->chefPeloton
-                                            ? \App\Filament\Resources\MemberResource::getUrl('view', ['record' => $record->chefPeloton])
-                                            : null)
-                                        ->color('primary')
+                                        ->html()
+                                        ->state(function ($record) {
+                                            $chefs = $record->chefs;
+                                            if ($chefs->isEmpty()) {
+                                                return null;
+                                            }
+                                            return $chefs->map(fn ($c) =>
+                                                '<a href="' . \App\Filament\Resources\MemberResource::getUrl('view', ['record' => $c]) . '" class="text-primary-600 dark:text-primary-400 hover:underline">'
+                                                . e($c->first_name . ' ' . $c->last_name)
+                                                . '</a>'
+                                            )->join('<br>');
+                                        })
                                         ->placeholder('—'),
                                 ]),
                             Components\Section::make('Strava')

@@ -118,9 +118,10 @@ class Member extends Model
         return $this->hasMany(Invoice::class);
     }
 
-    public function ledEvents(): HasMany
+    public function ledEvents(): BelongsToMany
     {
-        return $this->hasMany(Event::class, 'chef_peloton_id');
+        return $this->belongsToMany(Event::class, 'event_chef')
+            ->whereNull('event_chef.deleted_at');
     }
 
     public function events(): BelongsToMany
