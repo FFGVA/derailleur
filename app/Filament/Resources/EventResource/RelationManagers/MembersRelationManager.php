@@ -119,16 +119,17 @@ class MembersRelationManager extends RelationManager
                     ->label('Ajouter')
                     ->icon('heroicon-o-plus')
                     ->color('primary')
-                    ->preloadRecordSelect()
                     ->recordSelectSearchColumns(['first_name', 'last_name', 'member_number'])
-                    ->recordTitle(fn (Member $record) =>
-                        $record->first_name . ' ' . $record->last_name .
-                        ($record->member_number ? ' (#' . $record->member_number . ')' : '')
-                    )
                     ->recordSelectOptionsQuery(fn ($query) => $query->whereIn('statuscode', ['A', 'P', 'I']))
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
-                            ->label('Membre'),
+                            ->label('Membre')
+                            ->getOptionLabelFromRecordUsing(fn (Member $record) =>
+                                $record->first_name . ' ' . $record->last_name .
+                                ($record->member_number ? ' (#' . $record->member_number . ')' : '')
+                            )
+                            ->preload()
+                            ->searchable(),
                         Forms\Components\Select::make('status')
                             ->label('Statut')
                             ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
