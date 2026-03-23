@@ -138,6 +138,7 @@ class EventResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('starts_at', 'asc')
             ->columns([
                 Tables\Columns\TextColumn::make('event_type')
                     ->label('Type')
@@ -177,6 +178,14 @@ class EventResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                Tables\Filters\TernaryFilter::make('actifs')
+                    ->label('Événements actifs')
+                    ->default(true)
+                    ->queries(
+                        true: fn (Builder $query) => $query->whereNotIn('statuscode', ['T', 'X']),
+                        false: fn (Builder $query) => $query->whereIn('statuscode', ['T', 'X']),
+                        blank: fn (Builder $query) => $query,
+                    ),
                 Tables\Filters\SelectFilter::make('event_type')
                     ->label('Type')
                     ->options(collect(EventType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])),
