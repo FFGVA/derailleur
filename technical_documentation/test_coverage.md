@@ -170,7 +170,7 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 | Administration Filament (CRUD) | **Faible** | Seules cotisations et marquer payé testés |
 | Gestion membres (admin) | **Absente** | Aucun test CRUD MemberResource |
 | Gestion événements (admin) | **Très faible** | Seulement upload GPX |
-| Strava (OAuth, connexion) | **Absente** | Aucun test |
+| Strava (OAuth, connexion) | **Absente** | Intégration incomplète — pas prioritaire |
 | Gestion utilisateurs (admin) | **Absente** | Aucun test de la page Users |
 | Carte de membre | **Correcte** | Affichage et validation QR testés |
 
@@ -185,7 +185,7 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 | **MemberResource** (Filament CRUD) | **Élevé** | Création, modification, suppression de membres sans aucun test. Risque de régression sur les champs, validations, et soft-delete. |
 | **EventResource** (Filament CRUD) | **Élevé** | Seul l'upload GPX est testé. Création/modification d'événements non couverts. |
 | **Users Page** (Filament) | **Élevé** | CRUD utilisateurs (rôles, verrouillage) sans test. Impact sécurité. |
-| **StravaController** | **Moyen** | OAuth flow (redirect, callback, disconnect, token refresh) non testé. Tokens d'accès manipulés sans vérification. |
+| **StravaController** | **Faible** | OAuth flow non testé, mais intégration Strava incomplète — pas prioritaire. |
 | **InvoiceService.generatePdf()** | **Moyen** | Seul le header `%PDF` est vérifié. Le contenu (montant, nom, QR-bill) n'est jamais validé. |
 | **PortalAuth middleware** | **Moyen** | Testé implicitement via les feature tests, mais pas de test unitaire isolé pour le timeout et le filtrage de statut. |
 
@@ -238,7 +238,7 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 - Création d'événement via Filament (champs requis, validation dates)
 - Modification d'événement (changement de prix avec inscriptions existantes)
 - Suppression d'événement (vérification dépendances)
-- `isFull()` : refus d'inscription quand `max_participants` atteint
+- ~~`isFull()` : refus d'inscription quand `max_participants` atteint~~ *(pas de règle métier pour l'instant)*
 - Transitions de statut événement (N→P→T, N→X)
 - Relation chef de peloton : synchro `event_chef` pivot
 - Relation managers dans Filament (MembersRelationManager, PresencesRelationManager)
@@ -274,7 +274,7 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 **Testé**: Flow existant et nouveau membre, pricing, mails.
 
 **Non testé**:
-- Inscription quand événement complet (`max_participants`)
+- ~~Inscription quand événement complet (`max_participants`)~~ *(pas enforced par design)*
 - Inscription à un événement annulé (statut X)
 - Inscription à un événement brouillon (statut N)
 - Double inscription concurrent (race condition)
@@ -335,7 +335,7 @@ Le projet n'a qu'une seule factory (`UserFactory`). Tous les autres modèles son
 | 1.1 | **Tester MemberResource CRUD** (create, edit, view, delete avec dépendances) | Feature/Livewire | Moyen |
 | 1.2 | **Tester EventResource CRUD** (create, edit, delete, validation dates et prix) | Feature/Livewire | Moyen |
 | 1.3 | **Tester Users Page** (create, edit, lock, roles, suppression) | Feature/Livewire | Moyen |
-| 1.4 | **Tester `max_participants`** : refus d'inscription quand événement complet | Feature | Petit |
+| ~~1.4~~ | ~~Tester `max_participants`~~ | — | — *(pas de règle métier à appliquer pour l'instant)* |
 | 1.5 | **Tester rate limiting** sur les 3 endpoints API | Feature | Petit |
 | 1.6 | **Tester contenu PDF** facture (montant, nom, IBAN dans le QR) | Unit | Moyen |
 
@@ -355,7 +355,7 @@ Le projet n'a qu'une seule factory (`UserFactory`). Tous les autres modèles son
 
 | # | Action | Type de test | Effort |
 |---|--------|-------------|--------|
-| 3.1 | **Tester StravaController** (OAuth redirect, callback, disconnect, token refresh) | Feature | Moyen |
+| ~~3.1~~ | ~~Tester StravaController~~ | — | — *(Strava pas encore implémenté complètement)* |
 | 3.2 | **Tester PortalAudit::log()** | Unit | Petit |
 | 3.3 | **Renforcer ICalFeedTest** : valider DTSTART, SUMMARY, UID, timezone | Unit | Petit |
 | 3.4 | **Renforcer InvoiceServiceTest** : valider contenu PDF au-delà du header | Unit | Moyen |
