@@ -30,3 +30,4 @@ Homestead.json
 auth.json
 scripts/ftp.conf
 test-results/
+database/agiletra_ffgva.sql
