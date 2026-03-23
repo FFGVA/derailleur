@@ -2,7 +2,7 @@
 
 **Date**: 23.03.2026
 **Suite de tests**: PHPUnit 11 + Laravel 12 TestCase
-**Résultat actuel**: 325 tests, 732 assertions — **100% green**
+**Résultat actuel**: 406 tests, 984 assertions — **100% green** (P1 mitigations implémentées le 23.03.2026)
 **Durée**: ~29s contre MariaDB réelle (DatabaseTransactions)
 
 ---
@@ -27,11 +27,11 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| Fichiers de test | 46 |
-| Tests unitaires | 24 fichiers (1'076 lignes) |
-| Tests fonctionnels (Feature) | 22 fichiers (4'301 lignes) |
-| Total assertions | 732 |
-| Tests Dusk (browser) | 0 |
+| Fichiers de test | 51 |
+| Tests unitaires | 25 fichiers |
+| Tests fonctionnels (Feature) | 26 fichiers |
+| Total assertions | 984 |
+| Tests Dusk (browser) | 26 (7 suites) |
 | Tests Playwright (E2E) | 0 |
 | Factories | 1 (UserFactory uniquement) |
 
@@ -152,8 +152,8 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 | **Mail** | 11 | 9 | 2 | 82% |
 | **Policies** | 2 | 2 | 0 | 100% |
 | **Middleware** | 2 | 2 | 0 | 100% |
-| **Filament Resources** | 3 | 2 (partiels) | 1 | 33% |
-| **Filament Pages** | 4 | 1 | 3 | 25% |
+| **Filament Resources** | 3 | 3 | 0 | 100% |
+| **Filament Pages** | 4 | 2 | 2 | 50% |
 | **Filament Widgets** | 3 | 3 | 0 | 100% |
 | **Form Requests** | 3 | 0 (indirect) | 3 | 0% |
 
@@ -167,11 +167,11 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 | Facturation (création, PDF, paiement) | **Correcte** | Création testée, PDF superficiel, paiement partiel |
 | Contact (formulaire) | **Correcte** | Flow API testé avec honeypot |
 | Inscription événement (existant + nouveau) | **Bonne** | Deux parcours, pricing, mails |
-| Administration Filament (CRUD) | **Faible** | Seules cotisations et marquer payé testés |
-| Gestion membres (admin) | **Absente** | Aucun test CRUD MemberResource |
-| Gestion événements (admin) | **Très faible** | Seulement upload GPX |
+| Administration Filament (CRUD) | **Bonne** | MemberResource, EventResource, InvoiceResource, Users, Cotisations testés |
+| Gestion membres (admin) | **Bonne** | CRUD, validation, suppression avec dépendances |
+| Gestion événements (admin) | **Bonne** | CRUD, validation, suppression, accès chef |
 | Strava (OAuth, connexion) | **Absente** | Intégration incomplète — pas prioritaire |
-| Gestion utilisateurs (admin) | **Absente** | Aucun test de la page Users |
+| Gestion utilisateurs (admin) | **Bonne** | Create, edit, lock/unlock, accès admin-only |
 | Carte de membre | **Correcte** | Affichage et validation QR testés |
 
 ---
@@ -182,11 +182,11 @@ Ces tests passent mais n'apportent qu'une valeur minimale — ils testent essent
 
 | Composant | Risque | Justification |
 |-----------|--------|---------------|
-| **MemberResource** (Filament CRUD) | **Élevé** | Création, modification, suppression de membres sans aucun test. Risque de régression sur les champs, validations, et soft-delete. |
-| **EventResource** (Filament CRUD) | **Élevé** | Seul l'upload GPX est testé. Création/modification d'événements non couverts. |
-| **Users Page** (Filament) | **Élevé** | CRUD utilisateurs (rôles, verrouillage) sans test. Impact sécurité. |
+| ~~**MemberResource** (Filament CRUD)~~ | ~~Élevé~~ | ✅ Couvert par `MemberResourceTest.php` — 20 tests |
+| ~~**EventResource** (Filament CRUD)~~ | ~~Élevé~~ | ✅ Couvert par `EventResourceTest.php` — 17 tests |
+| ~~**Users Page** (Filament)~~ | ~~Élevé~~ | ✅ Couvert par `UsersPageTest.php` — 14 tests |
 | **StravaController** | **Faible** | OAuth flow non testé, mais intégration Strava incomplète — pas prioritaire. |
-| **InvoiceService.generatePdf()** | **Moyen** | Seul le header `%PDF` est vérifié. Le contenu (montant, nom, QR-bill) n'est jamais validé. |
+| ~~**InvoiceService.generatePdf()**~~ | ~~Moyen~~ | ✅ Couvert par `InvoicePdfContentTest.php` — 25 tests (records, lines, amounts, filenames, QR) |
 | **PortalAuth middleware** | **Moyen** | Testé implicitement via les feature tests, mais pas de test unitaire isolé pour le timeout et le filtrage de statut. |
 
 ### Modèles sans aucun test
@@ -332,12 +332,12 @@ Le projet n'a qu'une seule factory (`UserFactory`). Tous les autres modèles son
 
 | # | Action | Type de test | Effort |
 |---|--------|-------------|--------|
-| 1.1 | **Tester MemberResource CRUD** (create, edit, view, delete avec dépendances) | Feature/Livewire | Moyen |
-| 1.2 | **Tester EventResource CRUD** (create, edit, delete, validation dates et prix) | Feature/Livewire | Moyen |
-| 1.3 | **Tester Users Page** (create, edit, lock, roles, suppression) | Feature/Livewire | Moyen |
+| 1.1 | ~~**Tester MemberResource CRUD**~~ | Feature/Livewire | ✅ `MemberResourceTest.php` — 20 tests |
+| 1.2 | ~~**Tester EventResource CRUD**~~ | Feature/Livewire | ✅ `EventResourceTest.php` — 17 tests |
+| 1.3 | ~~**Tester Users Page**~~ | Feature/Livewire | ✅ `UsersPageTest.php` — 14 tests |
 | ~~1.4~~ | ~~Tester `max_participants`~~ | — | — *(pas de règle métier à appliquer pour l'instant)* |
-| 1.5 | **Tester rate limiting** sur les 3 endpoints API | Feature | Petit |
-| 1.6 | **Tester contenu PDF** facture (montant, nom, IBAN dans le QR) | Unit | Moyen |
+| 1.5 | ~~**Tester rate limiting**~~ | Feature | ✅ `RateLimitingTest.php` — 5 tests |
+| 1.6 | ~~**Tester contenu PDF**~~ | Unit | ✅ `InvoicePdfContentTest.php` — 25 tests |
 
 ### Priorité 2 — Important (logique métier)
 
@@ -399,13 +399,13 @@ Le projet n'a qu'une seule factory (`UserFactory`). Tous les autres modèles son
 
 | Test | Priorité | Description |
 |------|----------|-------------|
-| `MemberCrudTest` | **P1** | Créer un membre, modifier, vérifier view page, supprimer |
-| `EventCrudTest` | **P1** | Créer un événement, ajouter participants via relation manager |
-| `InvoiceCrudTest` | **P1** | Créer facture cotisation, ajouter lignes, marquer payé |
-| `UserManagementTest` | **P1** | Créer utilisateur, assigner rôle, verrouiller |
-| `MemberPhoneRepeaterTest` | **P2** | Ajouter/supprimer téléphones dans le repeater Filament |
-| `EventParticipantModalTest` | **P2** | Cliquer badge statut → modal → changer statut |
-| `CotisationsBulkTest` | **P2** | Envoyer factures en masse, vérifier notifications |
+| ~~`MemberCrudTest`~~ | ~~P1~~ | ✅ 5 tests — create, view, edit, delete, list |
+| ~~`EventCrudTest`~~ | ~~P1~~ | ✅ 5 tests — create, view, edit, list, participants |
+| ~~`InvoiceCrudTest`~~ | ~~P1~~ | ✅ 5 tests — list, view, status badge, cotisations page |
+| ~~`UserManagementTest`~~ | ~~P1~~ | ✅ 5 tests — page load, create, roles, details, lock icon |
+| ~~`MemberPhoneRepeaterTest`~~ | ~~P2~~ | ✅ 2 tests — repeater add, phone display |
+| ~~`EventParticipantModalTest`~~ | ~~P2~~ | ✅ 2 tests — status display, presence display |
+| ~~`CotisationsBulkTest`~~ | ~~P2~~ | ✅ 2 tests — expiring members, send action |
 
 #### Playwright (portail et flows publics)
 
@@ -422,10 +422,10 @@ Le projet n'a qu'une seule factory (`UserFactory`). Tous les autres modèles son
 
 | Phase | Effort | Livrable |
 |-------|--------|----------|
-| Setup Dusk (config, ChromeDriver, base test) | 2h | `tests/Browser/` fonctionnel |
+| ~~Setup Dusk (config, ChromeDriver, base test)~~ | ~~2h~~ | ✅ `tests/Browser/` — 26 tests |
 | Setup Playwright (config, fixtures) | 2h | `tests/Playwright/` fonctionnel |
-| Tests Dusk P1 (4 tests) | 8h | CRUD admin couvert |
-| Tests Dusk P2 (3 tests) | 4h | Interactions complexes couvertes |
+| ~~Tests Dusk P1 (4 tests)~~ | ~~8h~~ | ✅ 20 tests implémentés |
+| ~~Tests Dusk P2 (3 tests)~~ | ~~4h~~ | ✅ 6 tests implémentés |
 | Tests Playwright P1 (3 tests) | 6h | Flows publics couverts |
 | Tests Playwright P2-P3 (3 tests) | 4h | UX et responsive couverts |
 | **Total** | **~26h** | Couverture E2E complète |
@@ -440,13 +440,13 @@ Légende: ✅ Testé | ⚠️ Partiel | ❌ Non testé
 
 | Fichier | Unit | Feature | E2E |
 |---------|------|---------|-----|
-| `Member.php` | ✅ | ✅ | ❌ |
-| `User.php` | ✅ | ✅ | ❌ |
-| `Event.php` | ⚠️ | ✅ | ❌ |
-| `Invoice.php` | ✅ | ✅ | ❌ |
+| `Member.php` | ✅ | ✅ | ✅ |
+| `User.php` | ✅ | ✅ | ✅ |
+| `Event.php` | ⚠️ | ✅ | ✅ |
+| `Invoice.php` | ✅ | ✅ | ✅ |
 | `InvoiceLine.php` | ⚠️ | ⚠️ | ❌ |
-| `MemberPhone.php` | ✅ | ⚠️ | ❌ |
-| `EventMember.php` | ✅ | ✅ | ❌ |
+| `MemberPhone.php` | ✅ | ⚠️ | ✅ |
+| `EventMember.php` | ✅ | ✅ | ✅ |
 | `EventChef.php` | ❌ | ❌ | ❌ |
 | `MemberStrava.php` | ❌ | ❌ | ❌ |
 | `MemberMagicToken.php` | ✅ | ✅ | ❌ |
@@ -456,7 +456,7 @@ Légende: ✅ Testé | ⚠️ Partiel | ❌ Non testé
 
 | Fichier | Unit | Feature |
 |---------|------|---------|
-| `InvoiceService.php` | ⚠️ | ✅ |
+| `InvoiceService.php` | ✅ | ✅ |
 | `PhoneFormatter.php` | ✅ | ✅ |
 | `ICalService.php` | ⚠️ | ✅ |
 | `PortalAudit.php` | ❌ | ❌ |
@@ -477,11 +477,11 @@ Légende: ✅ Testé | ⚠️ Partiel | ❌ Non testé
 
 | Fichier | Feature | E2E |
 |---------|---------|-----|
-| `MemberResource` (+ 4 pages) | ❌ | ❌ |
-| `EventResource` (+ 4 pages) | ⚠️ | ❌ |
+| `MemberResource` (+ 4 pages) | ✅ | ✅ |
+| `EventResource` (+ 4 pages) | ✅ | ✅ |
 | `InvoiceResource` (+ 3 pages) | ⚠️ | ❌ |
 | `Pages/Cotisations` | ✅ | ❌ |
-| `Pages/Users` | ❌ | ❌ |
+| `Pages/Users` | ✅ | ✅ |
 | `Pages/Strava` | ❌ | ❌ |
 | `Pages/StravaConnect` | ❌ | ❌ |
 | `Widgets/StatsOverview` | ✅ | ❌ |

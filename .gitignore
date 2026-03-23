@@ -31,3 +31,8 @@ auth.json
 scripts/ftp.conf
 test-results/
 database/agiletra_ffgva.sql
+
+# Dusk
+tests/Browser/screenshots/
+tests/Browser/console/
+tests/Browser/source/
