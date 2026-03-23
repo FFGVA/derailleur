@@ -125,10 +125,10 @@ class MembersRelationManager extends RelationManager
                         $record->first_name . ' ' . $record->last_name .
                         ($record->member_number ? ' (#' . $record->member_number . ')' : '')
                     )
+                    ->recordSelectOptionsQuery(fn ($query) => $query->whereIn('statuscode', ['A', 'P', 'I']))
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
-                            ->label('Membre')
-                            ->modifyQueryUsing(fn ($query) => $query->whereIn('statuscode', ['A', 'P', 'I'])),
+                            ->label('Membre'),
                         Forms\Components\Select::make('status')
                             ->label('Statut')
                             ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
