@@ -111,7 +111,8 @@ rsync -a \
     --exclude='storage/app/private/livewire-tmp' \
     --exclude='storage/app/private/invoices' \
     --exclude='bootstrap/cache/*.php' \
-    --exclude='scripts' \
+    --exclude='scripts/deploy.sh' \
+    --exclude='scripts/ftp.conf' \
     --exclude='database' \
     --exclude='resources/css/app.css' \
     --exclude='resources/js/app.js' \
