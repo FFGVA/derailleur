@@ -34,8 +34,10 @@ Route::get('/events/ical', function () {
     ]);
 })->name('events.ical');
 
-// Membership card validation (public)
-Route::get('/carte/valider', [PortalController::class, 'carteValider'])->name('carte.valider');
+// Membership card validation (public, short token URL to avoid Chrome Safe Browsing false positives)
+Route::get('/carte/v/{token}', [PortalController::class, 'carteValider'])
+    ->where('token', '[a-f0-9]{16}')
+    ->name('carte.valider');
 
 // Portal auth (public)
 Route::get('/login', [PortalAuthController::class, 'login'])->name('portail.login');

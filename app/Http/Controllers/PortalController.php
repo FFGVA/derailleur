@@ -225,12 +225,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        // QR URL valid for 10 minutes, regenerated every 5 on the page via JS
-        $qrUrl = URL::temporarySignedRoute(
-            'carte.valider',
-            now()->addMinutes(5),
-            ['member' => $member->id],
-        );
+        $qrUrl = self::generateCarteToken($member);
 
         $isActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E'])
             && (!$member->membership_end || !$member->membership_end->isPast());
@@ -246,18 +241,26 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        $qrUrl = URL::temporarySignedRoute(
-            'carte.valider',
-            now()->addMinutes(5),
-            ['member' => $member->id],
-        );
-
-        return response()->json(['url' => $qrUrl]);
+        return response()->json(['url' => self::generateCarteToken($member)]);
     }
 
-    public function carteValider(Request $request)
+    /**
+     * Generate a short token for card validation and return the URL.
+     * Token is cached for 5 minutes mapping to the member ID.
+     */
+    private static function generateCarteToken(Member $member): string
     {
-        if (!$request->hasValidSignature()) {
+        $token = bin2hex(random_bytes(8)); // 16 hex chars
+        \Illuminate\Support\Facades\Cache::put("carte_token:{$token}", $member->id, now()->addMinutes(5));
+
+        return url("/carte/v/{$token}");
+    }
+
+    public function carteValider(Request $request, string $token)
+    {
+        $memberId = \Illuminate\Support\Facades\Cache::get("carte_token:{$token}");
+
+        if (!$memberId) {
             return view('portail.carte-valider', [
                 'valid' => false,
                 'member' => null,
@@ -265,7 +268,7 @@ class PortalController extends Controller
             ]);
         }
 
-        $member = Member::find($request->query('member'));
+        $member = Member::find($memberId);
 
         if (!$member) {
             return view('portail.carte-valider', [
