@@ -57,16 +57,16 @@ class EventPolicyTest extends TestCase
         $this->ownEvent = Event::create([
             'title' => 'Own Event',
             'starts_at' => now()->addDays(7),
-            'chef_peloton_id' => $this->chefMember->id,
             'statuscode' => 'P',
         ]);
+        \App\Models\EventChef::create(['event_id' => $this->ownEvent->id, 'member_id' => $this->chefMember->id, 'sort_order' => 0]);
 
         $this->otherEvent = Event::create([
             'title' => 'Other Event',
             'starts_at' => now()->addDays(14),
-            'chef_peloton_id' => $this->otherMember->id,
             'statuscode' => 'P',
         ]);
+        \App\Models\EventChef::create(['event_id' => $this->otherEvent->id, 'member_id' => $this->otherMember->id, 'sort_order' => 0]);
     }
 
     public function test_admin_can_view_any_events(): void

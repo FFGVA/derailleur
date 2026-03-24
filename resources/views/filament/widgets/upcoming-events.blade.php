@@ -23,10 +23,10 @@
                             </div>
                         @endif
 
-                        @if($event->chefPeloton)
+                        @if($event->chefs->isNotEmpty())
                             <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                                 <x-heroicon-o-user class="w-4 h-4" />
-                                <span>{{ $event->chefPeloton->first_name }} {{ $event->chefPeloton->last_name }}</span>
+                                <span>{{ $event->chefs->pluck('first_name')->join(', ') }}</span>
                             </div>
                         @endif
 

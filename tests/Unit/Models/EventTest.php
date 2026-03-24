@@ -5,7 +5,6 @@ namespace Tests\Unit\Models;
 use App\Enums\EventStatus;
 use App\Models\Event;
 use App\Models\Member;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
@@ -58,14 +57,12 @@ class EventTest extends TestCase
             'max_participants' => 25,
             'price' => '15.50',
             'statuscode' => 'P',
-            'chef_peloton_id' => $member->id,
         ]);
 
         $this->assertSame('Grand Tour', $event->title);
         $this->assertSame('A wonderful ride', $event->description);
         $this->assertSame('Geneve', $event->location);
         $this->assertSame(25, $event->max_participants);
-        $this->assertSame($member->id, $event->chef_peloton_id);
     }
 
     public function test_statuscode_casts_to_event_status_enum(): void
@@ -122,14 +119,15 @@ class EventTest extends TestCase
         $this->assertInstanceOf(BelongsToMany::class, $event->members());
     }
 
-    public function test_chef_peloton_relationship_returns_belongs_to(): void
+    public function test_chefs_relationship_returns_belongs_to_many(): void
     {
         $member = $this->makeMember();
-        $event = $this->makeEvent(['chef_peloton_id' => $member->id]);
+        $event = $this->makeEvent();
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $member->id, 'sort_order' => 0]);
 
-        $this->assertInstanceOf(BelongsTo::class, $event->chefPeloton());
-        $this->assertInstanceOf(Member::class, $event->chefPeloton);
-        $this->assertSame($member->id, $event->chefPeloton->id);
+        $this->assertInstanceOf(BelongsToMany::class, $event->chefs());
+        $this->assertEquals(1, $event->chefs()->count());
+        $this->assertSame($member->id, $event->chefs->first()->id);
     }
 
     public function test_soft_delete_works(): void

@@ -271,7 +271,8 @@ class EventResourceTest extends TestCase
     public function test_delete_action_hidden_for_chef(): void
     {
         [$chef, $chefMember] = $this->makeChef();
-        $event = $this->makeEvent(['chef_peloton_id' => $chefMember->id]);
+        $event = $this->makeEvent();
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $chefMember->id, 'sort_order' => 0]);
 
         $response = $this->actingAs($chef)
             ->get(EventResource::getUrl('edit', ['record' => $event]));
@@ -294,10 +295,133 @@ class EventResourceTest extends TestCase
     public function test_chef_can_edit_own_event(): void
     {
         [$chef, $chefMember] = $this->makeChef();
-        $event = $this->makeEvent(['chef_peloton_id' => $chefMember->id]);
+        $event = $this->makeEvent();
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $chefMember->id, 'sort_order' => 0]);
 
         $this->actingAs($chef)
             ->get(EventResource::getUrl('edit', ['record' => $event]))
             ->assertStatus(200);
+    }
+
+    // ── Multi-chef assignment ──
+
+    public function test_create_event_with_multiple_chefs(): void
+    {
+        $chef1 = Member::create([
+            'first_name' => 'Chef1',
+            'last_name' => 'Test',
+            'email' => 'er-chef1-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+        $chef2 = Member::create([
+            'first_name' => 'Chef2',
+            'last_name' => 'Test',
+            'email' => 'er-chef2-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(CreateEvent::class)
+            ->fillForm([
+                'title' => 'Multi-chef sortie',
+                'starts_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+                'statuscode' => 'N',
+                'chef_ids' => [$chef1->id, $chef2->id],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $event = Event::where('title', 'Multi-chef sortie')->first();
+        $this->assertNotNull($event);
+        $this->assertEquals(2, $event->chefs()->count());
+        $this->assertTrue($event->chefs->contains('id', $chef1->id));
+        $this->assertTrue($event->chefs->contains('id', $chef2->id));
+    }
+
+    public function test_edit_event_loads_existing_chefs(): void
+    {
+        $event = $this->makeEvent();
+        $chef = Member::create([
+            'first_name' => 'Existing',
+            'last_name' => 'Chef',
+            'email' => 'er-existing-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+        \App\Models\EventChef::create([
+            'event_id' => $event->id,
+            'member_id' => $chef->id,
+            'sort_order' => 0,
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(EditEvent::class, ['record' => $event->id])
+            ->assertFormSet(['chef_ids' => [$chef->id]]);
+    }
+
+    public function test_edit_event_adds_and_removes_chefs(): void
+    {
+        $event = $this->makeEvent();
+        $chef1 = Member::create([
+            'first_name' => 'Keep',
+            'last_name' => 'Chef',
+            'email' => 'er-keep-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+        $chef2 = Member::create([
+            'first_name' => 'Remove',
+            'last_name' => 'Chef',
+            'email' => 'er-remove-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+        $chef3 = Member::create([
+            'first_name' => 'Add',
+            'last_name' => 'Chef',
+            'email' => 'er-add-' . uniqid() . '@test.ch',
+            'statuscode' => 'A',
+        ]);
+
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $chef1->id, 'sort_order' => 0]);
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $chef2->id, 'sort_order' => 1]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(EditEvent::class, ['record' => $event->id])
+            ->fillForm(['chef_ids' => [$chef1->id, $chef3->id]])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $event->refresh();
+        $chefIds = $event->chefs->pluck('id')->toArray();
+        $this->assertContains($chef1->id, $chefIds);
+        $this->assertContains($chef3->id, $chefIds);
+        $this->assertNotContains($chef2->id, $chefIds);
+
+        // chef2 should be soft-deleted, not hard-deleted
+        $this->assertDatabaseHas('event_chef', [
+            'event_id' => $event->id,
+            'member_id' => $chef2->id,
+        ]);
+        $softDeleted = \App\Models\EventChef::withTrashed()
+            ->where('event_id', $event->id)
+            ->where('member_id', $chef2->id)
+            ->first();
+        $this->assertNotNull($softDeleted->deleted_at);
+    }
+
+    public function test_create_event_with_no_chefs(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(CreateEvent::class)
+            ->fillForm([
+                'title' => 'No-chef sortie',
+                'starts_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+                'statuscode' => 'N',
+                'chef_ids' => [],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $event = Event::where('title', 'No-chef sortie')->first();
+        $this->assertNotNull($event);
+        $this->assertEquals(0, $event->chefs()->count());
     }
 }

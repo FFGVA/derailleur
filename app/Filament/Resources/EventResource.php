@@ -83,13 +83,15 @@ class EventResource extends Resource
                             ->label('Fin')
                             ->displayFormat('d.m.Y H:i')
                             ->columnSpan(3),
-                        Forms\Components\Select::make('chef_peloton_id')
-                            ->label('Cheffe de peloton')
-                            ->relationship('chefPeloton', 'last_name')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->first_name . ' ' . $record->last_name)
-                            ->searchable(['first_name', 'last_name'])
+                        Forms\Components\Select::make('chef_ids')
+                            ->label('Cheffes de peloton')
+                            ->multiple()
+                            ->options(fn () => \App\Models\Member::whereNull('deleted_at')
+                                ->orderBy('first_name')
+                                ->get()
+                                ->mapWithKeys(fn ($m) => [$m->id => $m->first_name . ' ' . $m->last_name]))
+                            ->searchable()
                             ->preload()
-                            ->nullable()
                             ->columnSpan(6),
                         Forms\Components\FileUpload::make('gpx_file')
                             ->label('Fichier GPX')
@@ -159,8 +161,9 @@ class EventResource extends Resource
                     ->label('Lieu')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('chefs_list')
-                    ->label('Cheffes de peloton')
-                    ->state(fn ($record) => $record->chefs->map(fn ($c) => $c->first_name . ' ' . $c->last_name)->join(', ') ?: '—'),
+                    ->label('Cheffes')
+                    ->state(fn ($record) => $record->chefs->map(fn ($c) => $c->first_name . ' ' . $c->last_name)->join(', ') ?: '—')
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('statuscode')
                     ->label('Statut')
                     ->badge()

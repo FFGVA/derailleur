@@ -18,20 +18,6 @@ class Event extends Model
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
 
-    protected static function booted(): void
-    {
-        // Sync chef_peloton_id → event_chef pivot for backward compatibility
-        static::saved(function (Event $event) {
-            if ($event->chef_peloton_id && !$event->eventChefs()->where('member_id', $event->chef_peloton_id)->exists()) {
-                EventChef::create([
-                    'event_id' => $event->id,
-                    'member_id' => $event->chef_peloton_id,
-                    'sort_order' => 0,
-                ]);
-            }
-        });
-    }
-
     protected $fillable = [
         'event_type',
         'title',
@@ -46,7 +32,6 @@ class Event extends Model
         'strava_event_id',
         'strava_route_id',
         'gpx_file',
-        'chef_peloton_id',
         'modified_by_id',
     ];
 
@@ -65,11 +50,6 @@ class Event extends Model
     public function modifiedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'modified_by_id');
-    }
-
-    public function chefPeloton(): BelongsTo
-    {
-        return $this->belongsTo(Member::class, 'chef_peloton_id');
     }
 
     /**

@@ -126,13 +126,13 @@ class MemberTest extends TestCase
 
         $this->assertInstanceOf(BelongsToMany::class, $member->ledEvents());
 
-        Event::create([
+        $event = Event::create([
             'title' => 'Sortie test',
             'starts_at' => '2025-06-01 08:00:00',
             'ends_at' => '2025-06-01 12:00:00',
             'statuscode' => 'N',
-            'chef_peloton_id' => $member->id,
         ]);
+        \App\Models\EventChef::create(['event_id' => $event->id, 'member_id' => $member->id, 'sort_order' => 0]);
 
         $member->refresh();
 

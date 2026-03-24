@@ -307,7 +307,7 @@ class PortalController extends Controller
     public function evenement(Request $request, Event $event)
     {
         $member = $request->attributes->get('portal_member');
-        $event->load('chefPeloton.phones');
+        $event->load('chefs.phones');
 
         $pivot = $member->events()
             ->where('events.id', $event->id)

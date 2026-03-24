@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\InvoiceMail;
 use App\Models\Event;
+use App\Models\EventChef;
 use App\Models\EventMember;
 use App\Models\Invoice;
 use App\Models\Member;
@@ -54,18 +55,30 @@ class PortalPelotonTest extends TestCase
         ])->post($uri, $data);
     }
 
+    private function createEventWithChef(Member $chef, array $overrides = []): Event
+    {
+        $event = Event::create(array_merge([
+            'title' => 'Sortie test',
+            'starts_at' => now()->addDays(3),
+            'statuscode' => 'P',
+            'price' => 0,
+        ], $overrides));
+
+        EventChef::create([
+            'event_id' => $event->id,
+            'member_id' => $chef->id,
+            'sort_order' => 0,
+        ]);
+
+        return $event;
+    }
+
     // ── Dashboard button ──
 
     public function test_dashboard_shows_peloton_button_for_chef(): void
     {
         $chef = $this->createChef();
-        Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $this->createEventWithChef($chef);
 
         $response = $this->authenticatedGet($chef, '/portail');
 
@@ -93,13 +106,7 @@ class PortalPelotonTest extends TestCase
     public function test_peloton_page_shows_upcoming_led_events(): void
     {
         $chef = $this->createChef();
-        Event::create([
-            'title' => 'Sortie Jura',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $this->createEventWithChef($chef, ['title' => 'Sortie Jura']);
 
         $response = $this->authenticatedGet($chef, '/portail/peloton');
 
@@ -110,13 +117,7 @@ class PortalPelotonTest extends TestCase
     public function test_peloton_page_shows_events_up_to_1_week_past(): void
     {
         $chef = $this->createChef();
-        Event::create([
-            'title' => 'Sortie récente',
-            'starts_at' => now()->subDays(5),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $this->createEventWithChef($chef, ['title' => 'Sortie récente', 'starts_at' => now()->subDays(5)]);
 
         $response = $this->authenticatedGet($chef, '/portail/peloton');
 
@@ -126,13 +127,7 @@ class PortalPelotonTest extends TestCase
     public function test_peloton_page_hides_events_older_than_1_week(): void
     {
         $chef = $this->createChef();
-        Event::create([
-            'title' => 'Sortie ancienne',
-            'starts_at' => now()->subDays(10),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $this->createEventWithChef($chef, ['title' => 'Sortie ancienne', 'starts_at' => now()->subDays(10)]);
 
         $response = $this->authenticatedGet($chef, '/portail/peloton');
 
@@ -143,13 +138,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $otherChef = $this->createMember('Autre', 'Chef');
-        Event::create([
-            'title' => 'Sortie autre chef',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $otherChef->id,
-        ]);
+        $this->createEventWithChef($otherChef, ['title' => 'Sortie autre chef']);
 
         $response = $this->authenticatedGet($chef, '/portail/peloton');
 
@@ -161,15 +150,12 @@ class PortalPelotonTest extends TestCase
     public function test_peloton_event_shows_detail(): void
     {
         $chef = $this->createChef();
-        $event = Event::create([
+        $event = $this->createEventWithChef($chef, [
             'title' => 'Col de la Faucille',
             'description' => 'Montée mythique du Jura',
             'starts_at' => now()->addDays(3)->setTime(9, 0),
             'ends_at' => now()->addDays(3)->setTime(12, 0),
             'location' => 'Gex, France',
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
         ]);
 
         $response = $this->authenticatedGet($chef, '/portail/peloton/' . $event->id);
@@ -191,13 +177,7 @@ class PortalPelotonTest extends TestCase
             'sort_order' => 0,
         ]);
 
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         EventMember::create([
             'event_id' => $event->id,
@@ -223,13 +203,7 @@ class PortalPelotonTest extends TestCase
             'is_invitee' => false,
             'photo_ok' => false,
         ]);
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -245,13 +219,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Souriante');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -267,13 +235,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $other = $this->createMember();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $response = $this->authenticatedGet($other, '/portail/peloton/' . $event->id);
 
@@ -286,13 +248,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Cycliste');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -309,13 +265,7 @@ class PortalPelotonTest extends TestCase
     public function test_peloton_member_allows_chef_to_view_herself(): void
     {
         $chef = $this->createChef();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $response = $this->authenticatedGet($chef, "/portail/peloton/{$event->id}/membre/{$chef->id}");
 
@@ -327,13 +277,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $outsider = $this->createMember('Externe', 'Personne');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $response = $this->authenticatedGet($chef, "/portail/peloton/{$event->id}/membre/{$outsider->id}");
 
@@ -346,13 +290,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         $pivot = EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -370,13 +308,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         $pivot = EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -394,13 +326,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         $pivot = EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -419,13 +345,7 @@ class PortalPelotonTest extends TestCase
         $chef = $this->createChef();
         $other = $this->createMember('Autre', 'Personne');
         $rider = $this->createMember('Léa', 'Cycliste');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -441,13 +361,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember();
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -465,13 +379,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Nouvelle');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $this->authenticatedPost($chef, "/portail/peloton/{$event->id}/ajouter", [
             'member_id' => $rider->id,
@@ -490,13 +398,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Nouvelle');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $response = $this->authenticatedPost($chef, "/portail/peloton/{$event->id}/ajouter", [
             'member_id' => $rider->id,
@@ -510,13 +412,7 @@ class PortalPelotonTest extends TestCase
         $chef = $this->createChef();
         $other = $this->createMember('Autre', 'Personne');
         $rider = $this->createMember('Léa', 'Nouvelle');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
 
         $response = $this->authenticatedPost($other, "/portail/peloton/{$event->id}/ajouter", [
             'member_id' => $rider->id,
@@ -529,13 +425,7 @@ class PortalPelotonTest extends TestCase
     {
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Déjà');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $rider->id,
@@ -555,13 +445,7 @@ class PortalPelotonTest extends TestCase
         $chef = $this->createChef();
         $existing = $this->createMember('Déjà', 'Là');
         $available = $this->createMember('Nouvelle', 'Membre');
-        $event = Event::create([
-            'title' => 'Sortie test',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef);
         EventMember::create([
             'event_id' => $event->id,
             'member_id' => $existing->id,
@@ -579,13 +463,7 @@ class PortalPelotonTest extends TestCase
         Mail::fake();
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Payante');
-        $event = Event::create([
-            'title' => 'Sortie payante',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 25.00,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef, ['title' => 'Sortie payante', 'price' => 25.00]);
 
         $this->authenticatedPost($chef, "/portail/peloton/{$event->id}/ajouter", [
             'member_id' => $rider->id,
@@ -608,13 +486,7 @@ class PortalPelotonTest extends TestCase
         Mail::fake();
         $chef = $this->createChef();
         $rider = $this->createMember('Léa', 'Gratuite');
-        $event = Event::create([
-            'title' => 'Sortie gratuite',
-            'starts_at' => now()->addDays(3),
-            'statuscode' => 'P',
-            'price' => 0,
-            'chef_peloton_id' => $chef->id,
-        ]);
+        $event = $this->createEventWithChef($chef, ['title' => 'Sortie gratuite']);
 
         $this->authenticatedPost($chef, "/portail/peloton/{$event->id}/ajouter", [
             'member_id' => $rider->id,
