@@ -2,15 +2,19 @@
 
 namespace App\Filament\Resources\EventResource\Pages;
 
+use App\Enums\EventMemberStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Filament\Resources\EventResource;
 use App\Filament\Resources\EventResource\RelationManagers;
+use App\Mail\EventReminderMail;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\Mail;
 
 class ViewEvent extends ViewRecord
 {
@@ -86,7 +90,7 @@ class ViewEvent extends ViewRecord
                                         ->color(fn (EventStatus $state) => $state->getColor()),
                                     Components\TextEntry::make('members_count')
                                         ->label('Participantes')
-                                        ->state(fn ($record) => $record->members()->count())
+                                        ->state(fn ($record) => $record->members()->whereIn('event_member.status', ['N', 'C'])->count())
                                         ->icon('heroicon-o-user-group'),
                                     Components\TextEntry::make('price')
                                         ->label('Prix membre')
@@ -142,6 +146,31 @@ class ViewEvent extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('reminder')
+                ->label('Rappel')
+                ->icon('heroicon-o-envelope')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Envoyer un rappel')
+                ->modalDescription(fn () => 'Un e-mail de rappel sera envoyé à toutes les participantes inscrites (' . $this->record->members()->whereIn('event_member.status', ['N', 'C'])->count() . ' personnes).')
+                ->modalSubmitActionLabel('Envoyer')
+                ->action(function () {
+                    $participants = $this->record->members()
+                        ->whereIn('event_member.status', ['N', 'C'])
+                        ->get();
+
+                    $count = 0;
+                    foreach ($participants as $member) {
+                        Mail::send(new EventReminderMail($member, $this->record));
+                        $count++;
+                    }
+
+                    Notification::make()
+                        ->title('Rappel envoyé')
+                        ->body("{$count} e-mail(s) envoyé(s).")
+                        ->success()
+                        ->send();
+                }),
             Actions\EditAction::make()
                 ->label('Modifier')
                 ->icon('heroicon-o-pencil-square')

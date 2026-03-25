@@ -17,6 +17,22 @@ class Member extends Model
     const CREATED_AT = null;
     const UPDATED_AT = 'updated_at';
 
+    const METADATA_LABELS = [
+        'instagram' => 'Instagram',
+        'strava' => 'Strava',
+        'type_velo' => 'Type de vélo',
+        'taille_maillot' => 'Taille maillot',
+        'groupe' => 'Groupe',
+        'fonction' => 'Fonction',
+        'gilet' => 'Gilet',
+        'bib' => 'Dossard',
+        'aec' => 'AEC',
+        'atelier' => 'Atelier',
+        'sorties' => 'Sorties',
+        'cotisation_ok' => 'Cotisation OK',
+        'statuts_ok' => 'Statuts OK',
+    ];
+
     protected static function booted(): void
     {
         static::updating(function (Member $member) {

@@ -159,7 +159,8 @@ class EventResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Lieu')
-                    ->searchable(),
+                    ->searchable()
+                    ->wrap(),
                 Tables\Columns\TextColumn::make('chefs_list')
                     ->label('Cheffes')
                     ->state(fn ($record) => $record->chefs->map(fn ($c) => $c->first_name . ' ' . $c->last_name)->join(', ') ?: '—')
@@ -174,10 +175,10 @@ class EventResource extends Resource
                     ->label('Prix')
                     ->money('CHF', locale: 'de_CH')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('members_count')
+                Tables\Columns\TextColumn::make('active_members_count')
                     ->label('Participantes')
-                    ->counts('members')
-                    ->sortable(),
+                    ->state(fn ($record) => $record->members()->whereIn('event_member.status', ['N', 'C'])->count())
+                    ->sortable(false),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('actifs')
