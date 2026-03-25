@@ -15,7 +15,7 @@
         @foreach($allEvents as $event)
             <tr class="{{ !$loop->last ? 'border-b border-gray-100 dark:border-gray-700' : '' }}">
                 <td class="py-1.5 pr-2">
-                    <a href="{{ \App\Filament\Resources\EventResource::getUrl('edit', ['record' => $event]) }}"
+                    <a href="{{ \App\Filament\Resources\EventResource::getUrl('view', ['record' => $event]) }}"
                        class="text-primary-600 hover:underline">
                         {{ $event->title }}
                     </a>
