@@ -71,6 +71,7 @@ class ViewMember extends ViewRecord
                                 ])
                                 ->hidden(fn ($record) => $record->events->isEmpty() && $record->ledEvents->isEmpty()),
                             Components\Section::make('Factures')
+                                ->icon('heroicon-o-document-text')
                                 ->schema([
                                     Components\ViewEntry::make('member_invoices')
                                         ->label('')
@@ -144,11 +145,13 @@ class ViewMember extends ViewRecord
                     ->hidden(fn ($record) => empty($record->notes)),
 
                 Components\Section::make('Métadonnées')
+                    ->icon('heroicon-o-table-cells')
                     ->schema([
                         Components\ViewEntry::make('metadata_display')
                             ->label('')
                             ->view('filament.infolists.member-metadata'),
                     ])
+                    ->collapsed()
                     ->hidden(fn ($record) => empty($record->metadata)),
             ]);
     }

@@ -33,7 +33,7 @@ class MemberResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informations personnelles')
+                Forms\Components\Section::make(new \Illuminate\Support\HtmlString('<span style="display:inline-flex;align-items:center;gap:0.5rem;"><img src="' . asset('images/contact.svg') . '" style="width:1.25rem;height:1.25rem;filter:invert(50%);"> Informations personnelles</span>'))
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('first_name')
@@ -54,6 +54,7 @@ class MemberResource extends Resource
                             ->displayFormat('d.m.Y'),
                     ]),
                 Forms\Components\Section::make('Adhésion')
+                    ->icon('heroicon-o-clock')
                     ->columns(4)
                     ->schema([
                         Forms\Components\Select::make('statuscode')
@@ -73,6 +74,7 @@ class MemberResource extends Resource
                             ->columnSpanFull(),
                     ]),
                 Forms\Components\Section::make('Téléphones')
+                    ->icon('heroicon-o-phone')
                     ->schema([
                         Forms\Components\Repeater::make('phones')
                             ->relationship()
@@ -101,6 +103,7 @@ class MemberResource extends Resource
                             ->orderColumn('sort_order'),
                     ]),
                 Forms\Components\Section::make('Adresse')
+                    ->icon('heroicon-o-map-pin')
                     ->columns(20)
                     ->schema([
                         Forms\Components\Textarea::make('address')
@@ -136,6 +139,7 @@ class MemberResource extends Resource
                             ->maxLength(60),
                     ]),
                 Forms\Components\Section::make('Métadonnées')
+                    ->icon('heroicon-o-table-cells')
                     ->schema([
                         Forms\Components\KeyValue::make('metadata')
                             ->label('')
