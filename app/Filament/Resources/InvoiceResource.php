@@ -111,12 +111,25 @@ class InvoiceResource extends Resource
                             })
                             ->live(),
                     ]),
+                Forms\Components\Section::make('Dernière modification')
+                    ->icon('heroicon-o-clock')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Placeholder::make('updated_at_display')
+                            ->label('Date')
+                            ->content(fn ($record) => $record?->updated_at?->format('d.m.Y H:i') ?? '—'),
+                        Forms\Components\Placeholder::make('modified_by_display')
+                            ->label('Par')
+                            ->content(fn ($record) => $record?->modifiedBy?->name ?? '—'),
+                    ])
+                    ->hiddenOn('create'),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->heading('Factures')
             ->defaultSort('updated_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
@@ -160,8 +173,7 @@ class InvoiceResource extends Resource
             ])
             ->headerActions([
                 Tables\Actions\Action::make('createAutre')
-                    ->label('')
-                    ->tooltip('Nouvelle facture autre')
+                    ->label('Nouvelle facture')
                     ->icon('heroicon-o-plus')
                     ->color('primary')
                     ->modalHeading('Nouvelle facture')

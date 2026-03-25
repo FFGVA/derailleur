@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Invoice;
 use App\Models\Member;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -36,7 +37,15 @@ class ExpiringMemberships extends StatsOverviewWidget
             })
             ->count();
 
+        $openAmount = Invoice::whereIn('statuscode', ['N', 'E'])
+            ->whereNull('deleted_at')
+            ->sum('amount');
+
         return [
+            Stat::make('Factures ouvertes', 'CHF ' . number_format((float) $openAmount, 2, '.', ''))
+                ->description('Montant total non payé')
+                ->icon('heroicon-o-banknotes')
+                ->color($openAmount > 0 ? 'warning' : 'success'),
             Stat::make('Adhésions qui expirent', $count)
                 ->description('Fin d\'adhésion ce mois ou avant')
                 ->icon('heroicon-o-exclamation-triangle')

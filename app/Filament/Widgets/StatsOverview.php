@@ -2,8 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\EventResource;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\MemberResource;
+use App\Models\Event;
 use App\Models\Invoice;
 use App\Models\Member;
 use Filament\Widgets\StatsOverviewWidget;
@@ -13,6 +15,18 @@ class StatsOverview extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
+        $plannedEvents = Event::whereIn('statuscode', ['N', 'P'])
+            ->where('starts_at', '>=', now()->startOfDay())
+            ->whereNull('deleted_at')
+            ->count();
+
+        $toClose = Event::where('statuscode', 'P')
+            ->where('starts_at', '<', now()->startOfDay())
+            ->whereNull('deleted_at')
+            ->count();
+
+        $totalEvents = Event::whereNull('deleted_at')->count();
+
         $unpaidTotal = Invoice::whereIn('statuscode', ['N', 'E'])
             ->sum('amount');
 
@@ -21,6 +35,11 @@ class StatsOverview extends StatsOverviewWidget
             ->count();
 
         return [
+            Stat::make('Événements', $plannedEvents . ' planifiés (' . $totalEvents . ')')
+                ->description($toClose > 0 ? $toClose . ' à clôturer' : 'Tous à jour')
+                ->icon('heroicon-o-calendar-days')
+                ->color($toClose > 0 ? 'warning' : 'success')
+                ->url(EventResource::getUrl('index')),
             Stat::make('Montants ouverts', 'CHF ' . number_format($unpaidTotal, 2, '.', "'"))
                 ->description('Factures non payées')
                 ->icon('heroicon-o-banknotes')

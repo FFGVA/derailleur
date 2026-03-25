@@ -31,7 +31,7 @@ class UpcomingEvents extends Widget
                         ->whereDate('starts_at', '>=', $today);
                 });
             })
-            ->with('chefs')
+            ->with(['chefs', 'members'])
             ->orderBy('starts_at')
             ->get();
     }

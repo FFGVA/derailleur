@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InvoiceLine extends Model
 {
+    use Concerns\SetsModifiedBy;
     use SoftDeletes;
 
     const CREATED_AT = null;
@@ -17,6 +18,7 @@ class InvoiceLine extends Model
         'description',
         'amount',
         'sort_order',
+        'modified_by_id',
     ];
 
     protected function casts(): array
@@ -29,5 +31,10 @@ class InvoiceLine extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function modifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'modified_by_id');
     }
 }

@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 
 class Member extends Model
 {
+    use Concerns\SetsModifiedBy;
     use SoftDeletes;
 
     const CREATED_AT = null;

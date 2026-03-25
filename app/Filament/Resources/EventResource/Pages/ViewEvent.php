@@ -140,6 +140,22 @@ class ViewEvent extends ViewRecord
                                 ->collapsed(fn ($record) => !$record->strava_event_id),
                         ])->columnSpan(1),
                     ]),
+
+                // Last modified
+                Components\Section::make()
+                    ->schema([
+                        Components\Grid::make(2)
+                            ->schema([
+                                Components\TextEntry::make('updated_at')
+                                    ->label('Dernière modification')
+                                    ->icon('heroicon-o-clock')
+                                    ->dateTime('d.m.Y H:i'),
+                                Components\TextEntry::make('modifiedBy.name')
+                                    ->label('Par')
+                                    ->icon('heroicon-o-user')
+                                    ->placeholder('—'),
+                            ]),
+                    ]),
             ]);
     }
 

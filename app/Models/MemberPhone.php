@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MemberPhone extends Model
 {
+    use Concerns\SetsModifiedBy;
     use SoftDeletes;
 
     const CREATED_AT = null;

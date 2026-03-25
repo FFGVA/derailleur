@@ -10,6 +10,12 @@ class EditInvoice extends EditRecord
 {
     protected static string $resource = InvoiceResource::class;
 
+    protected function afterSave(): void
+    {
+        // Touch timestamp so line edits are reflected (modified_by_id set by SetsModifiedBy trait)
+        $this->record->touch();
+    }
+
     protected function getFormActions(): array
     {
         return [

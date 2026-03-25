@@ -149,6 +149,18 @@ class MemberResource extends Resource
                             ->reorderable(),
                     ])
                     ->collapsed(),
+                Forms\Components\Section::make('Dernière modification')
+                    ->icon('heroicon-o-clock')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Placeholder::make('updated_at_display')
+                            ->label('Date')
+                            ->content(fn ($record) => $record?->updated_at?->format('d.m.Y H:i') ?? '—'),
+                        Forms\Components\Placeholder::make('modified_by_display')
+                            ->label('Par')
+                            ->content(fn ($record) => $record?->modifiedBy?->name ?? '—'),
+                    ])
+                    ->hiddenOn('create'),
             ]);
     }
 

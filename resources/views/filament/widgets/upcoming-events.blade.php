@@ -1,10 +1,16 @@
 <x-filament-widgets::widget>
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         @forelse($this->getEvents() as $event)
-            <a href="{{ \App\Filament\Resources\EventResource::getUrl('edit', ['record' => $event]) }}" class="block transition hover:scale-[1.02]">
+            @php
+                $activeParticipants = $event->members->filter(fn ($m) => in_array($m->pivot->getRawOriginal('status'), ['N', 'C']));
+                $participantCount = $activeParticipants->count();
+                $memberCount = $activeParticipants->filter(fn ($m) => $m->getRawOriginal('statuscode') === 'A')->count();
+                $nonMemberCount = $participantCount - $memberCount;
+            @endphp
+            <a href="{{ \App\Filament\Resources\EventResource::getUrl('view', ['record' => $event]) }}" class="block transition hover:scale-[1.02]">
                 <x-filament::section>
                     <x-slot name="heading">
-                        {{ $event->title }}
+                        {{ $event->title }}@if($participantCount) [{{ $participantCount }}]@endif
                     </x-slot>
 
                     <div class="space-y-2 text-sm">
@@ -30,18 +36,19 @@
                             </div>
                         @endif
 
+                        @if($participantCount)
+                            <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                <x-heroicon-o-user-group class="w-4 h-4" />
+                                <span>{{ $memberCount }} membres / {{ $nonMemberCount }} non-membres</span>
+                            </div>
+                        @endif
+
                         <div class="flex items-center justify-between pt-2">
                             <x-filament::badge
                                 :color="$event->statuscode->getColor()"
                             >
                                 {{ $event->statuscode->getLabel() }}
                             </x-filament::badge>
-
-                            @if($event->members()->count())
-                                <span class="text-xs text-gray-500">
-                                    {{ $event->members()->count() }} participante(s)
-                                </span>
-                            @endif
                         </div>
                     </div>
                 </x-filament::section>

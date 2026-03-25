@@ -500,11 +500,20 @@ class PortalController extends Controller
             ->orderBy('last_name')
             ->get(['id', 'first_name', 'last_name']);
 
+        // Find members with open invoices for this event
+        $openInvoiceMemberIds = \App\Models\Invoice::whereIn('statuscode', ['N', 'E'])
+            ->whereNull('deleted_at')
+            ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))
+            ->pluck('member_id')
+            ->unique()
+            ->toArray();
+
         return view('portail.peloton-event', [
             'member' => $member,
             'event' => $event,
             'participants' => $participants,
             'availableMembers' => $availableMembers,
+            'openInvoiceMemberIds' => $openInvoiceMemberIds,
         ]);
     }
 

@@ -121,8 +121,27 @@
         display: flex;
         align-items: center;
         gap: 0.625rem;
-        padding: 0.75rem 0;
+        padding: 0.75rem 0.5rem;
         border-bottom: 1px solid #f0ede8;
+        border-radius: 0.25rem;
+    }
+    .portal-participant-nonmember {
+        background-color: #eff6ff;
+    }
+    .portal-participant-cancelled {
+        background-color: #fff1f2;
+    }
+    .portal-participant-unpaid {
+        background-color: #991b1b;
+        color: white;
+    }
+    .portal-participant-unpaid .portal-participant-name a,
+    .portal-participant-unpaid .portal-participant-icons a,
+    .portal-participant-unpaid .portal-info-label {
+        color: white;
+    }
+    .portal-participant-unpaid .portal-participant-icons a:hover {
+        color: #fecaca;
     }
     .portal-participant:last-child { border-bottom: none; }
     .portal-participant-info {
@@ -327,7 +346,7 @@
     {{-- Participants card --}}
     <div class="portal-detail-card">
         <div class="portal-section-header">
-            <div class="portal-section-title">Présences ({{ $participants->count() }})</div>
+            <div class="portal-section-title">Présences ({{ $participants->filter(fn ($p) => in_array($p->pivot->status->value, ['N', 'C']))->count() }})</div>
             @if($availableMembers->isNotEmpty())
                 <button class="portal-add-btn" onclick="document.getElementById('addPopup').classList.add('active')" aria-label="Ajouter">+</button>
             @endif
@@ -340,7 +359,13 @@
                 $whatsappPhone = $participant->phones->firstWhere('is_whatsapp', true);
                 $rawPresent = $participant->pivot->getRawOriginal('present');
             @endphp
-            <div class="portal-participant">
+            @php
+                $hasOpenInvoice = in_array($participant->id, $openInvoiceMemberIds);
+                $isCancelled = $participant->pivot->status->value === 'X';
+                $isNonMember = $participant->getRawOriginal('statuscode') !== 'A';
+                $rowClass = $hasOpenInvoice ? 'portal-participant-unpaid' : ($isCancelled ? 'portal-participant-cancelled' : ($isNonMember ? 'portal-participant-nonmember' : ''));
+            @endphp
+            <div class="portal-participant {{ $rowClass }}">
                 <span class="portal-status-dot {{ match($participant->pivot->status->value) { 'C' => 'portal-dot-green', 'N' => 'portal-dot-orange', 'X' => 'portal-dot-red', default => '' } }}" title="{{ $participant->pivot->status->getLabel() }}"></span>
                 <div class="portal-participant-info">
                     <div class="portal-participant-name">
@@ -358,6 +383,9 @@
                     <div class="portal-photo-spacer"></div>
                 @endif
                 <div class="portal-participant-icons">
+                    @if($hasOpenInvoice)
+                        <span title="Facture ouverte" style="font-weight:700;font-size:1.125rem;">€</span>
+                    @endif
                     <a href="mailto:{{ $participant->email }}" aria-label="E-mail">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
