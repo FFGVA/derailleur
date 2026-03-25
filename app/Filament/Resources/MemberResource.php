@@ -119,6 +119,22 @@ class MemberResource extends Resource
                             ->maxLength(2)
                             ->columnSpan(2),
                     ]),
+                Forms\Components\Section::make('Réseaux sociaux')
+                    ->icon('heroicon-o-globe-alt')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('metadata.instagram')
+                            ->label('Instagram')
+                            ->prefix(new \Illuminate\Support\HtmlString('<img src="' . asset('images/instagram-logo.svg') . '" style="width:1.25rem;height:1.25rem;">'))
+                            ->placeholder('nom_utilisateur')
+                            ->maxLength(30)
+                            ->dehydrateStateUsing(fn ($state) => $state ? ltrim($state, '@') : null),
+                        Forms\Components\TextInput::make('metadata.strava')
+                            ->label('Strava')
+                            ->prefix(new \Illuminate\Support\HtmlString('<img src="' . asset('images/strava-logo.svg') . '" style="width:1.25rem;height:1.25rem;">'))
+                            ->placeholder('nom_utilisateur')
+                            ->maxLength(60),
+                    ]),
                 Forms\Components\Section::make('Métadonnées')
                     ->schema([
                         Forms\Components\KeyValue::make('metadata')

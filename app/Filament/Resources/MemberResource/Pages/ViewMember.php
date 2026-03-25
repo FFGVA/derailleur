@@ -30,10 +30,10 @@ class ViewMember extends ViewRecord
                 Components\Grid::make(3)
                     ->schema([
                         Components\Group::make([
-                            Components\Section::make()
+                            Components\Section::make(new \Illuminate\Support\HtmlString('<span style="display:inline-flex;align-items:center;gap:0.5rem;"><img src="' . asset('images/contact.svg') . '" style="width:1.25rem;height:1.25rem;filter:invert(50%);"> Contact</span>'))
                                 ->schema([
                                     Components\TextEntry::make('email')
-                                        ->label('E-mail')
+                                        ->label('')
                                         ->icon('heroicon-o-envelope')
                                         ->url(fn ($record) => 'mailto:' . $record->email)
                                         ->color('primary'),
@@ -41,6 +41,28 @@ class ViewMember extends ViewRecord
                                         ->label('Téléphones')
                                         ->view('filament.infolists.phones'),
                                 ]),
+                            Components\Section::make('Réseaux sociaux')
+                                ->icon('heroicon-o-globe-alt')
+                                ->columns(2)
+                                ->schema([
+                                    Components\ViewEntry::make('instagram_link')
+                                        ->label('')
+                                        ->view('filament.infolists.social-link')
+                                        ->viewData([
+                                            'icon' => asset('images/instagram-logo.svg'),
+                                            'getUrl' => fn ($record) => ($record->metadata['instagram'] ?? false) ? 'https://instagram.com/' . ltrim($record->metadata['instagram'], '@') : null,
+                                            'getText' => fn ($record) => ($record->metadata['instagram'] ?? false) ? '@' . ltrim($record->metadata['instagram'], '@') : null,
+                                        ]),
+                                    Components\ViewEntry::make('strava_link')
+                                        ->label('')
+                                        ->view('filament.infolists.social-link')
+                                        ->viewData([
+                                            'icon' => asset('images/strava-logo.svg'),
+                                            'getUrl' => fn ($record) => ($record->metadata['strava'] ?? false) ? 'https://www.strava.com/athletes/' . urlencode($record->metadata['strava']) : null,
+                                            'getText' => fn ($record) => $record->metadata['strava'] ?? null,
+                                        ]),
+                                ])
+                                ->hidden(fn ($record) => empty($record->metadata['instagram']) && empty($record->metadata['strava'])),
                             Components\Section::make('Activités')
                                 ->schema([
                                     Components\ViewEntry::make('events')
@@ -106,13 +128,6 @@ class ViewMember extends ViewRecord
                                         ->label('Date de naissance')
                                         ->icon('heroicon-o-cake')
                                         ->date('d.m.Y')
-                                        ->placeholder('—'),
-                                    Components\TextEntry::make('metadata.instagram')
-                                        ->label('Instagram')
-                                        ->icon('heroicon-o-at-symbol')
-                                        ->url(fn ($record) => $record->metadata['instagram'] ?? false ? 'https://instagram.com/' . ltrim($record->metadata['instagram'], '@') : null)
-                                        ->openUrlInNewTab()
-                                        ->color('primary')
                                         ->placeholder('—'),
                                 ]),
                         ])->columnSpan(1),
