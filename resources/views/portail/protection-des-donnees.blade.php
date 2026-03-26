@@ -74,7 +74,6 @@
 
         <h2>Responsable du traitement</h2>
         <p>Fast and Female Geneva<br>
-        {{ config('ffgva.creditor_address') }}<br>
         {{ config('ffgva.creditor_postal_code') }} {{ config('ffgva.creditor_city') }}</p>
 
         <h2>Préposée à la protection des données</h2>
