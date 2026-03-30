@@ -62,6 +62,20 @@ class MembersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('first_name')
             ->columns([
+                Tables\Columns\IconColumn::make('statuscode')
+                    ->label('')
+                    ->icon(fn ($record) => match ($record->getRawOriginal('statuscode')) {
+                        'N' => 'heroicon-o-minus',
+                        default => 'heroicon-s-user',
+                    })
+                    ->color(fn ($record) => match ($record->getRawOriginal('statuscode')) {
+                        'A', 'E' => 'primary',
+                        'N' => 'info',
+                        default => 'gray',
+                    })
+                    ->tooltip(fn ($record) => $record->statuscode->getLabel())
+                    ->grow(false)
+                    ->size(Tables\Columns\IconColumn\IconColumnSize::Small),
                 Tables\Columns\TextColumn::make('last_name')
                     ->label('Nom')
                     ->sortable(),
