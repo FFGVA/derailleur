@@ -6,14 +6,16 @@ use App\Models\Event;
 
 class ICalService
 {
+    private const TIMEZONE = 'Europe/Zurich';
+
     public static function generate(Event $event): string
     {
         $uid = 'event-' . $event->id . '@ffgva.ch';
         $now = gmdate('Ymd\THis\Z');
-        $dtstart = $event->starts_at->utc()->format('Ymd\THis\Z');
+        $dtstart = $event->starts_at->format('Ymd\THis');
         $dtend = $event->ends_at
-            ? $event->ends_at->utc()->format('Ymd\THis\Z')
-            : $event->starts_at->copy()->addHours(2)->utc()->format('Ymd\THis\Z');
+            ? $event->ends_at->format('Ymd\THis')
+            : $event->starts_at->copy()->addHours(2)->format('Ymd\THis');
 
         $summary = self::escape($event->title);
         $description = self::escape($event->description ?? '');
@@ -28,8 +30,8 @@ class ICalService
             'BEGIN:VEVENT',
             'UID:' . $uid,
             'DTSTAMP:' . $now,
-            'DTSTART:' . $dtstart,
-            'DTEND:' . $dtend,
+            'DTSTART;TZID=' . self::TIMEZONE . ':' . $dtstart,
+            'DTEND;TZID=' . self::TIMEZONE . ':' . $dtend,
             'SUMMARY:' . $summary,
             $description ? 'DESCRIPTION:' . $description : null,
             $location ? 'LOCATION:' . $location : null,
@@ -52,10 +54,10 @@ class ICalService
         $now = gmdate('Ymd\THis\Z');
 
         foreach ($events as $event) {
-            $dtstart = $event->starts_at->utc()->format('Ymd\THis\Z');
+            $dtstart = $event->starts_at->format('Ymd\THis');
             $dtend = $event->ends_at
-                ? $event->ends_at->utc()->format('Ymd\THis\Z')
-                : $event->starts_at->copy()->addHours(2)->utc()->format('Ymd\THis\Z');
+                ? $event->ends_at->format('Ymd\THis')
+                : $event->starts_at->copy()->addHours(2)->format('Ymd\THis');
 
             $summary = self::escape($event->title);
             $description = self::escape($event->description ?? '');
@@ -64,8 +66,8 @@ class ICalService
             $lines[] = 'BEGIN:VEVENT';
             $lines[] = 'UID:event-' . $event->id . '@ffgva.ch';
             $lines[] = 'DTSTAMP:' . $now;
-            $lines[] = 'DTSTART:' . $dtstart;
-            $lines[] = 'DTEND:' . $dtend;
+            $lines[] = 'DTSTART;TZID=' . self::TIMEZONE . ':' . $dtstart;
+            $lines[] = 'DTEND;TZID=' . self::TIMEZONE . ':' . $dtend;
             $lines[] = 'SUMMARY:' . $summary;
             if ($description) {
                 $lines[] = 'DESCRIPTION:' . $description;

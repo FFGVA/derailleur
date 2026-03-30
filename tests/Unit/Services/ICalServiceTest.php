@@ -11,7 +11,7 @@ class ICalServiceTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_generate_returns_valid_ical(): void
+    public function test_generate_returns_valid_ical_with_zurich_timezone(): void
     {
         $event = Event::create([
             'title' => 'Sortie Jura',
@@ -30,6 +30,9 @@ class ICalServiceTest extends TestCase
         $this->assertStringContainsString('SUMMARY:Sortie Jura', $ical);
         $this->assertStringContainsString('LOCATION:Gex\\, France', $ical);
         $this->assertStringContainsString('DESCRIPTION:Belle montée', $ical);
+        $this->assertStringContainsString('DTSTART;TZID=Europe/Zurich:20260415T090000', $ical);
+        $this->assertStringContainsString('DTEND;TZID=Europe/Zurich:20260415T120000', $ical);
+        $this->assertStringNotContainsString('DTSTART:20260415T090000Z', $ical);
         $this->assertStringContainsString('END:VCALENDAR', $ical);
     }
 
@@ -44,8 +47,25 @@ class ICalServiceTest extends TestCase
 
         $ical = ICalService::generate($event);
 
-        $this->assertStringContainsString('DTSTART:', $ical);
-        $this->assertStringContainsString('DTEND:', $ical);
+        $this->assertStringContainsString('DTSTART;TZID=Europe/Zurich:20260415T090000', $ical);
+        $this->assertStringContainsString('DTEND;TZID=Europe/Zurich:20260415T110000', $ical);
+    }
+
+    public function test_generate_feed_uses_zurich_timezone(): void
+    {
+        $event = Event::create([
+            'title' => 'Sortie feed',
+            'starts_at' => '2026-04-15 09:00:00',
+            'ends_at' => '2026-04-15 12:00:00',
+            'statuscode' => 'P',
+            'price' => 0,
+        ]);
+
+        $ical = ICalService::generateFeed([$event]);
+
+        $this->assertStringContainsString('DTSTART;TZID=Europe/Zurich:20260415T090000', $ical);
+        $this->assertStringContainsString('DTEND;TZID=Europe/Zurich:20260415T120000', $ical);
+        $this->assertStringNotContainsString('T090000Z', $ical);
     }
 
     public function test_filename_sanitizes_title(): void
