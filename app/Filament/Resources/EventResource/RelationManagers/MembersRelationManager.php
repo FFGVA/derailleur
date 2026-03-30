@@ -3,12 +3,14 @@
 namespace App\Filament\Resources\EventResource\RelationManagers;
 
 use App\Enums\EventMemberStatus;
+use App\Mail\EventConfirmationMail;
 use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Services\ICalService;
 use App\Services\InvoiceService;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -218,6 +220,44 @@ class MembersRelationManager extends RelationManager
                     ->visible(fn () => $this->canManageParticipants()),
             ])
             ->actions([
+                Tables\Actions\Action::make('resendEmail')
+                    ->label('')
+                    ->tooltip('Renvoyer l\'email d\'inscription')
+                    ->icon('heroicon-o-envelope')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Renvoyer l\'email')
+                    ->modalDescription(fn ($record) => 'Renvoyer l\'email d\'inscription à ' . $record->first_name . ' ' . $record->last_name . ' ?')
+                    ->action(function ($record) {
+                        $event = $this->getOwnerRecord();
+                        $member = $record;
+                        $applicablePrice = (float) $event->priceForMember($member);
+
+                        if ($applicablePrice > 0) {
+                            $invoice = Invoice::where('member_id', $member->id)
+                                ->where('type', 'E')
+                                ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))
+                                ->latest('updated_at')
+                                ->first();
+
+                            if ($invoice) {
+                                $result = InvoiceService::generatePdf($invoice);
+                                $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+                                $ical = ICalService::generate($event);
+                                $icalFilename = ICalService::filename($event);
+                                Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+                            }
+                        } else {
+                            Mail::send(new EventConfirmationMail($member, $event));
+                        }
+
+                        Notification::make()
+                            ->success()
+                            ->title('Email envoyé')
+                            ->body('L\'email a été renvoyé à ' . $member->first_name . ' ' . $member->last_name)
+                            ->send();
+                    })
+                    ->visible(fn () => $this->canManageParticipants()),
                 Tables\Actions\DetachAction::make()
                     ->label('Retirer')
                     ->visible(fn () => $this->canManageParticipants()),
