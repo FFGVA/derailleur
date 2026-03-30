@@ -130,6 +130,17 @@ class MembersRelationManager extends RelationManager
                             ->visible(fn () => $this->canManageParticipants())
                     ),
             ])
+            ->modifyQueryUsing(fn ($query) => $query->whereNull('event_member.deleted_at'))
+            ->filters([
+                Tables\Filters\TernaryFilter::make('actives')
+                    ->label('Inscrites/Confirmées')
+                    ->default(true)
+                    ->queries(
+                        true: fn ($query) => $query->whereIn('event_member.status', ['N', 'C']),
+                        false: fn ($query) => $query->where('event_member.status', 'X'),
+                        blank: fn ($query) => $query,
+                    ),
+            ])
             ->headerActions([
                 Tables\Actions\Action::make('exportExcel')
                     ->label('')
