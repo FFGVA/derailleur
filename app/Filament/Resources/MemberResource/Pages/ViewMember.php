@@ -4,6 +4,7 @@ namespace App\Filament\Resources\MemberResource\Pages;
 
 use App\Enums\MemberStatus;
 use App\Filament\Resources\MemberResource;
+use App\Services\MemberCardService;
 use Filament\Actions;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components;
@@ -175,6 +176,22 @@ class ViewMember extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('downloadCard')
+                ->label('Carte')
+                ->icon(fn () => new \Illuminate\Support\HtmlString('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:1.25rem;height:1.25rem;"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm7.5 7V7h-1v4H8.25l3.25 3.25L14.75 11H11.5zM7 16h10v1H7v-1z"/></svg>'))
+                ->color('gray')
+                ->visible(fn () => in_array($this->record->getRawOriginal('statuscode'), ['A', 'E']))
+                ->action(function () {
+                    $member = $this->record;
+                    $pdf = MemberCardService::generate($member);
+                    $filename = MemberCardService::filename($member);
+
+                    return response()->streamDownload(
+                        function () use ($pdf) { echo $pdf; },
+                        $filename,
+                        ['Content-Type' => 'application/pdf']
+                    );
+                }),
             Actions\Action::make('downloadVcard')
                 ->label('vCard')
                 ->icon('heroicon-o-arrow-down-tray')

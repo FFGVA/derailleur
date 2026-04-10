@@ -14,6 +14,7 @@
         "laravel/tinker": "^2.10.1",
         "mews/purifier": "^3.4",
         "openspout/openspout": "^4.32",
+        "setasign/fpdi": "^2.6",
         "sprain/swiss-qr-bill": "*"
     },
     "require-dev": {
