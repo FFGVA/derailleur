@@ -2,10 +2,6 @@
 
 namespace App\Services;
 
-if (! class_exists('FPDF')) {
-    class_alias(\Fpdf\Fpdf::class, 'FPDF');
-}
-
 use App\Models\Member;
 use setasign\Fpdi\Fpdi;
 
@@ -34,6 +30,10 @@ class MemberCardService
 
     public static function generate(Member $member): string
     {
+        if (! class_exists('FPDF')) {
+            class_alias(\Fpdf\Fpdf::class, 'FPDF');
+        }
+
         $templatePath = storage_path('app/' . self::TEMPLATE_PATH);
 
         $pdf = new Fpdi('L', 'mm', [self::PAGE_W, self::PAGE_H]);
