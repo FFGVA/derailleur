@@ -61,6 +61,7 @@ Route::middleware('portal')->prefix('portail')->group(function () {
     Route::post('/adhesion/inscription', [PortalController::class, 'adhesionInscriptionStore'])->name('portail.adhesion.inscription.store');
     Route::get('/carte', [PortalController::class, 'carte'])->name('portail.carte');
     Route::get('/carte/qr-url', [PortalController::class, 'carteQrUrl'])->name('portail.carte.qr-url');
+    Route::get('/carte/pdf', [PortalController::class, 'cartePdf'])->name('portail.carte.pdf');
     Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
     Route::get('/evenement/{event}', [PortalController::class, 'evenement'])->name('portail.evenement');
     Route::post('/evenement/{event}/inscrire', [PortalController::class, 'inscrire'])->name('portail.evenement.inscrire');

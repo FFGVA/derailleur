@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\ActivationMail;
 use App\Models\Event;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Member;
+use Illuminate\Support\Facades\Mail;
 use Fpdf\Fpdf;
 use Sprain\SwissQrBill\DataGroup\Element\AdditionalInformation;
 use Sprain\SwissQrBill\DataGroup\Element\CreditorInformation;
@@ -350,10 +352,16 @@ class InvoiceService
 
         $newEnd = self::computeMembershipEnd($periodStart);
 
+        $wasActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E']);
+
         $member->update([
             'membership_end' => $newEnd,
             'statuscode' => 'A',
         ]);
+
+        if (! $wasActive) {
+            Mail::send(new ActivationMail($member));
+        }
     }
 
     public static function utf8(string $text): string

@@ -15,6 +15,7 @@ use App\Models\Member;
 use App\Models\MemberPhone;
 use App\Services\ICalService;
 use App\Services\InvoiceService;
+use App\Services\MemberCardService;
 use App\Services\PortalAudit;
 use App\Enums\MemberStatus;
 use Illuminate\Http\Request;
@@ -242,6 +243,23 @@ class PortalController extends Controller
         $member = $request->attributes->get('portal_member');
 
         return response()->json(['url' => self::generateCarteToken($member)]);
+    }
+
+    public function cartePdf(Request $request)
+    {
+        $member = $request->attributes->get('portal_member');
+
+        if (! in_array($member->getRawOriginal('statuscode'), ['A', 'E'])) {
+            abort(403);
+        }
+
+        $pdf = MemberCardService::generate($member);
+        $filename = MemberCardService::filename($member);
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     /**
