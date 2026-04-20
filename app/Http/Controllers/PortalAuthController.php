@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MemberStatus;
 use App\Http\Requests\PortalMagicLinkRequest;
 use App\Mail\PortalMagicLinkMail;
 use App\Models\Member;
 use App\Models\MemberMagicToken;
+use App\Services\AdhesionService;
 use App\Services\PortalAudit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -65,6 +67,11 @@ class PortalAuthController extends Controller
         }
 
         $magicToken->markUsed();
+
+        // If member is P (email unconfirmed from adhesion), confirm now — magic link proves email works
+        if ($member->getRawOriginal('statuscode') === MemberStatus::EnAttente->value) {
+            AdhesionService::confirmEmail($member);
+        }
 
         session([
             'portal_member_id' => $member->id,
