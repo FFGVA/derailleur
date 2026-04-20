@@ -5,7 +5,7 @@
 
     <p style="margin-bottom: 16px;">Tu souhaites t'inscrire à l'événement suivant :</p>
 
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px; background-color: #f5f1e9; border-radius: 6px; padding: 16px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 20px; background-color: {{ config('association.colors.background') }}; border-radius: 6px; padding: 16px;">
         <tr>
             <td style="padding: 16px;">
                 <strong style="font-size: 16px;">{{ $event->title }}</strong><br>
@@ -19,7 +19,7 @@
     <p style="margin-bottom: 16px;">Pour finaliser ton inscription, complète tes informations :</p>
 
     <p style="text-align: center; margin-bottom: 20px;">
-        <a href="{{ $registrationUrl }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+        <a href="{{ $registrationUrl }}" style="display: inline-block; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
             M'inscrire
         </a>
     </p>

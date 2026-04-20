@@ -12,8 +12,8 @@
     {{-- Invoice lines table --}}
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 16px;">
         <tr>
-            <td style="padding: 8px 10px; background-color: #80081C; color: #ffffff; font-weight: bold; font-size: 13px;">Description</td>
-            <td style="padding: 8px 10px; background-color: #80081C; color: #ffffff; font-weight: bold; font-size: 13px; text-align: right; width: 100px;">Montant</td>
+            <td style="padding: 8px 10px; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: bold; font-size: 13px;">Description</td>
+            <td style="padding: 8px 10px; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: bold; font-size: 13px; text-align: right; width: 100px;">Montant</td>
         </tr>
         @foreach($lines as $line)
         <tr>
@@ -42,7 +42,7 @@
 
     @if($invoice->getRawOriginal('type') === 'E' && $invoice->events->first())
         <p style="text-align: center; margin: 20px 0;">
-            <a href="{{ route('portail.evenement', $invoice->events->first()) }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+            <a href="{{ route('portail.evenement', $invoice->events->first()) }}" style="display: inline-block; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
                 Voir mon inscription sur le portail
             </a>
         </p>

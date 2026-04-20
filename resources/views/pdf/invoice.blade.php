@@ -30,13 +30,13 @@
             font-size: 10px;
             color: #666;
             margin-bottom: 30px;
-            border-bottom: 2px solid #80081C;
+            border-bottom: 2px solid {{ config('association.colors.primary') }};
             padding-bottom: 12px;
         }
         .invoice-title {
             font-size: 20px;
             font-weight: bold;
-            color: #80081C;
+            color: {{ config('association.colors.primary') }};
             margin: 25px 0 20px;
         }
         table.details {
@@ -59,7 +59,7 @@
             margin: 25px 0 15px;
         }
         table.items th {
-            background-color: #80081C;
+            background-color: {{ config('association.colors.primary') }};
             color: #fff;
             text-align: left;
             padding: 8px 10px;

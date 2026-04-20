@@ -14,7 +14,7 @@
 </p>
 
 <p style="text-align: center; margin: 28px 0;">
-    <a href="{{ $activationUrl }}" style="display: inline-block; background-color: #80081C; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold;">
+    <a href="{{ $activationUrl }}" style="display: inline-block; background-color: {{ config('association.colors.primary') }}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-size: 16px; font-weight: bold;">
         Confirmer mon adresse email
     </a>
 </p>

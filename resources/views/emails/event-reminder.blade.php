@@ -25,7 +25,7 @@
     </table>
 
     <p style="text-align: center; margin-bottom: 20px;">
-        <a href="{{ route('portail.evenement', $event) }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+        <a href="{{ route('portail.evenement', $event) }}" style="display: inline-block; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
             Voir l'événement
         </a>
     </p>

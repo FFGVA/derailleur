@@ -1,7 +1,7 @@
 @extends('emails.layout')
 
 @section('content')
-    <h2 style="color: #80081C; margin: 0 0 20px; font-size: 20px;">Nouvelle demande d'adhésion</h2>
+    <h2 style="color: {{ config('association.colors.primary') }}; margin: 0 0 20px; font-size: 20px;">Nouvelle demande d'adhésion</h2>
 
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
         <tr>
@@ -14,11 +14,11 @@
         </tr>
         <tr>
             <td style="padding: 8px 0; font-weight: bold; color: #555; vertical-align: top;">Courriel</td>
-            <td style="padding: 8px 0;"><a href="mailto:{{ $email }}" style="color: #80081C;">{{ $email }}</a></td>
+            <td style="padding: 8px 0;"><a href="mailto:{{ $email }}" style="color: {{ config('association.colors.primary') }};">{{ $email }}</a></td>
         </tr>
         <tr>
             <td style="padding: 8px 0; font-weight: bold; color: #555; vertical-align: top;">Téléphone</td>
-            <td style="padding: 8px 0;"><a href="tel:{{ $telephone }}" style="color: #80081C;">{{ $telephone }}</a></td>
+            <td style="padding: 8px 0;"><a href="tel:{{ $telephone }}" style="color: {{ config('association.colors.primary') }};">{{ $telephone }}</a></td>
         </tr>
         <tr>
             <td style="padding: 8px 0; font-weight: bold; color: #555; vertical-align: top;">Photos/vidéos</td>
@@ -28,7 +28,7 @@
 
     @if($type_velo || $sorties || $atelier || $instagram || $strava || $statuts_ok || $cotisation_ok)
         <hr style="border: none; border-top: 1px solid #d9bbae; margin: 20px 0;">
-        <h3 style="color: #80081C; margin: 0 0 12px; font-size: 15px;">Informations complémentaires</h3>
+        <h3 style="color: {{ config('association.colors.primary') }}; margin: 0 0 12px; font-size: 15px;">Informations complémentaires</h3>
 
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
             @if($type_velo)

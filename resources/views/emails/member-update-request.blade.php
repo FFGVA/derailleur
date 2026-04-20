@@ -4,7 +4,7 @@
     <p style="margin-bottom: 16px;">La membre <strong>{{ $member->first_name }} {{ $member->last_name }}</strong>@if($member->member_number) (n° {{ $member->member_number }})@endif demande les modifications suivantes :</p>
 
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; margin-bottom: 16px; font-size: 14px;">
-        <tr style="background-color: #f5f1e9;">
+        <tr style="background-color: {{ config('association.colors.background') }};">
             <td style="padding: 6px 12px; font-weight: 600; width: 40%;">Champ</td>
             <td style="padding: 6px 12px; font-weight: 600;">Actuel</td>
             <td style="padding: 6px 12px; font-weight: 600;">Demandé</td>
@@ -24,7 +24,7 @@
                 <tr>
                     <td style="padding: 6px 12px; color: #666;">{{ $field['label'] }}</td>
                     <td style="padding: 6px 12px;">{{ $field['current'] }}</td>
-                    <td style="padding: 6px 12px; font-weight: 500; color: #80081C;">{{ $changes[$key] }}</td>
+                    <td style="padding: 6px 12px; font-weight: 500; color: {{ config('association.colors.primary') }};">{{ $changes[$key] }}</td>
                 </tr>
             @endif
         @endforeach
@@ -33,7 +33,7 @@
     @if(!empty($changes['phones']))
         <p style="margin-bottom: 8px; font-weight: 600;">Téléphones demandés :</p>
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; margin-bottom: 16px; font-size: 14px;">
-            <tr style="background-color: #f5f1e9;">
+            <tr style="background-color: {{ config('association.colors.background') }};">
                 <td style="padding: 6px 12px; font-weight: 600;">Libellé</td>
                 <td style="padding: 6px 12px; font-weight: 600;">Numéro</td>
                 <td style="padding: 6px 12px; font-weight: 600;">WhatsApp</td>

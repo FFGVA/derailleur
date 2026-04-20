@@ -6,7 +6,7 @@
     <p style="margin-bottom: 20px;">Tu as demandé un lien de connexion à ton espace membre Fast and Female Geneva.</p>
 
     <p style="text-align: center; margin-bottom: 20px;">
-        <a href="{{ $magicLinkUrl }}" style="display: inline-block; background-color: #80081C; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
+        <a href="{{ $magicLinkUrl }}" style="display: inline-block; background-color: {{ config('association.colors.primary') }}; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 32px; border-radius: 6px; text-decoration: none;">
             Me connecter
         </a>
     </p>

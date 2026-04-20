@@ -10,7 +10,7 @@
 </p>
 
 <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
-    Tu peux dès aujourd'hui télécharger ta carte de membre dans l'application : <a href="https://derailleur.ffgva.ch/login" style="color: #80081C; text-decoration: underline;">derailleur.ffgva.ch/login</a> — puis tu recevras un email avec un lien pour te connecter. Ensuite, sur la page d'accueil, tu as en haut à droite un petit logo symbolisant un QR-code qui t'affiche ta preuve d'adhésion. Sur cette page, tu peux télécharger ta carte en format PDF.
+    Tu peux dès aujourd'hui télécharger ta carte de membre dans l'application : <a href="https://derailleur.ffgva.ch/login" style="color: {{ config('association.colors.primary') }}; text-decoration: underline;">derailleur.ffgva.ch/login</a> — puis tu recevras un email avec un lien pour te connecter. Ensuite, sur la page d'accueil, tu as en haut à droite un petit logo symbolisant un QR-code qui t'affiche ta preuve d'adhésion. Sur cette page, tu peux télécharger ta carte en format PDF.
 </p>
 
 <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px;">
