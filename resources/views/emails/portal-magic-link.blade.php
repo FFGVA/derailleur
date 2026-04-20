@@ -14,4 +14,6 @@
     <p style="margin-bottom: 16px; font-size: 13px; color: #666;">
         Ce lien expire le {{ $expiresAt }}. Si tu n'as pas fait cette demande, ignore cet e-mail.
     </p>
+
+    @include('emails.partials.lpd-notice')
 @endsection

@@ -1,0 +1,4 @@
+<p style="font-size: 13px; line-height: 1.6; margin: 24px 0 0; padding: 16px; background-color: #f8f8f8; border-radius: 4px; color: #666666;">
+    En utilisant ton espace membre, tu consens au stockage et à l'utilisation de tes données personnelles (prénom, nom, email, téléphone) dans le cadre des activités de l'association, conformément à la Loi fédérale sur la protection des données (LPD). Nous pouvons utiliser ton adresse email pour te contacter au sujet des événements et activités de l'association. Tu peux consulter notre <a href="{{ url('/portail/protection-des-donnees') }}" style="color: {{ config('association.colors.primary') }};">déclaration de protection des données</a> sur ton espace membre.<br><br>
+    Pour supprimer ton compte ou retirer ton consentement, contacte le comité : <a href="mailto:{{ config('association.contact_email') }}" style="color: {{ config('association.colors.primary') }};">{{ config('association.contact_email') }}</a>
+</p>
