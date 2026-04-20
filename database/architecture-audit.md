@@ -2,451 +2,394 @@
 
 **Date:** 20.04.2026
 **Scope:** Full codebase analysis for quality, modularity, adaptability
-**Strategic goal:** Create a reusable package for other associations
+**Strategic goal:** Assess reusability as a package for other association deployments
 **Frameworks applied:** TOGAF, SOLID principles, Clean Code
+**Constraint:** No i18n layer (per CLAUDE.md) — French-only UI is by design, not a defect
 
 ---
 
-## Executive Summary
+## 1. Executive Summary
 
-The codebase is functional and well-tested (440 tests, 1063 assertions) but has significant architectural debt that blocks reusability. The main issues are:
+The codebase is functional, well-tested (475 tests, 1171 assertions), and has undergone significant refactoring. The main architectural issues blocking reusability are:
 
-1. **Business logic scattered across controllers and Filament classes** — violates Single Responsibility Principle
-2. **Invoice/email workflow duplicated in 6 locations** — violates DRY
-3. **Branding hardcoded in 39+ files** — blocks rebranding
-4. **300+ lines of duplicated CSS in blade views** — no centralized styling
-5. **All services use static methods** — blocks dependency injection and testability via mocking
+1. **87 hardcoded brand color references** (`#80081C`) across blade views and CSS — `config('association.colors')` exists but is unused in views
+2. **4 deprecated delegates** in InvoiceService that should be removed once callers are migrated
+3. **Business logic in Filament classes** — Excel export (60 lines), email resending, payment processing inline in modal actions
+4. **Policies exist but are never invoked** — 8 manual `abort(403)` calls instead of `$this->authorize()`
+5. **2 enum bugs** — `DashboardController.php:18` missing `->value`, `UpcomingEvents.php:22` uses raw string `'X'`
 
-**Rebranding effort today:** 3-4 weeks of manual find/replace across 50+ files.
-**Target after refactoring:** Change config + 1 CSS file + logo.
-
----
-
-## 1. SOLID Violations
-
-### 1.1 Single Responsibility Principle (SRP)
-
-#### InvoiceService — God Service (372 lines)
-`app/Services/InvoiceService.php` handles 5 distinct responsibilities:
-
-| Responsibility | Methods | Lines |
+| Metric | Current | Target |
 |---|---|---|
-| Invoice creation | `createCotisation()`, `createEvent()`, `createAutre()` | 25-102 |
-| PDF generation | `generatePdf()` | 108-249 |
-| QR code generation | `generateQrCodeBase64()`, `buildQrBill()` | 262-318 |
-| Business rules | `computeMembershipEnd()` | 324-334 |
-| Payment processing | `onCotisationPaid()` | 339-366 |
-
-**Recommendation:** Split into:
-- `InvoiceCreationService` — creation workflows
-- `InvoicePdfService` — PDF generation (141 lines of FPDF code)
-- `InvoicePaymentService` — payment processing, membership activation
-- `QrBillService` — QR code generation
-
-#### PortalController — Fat Controller (640+ lines)
-`app/Http/Controllers/PortalController.php` handles:
-- Dashboard, adhesion, carte, factures, événements
-- Event registration (inscrire, annuler)
-- Peloton management (5 methods with authorization)
-- Card validation, QR URL generation
-
-**Recommendation:** Split into:
-- `PortalDashboardController`
-- `PortalAdhesionController`
-- `PortalEventController`
-- `PortalPelotonController`
-- `PortalCarteController`
-
-### 1.2 Open/Closed Principle (OCP)
-
-**Violation:** Status transitions are hardcoded in controllers and services with `if/elseif` chains.
-
-Example — `FormController.php:55-89`:
-```php
-if (! $member) { /* create P */ }
-elseif ($member->getRawOriginal('statuscode') === 'P') { /* update */ }
-// then:
-if ($member->getRawOriginal('statuscode') === 'N') { /* direct invoice */ }
-else { /* activation email */ }
-```
-
-**Recommendation:** Implement a `MemberStatusMachine` or strategy pattern. New statuses should not require modifying existing code.
-
-### 1.3 Liskov Substitution Principle (LSP)
-
-**No violations found.** Models and services don't use inheritance in ways that break substitutability.
-
-### 1.4 Interface Segregation Principle (ISP)
-
-**Violation:** No interfaces defined anywhere. All services are concrete static classes.
-
-For package reusability, key services need interfaces:
-- `InvoiceGeneratorInterface` — allows associations to customize invoice format
-- `MemberCardGeneratorInterface` — different card designs
-- `NotificationServiceInterface` — different email templates/channels
-
-### 1.5 Dependency Inversion Principle (DIP)
-
-**Violation:** All services use static methods — impossible to inject alternatives.
-
-```php
-// Current (tight coupling):
-InvoiceService::createCotisation($member, $year);
-
-// Target (injectable):
-$this->invoiceService->createCotisation($member, $year);
-```
-
-**Impact:** An association cannot replace the PDF generator, QR bill provider, or email sender without modifying the service class directly.
+| Rebranding effort | ~8 hours (87 color refs, 10 CHF refs, org name in 2 mail subjects) | ~30 min (edit config/association.php + CSS variables + logo) |
+| Files to touch for rebrand | ~25 | 3 (config, CSS, logo asset) |
+| Test coverage | 475 tests, 1171 assertions | Maintained |
 
 ---
 
-## 2. DRY Violations — Code Duplication
+## 2. SOLID Violations
 
-### 2.1 Invoice Creation + Email Workflow (6 locations)
+### 2.1 Single Responsibility Principle (SRP)
 
-The same 8-line pattern is copy-pasted in 6 places:
+**InvoiceService still holds creation + deprecated delegates (142 lines)**
+
+`app/Services/InvoiceService.php` retains 4 deprecated facade methods that delegate to other services:
+- `generatePdf()` → `InvoicePdfService::generate()` (line 115)
+- `generateQrCodeBase64()` → `QrBillService::generateQrCodeBase64()` (line 121)
+- `onCotisationPaid()` → `InvoicePaymentService::onCotisationPaid()` (line 127)
+- `computeMembershipEnd()` → `InvoicePaymentService::computeMembershipEnd()` (line 133)
+
+**Recommendation:** Remove deprecated delegates once all test files are migrated to call the target services directly. Currently 22 test references still use `InvoiceService::` for these methods.
+
+**MembersRelationManager contains Excel export logic (60 lines)**
+
+`app/Filament/Resources/EventResource/RelationManagers/MembersRelationManager.php:154-211` — full OpenSpout writer with headers, data formatting, file management.
+
+**Recommendation:** Extract to `ExcelExportService::exportParticipants(Event $event)`.
+
+### 2.2 Open/Closed Principle (OCP)
+
+Status transitions are handled via direct `->update(['statuscode' => ...])` calls scattered across services and controllers. Adding a new status requires editing multiple files.
+
+**Locations of direct status writes:**
+- `app/Services/AdhesionService.php:34,102` — P, N
+- `app/Services/InvoicePaymentService.php:37` — A
+- `app/Services/EventRegistrationService.php:33-34` — N, C
+- `app/Services/InvoiceEmailService.php:44` — E (invoice)
+
+**Assessment:** For the current scope (6 member statuses, stable), this is acceptable. A state machine would add complexity without clear benefit unless the status set grows. Noted but not recommended for immediate action.
+
+### 2.3 Liskov Substitution Principle (LSP)
+
+No violations. Models don't use inheritance beyond Eloquent. Services are concrete static classes.
+
+### 2.4 Interface Segregation Principle (ISP)
+
+No interfaces defined. All services are concrete static classes. For package reuse, key extension points would benefit from interfaces:
+- `InvoiceGeneratorInterface` — custom invoice formats
+- `MemberCardGeneratorInterface` — custom card designs
+
+**Assessment:** Not blocking current operations. Required when extracting to package.
+
+### 2.5 Dependency Inversion Principle (DIP)
+
+All 11 services use exclusively static methods — impossible to inject alternatives via constructor.
+
+**Assessment:** Static services are appropriate for the current single-deployment model. Converting to injectable would require changing every caller. Defer to package extraction phase.
+
+---
+
+## 3. DRY Violations
+
+### 3.1 Deprecated Delegates in InvoiceService (4 locations)
 
 ```php
-$result = InvoiceService::create*($member, ...);
-$invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-$qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, ...));
-$invoice->update(['statuscode' => 'E']);
+// app/Services/InvoiceService.php:115-136
+/** @deprecated Use InvoicePdfService::generate() */
+public static function generatePdf(Invoice $invoice): array { return InvoicePdfService::generate($invoice); }
+/** @deprecated Use QrBillService::generateQrCodeBase64() */
+public static function generateQrCodeBase64(Invoice $invoice): ?string { ... }
+/** @deprecated Use InvoicePaymentService::onCotisationPaid() */
+public static function onCotisationPaid(Invoice $invoice): void { ... }
+/** @deprecated Use InvoicePaymentService::computeMembershipEnd() */
+public static function computeMembershipEnd(\DateTimeInterface $periodStart): \Carbon\Carbon { ... }
 ```
 
-**Locations:**
-1. `AdhesionActivationController.php:60-72`
-2. `EventRegistrationController.php:193-200`
-3. `PortalController.php:192-202`
-4. `PortalController.php:386-393`
-5. `PortalController.php:599-606`
-6. `FormController.php:102-111`
-7. `MembersRelationManager.php:229-244` (Filament)
-8. `Cotisations.php:150-184` (Filament)
-9. `MemberResource.php:102-122` (Filament)
+**Test files still using deprecated paths (22 references):**
+- `tests/Unit/Services/InvoiceServiceTest.php` — 5 calls to `generatePdf()`
+- `tests/Unit/Services/InvoicePdfContentTest.php` — 7 calls via `InvoiceService::` prefix
+- `tests/Unit/Models/InvoiceTest.php` — 3 calls to `onCotisationPaid()`
+- `tests/Feature/MembershipRequestFlowTest.php` — 3 calls to `onCotisationPaid()`
+- `tests/Feature/Filament/CotisationsPageTest.php` — 2 calls to `computeMembershipEnd()`
 
-**Fix:** Create `InvoiceEmailService::createAndSend(Member $member, string $type, ...)`.
+**Fix:** Update test imports to target services, then remove deprecated methods.
 
-### 2.2 Event Registration Flow (3 locations)
-
-Event member creation + price check + invoice/confirmation:
-1. `EventRegistrationController.php:168-204`
-2. `PortalController.php:359-405`
-3. `PortalController.php:569-613`
-
-**Fix:** Create `EventRegistrationService::register(Member, Event)`.
-
-### 2.3 Phone Create/Update (3 locations)
+### 3.2 Phone Create/Update Pattern (3 locations)
 
 ```php
 $phone = $member->phones()->first();
-if ($phone) { $phone->update([...]); }
+if ($phone) { $phone->update(['phone_number' => ...]); }
 else { MemberPhone::create([...]); }
 ```
 
-1. `FormController.php:82-91`
-2. `PortalController.php:177-186`
-3. `EventRegistrationController.php:150-156`
+1. `app/Services/AdhesionService.php:54-63`
+2. `app/Http/Controllers/EventRegistrationController.php:147-153`
+3. `app/Http/Controllers/Portal/AdhesionController.php:60-69` (adhesionUpdate)
 
-**Fix:** Add `Member::setPhone(string $number, string $label)` method or service.
+**Fix:** Add `Member::setPhone(string $number, string $label)` method.
 
-### 2.4 Payment Date Modal (2 locations)
+### 3.3 Email Resend Pattern in Filament (2 locations)
 
-Identical modal with date regex validation:
-1. `Cotisations.php:197-215`
-2. `InvoiceResource.php:260-278`
+Invoice PDF regeneration + QR + Mail::send pattern appears in:
+1. `app/Filament/Resources/EventResource/RelationManagers/MembersRelationManager.php:265-274`
+2. `app/Filament/Resources/InvoiceResource/Pages/ViewInvoice.php:140-154`
 
-**Fix:** Extract to `PaymentDateForm::schema()` or a reusable Action class.
-
-### 2.5 iCal Event Formatting (2 locations in same file)
-
-`ICalService.php` — `generate()` and `generateFeed()` duplicate event-to-ical conversion.
-
-**Fix:** Extract `private static function formatEvent(Event $event): array`.
-
-### 2.6 Active Status Array (5 locations)
-
-`['A', 'P', 'N', 'E']` repeated in:
-1. `PortalAuth.php:32`
-2. `PortalAuthController.php:29`
-3. `PortalAuthController.php:59`
-4. `EventRegistrationController.php:38`
-5. `Api/EventRegistrationController.php:40`
-
-**Fix:** Define `Member::PORTAL_ACCESSIBLE_STATUSES` constant.
+**Fix:** Use `InvoiceEmailService::sendExisting()` which already encapsulates this.
 
 ---
 
-## 3. Hardcoded Values — Rebranding Blockers
+## 4. Hardcoded Values — Rebranding Blockers
 
-### 3.1 Email Addresses
+### 4.1 Brand Color #80081C
 
-| Value | Occurrences | Location |
+| Location type | Count | Files |
 |---|---|---|
-| `'noreply@ffgva.ch'` | 11 mail classes | From address in every Mailable |
-| `'Fast and Female Geneva - Ne pas répondre'` | 11 mail classes | From name |
-| `'fastandfemalegva@etik.com'` | 8 mail classes | Reply-to, hardcoded |
+| Email blade views | 30 | layout, adhesion, invoice, event-confirmation, event-reminder, event-registration-new, member-update-request, activation, adhesion-confirmation |
+| Portal blade views | 38 | layout, dashboard, adhesion-inscription, evenement, peloton-event, carte, adhesion, factures |
+| portal.css (x2) | 8 | resources/css/portal.css (4), public/css/portal.css (4) |
+| admin.css | 0 | Uses CSS variables ✓ |
+| PHP services | 0 | Uses `config('association.colors.pdf_brand_rgb')` ✓ |
+| **Total** | **87** | |
 
-**Fix:** Create `BaseMailable` with from/reply-to from config:
-```php
-abstract class BaseMailable extends Mailable {
-    protected function baseEnvelope(): array {
-        return [
-            'from' => new Address(config('mail.from.address'), config('mail.from.name')),
-            'replyTo' => [new Address(config('ffgva.contact_email'))],
-        ];
-    }
-}
-```
+**Config key exists but unused in views:** `config('association.colors.primary')` = `'#80081C'`
 
-### 3.2 Brand Colors
+### 4.2 Background Color #f5f1e9
 
-| Color | Hex | Usage | Files |
-|---|---|---|---|
-| Primary burgundy | `#80081C` | Buttons, headers, links, badges | 25+ blade views, admin.css |
-| Hover burgundy | `#660616` | Button hover states | 5+ views |
-| Beige background | `#f5f1e9` | Email/portal backgrounds | 10+ views |
-| PDF brand color | `RGB(128,8,28)` | Invoice PDF | InvoiceService.php (3 locations) |
+| Location type | Count |
+|---|---|
+| Email views | 6 |
+| Portal layout | 1 |
+| Portal views | 10 |
+| **Total** | **17** |
 
-**Fix:** Define CSS variables in layout + config for PDF:
-```css
-:root {
-    --color-primary: #80081C;
-    --color-primary-hover: #660616;
-    --color-bg: #f5f1e9;
-}
-```
+### 4.3 Organization Name
 
-### 3.3 Organization Data
+| Value | Count | Location |
+|---|---|---|
+| `'Fast and Female Geneva'` in config | 4 | `config/association.php:20,30,32,36` |
+| Hardcoded in mail subjects | 2 | `ActivationMail.php:22`, `AdhesionWelcomeMail.php:21` |
+| In email layout (config-driven) | 2 | `layout.blade.php:6,16` ✓ |
+| In portal layout title | 1 | `portail/layout.blade.php:7` (hardcoded) |
 
-| Data | Hardcoded | Config | Configurable via env |
-|---|---|---|---|
-| Organization name | Views, emails | `config/ffgva.php` | No (hardcoded fallback) |
-| Website URL | `emails/layout.blade.php` | No | No |
-| Contact email | 4 views | `config/ffgva.php` | No (hardcoded) |
-| IBAN | — | `config/ffgva.php` | Yes |
-| Creditor address | — | `config/ffgva.php` | Yes |
-| Logo path | `asset('images/logo-ffgva.png')` | No | No |
-| Currency (CHF) | 50+ inline references | No | No |
-| Date format (d.m.Y) | 30+ inline references | No | No |
+### 4.4 Currency "CHF"
 
-### 3.4 French Strings
+| Location | Count |
+|---|---|
+| `app/Services/InvoicePdfService.php` | 3 (lines 118, 131, 138) |
+| `app/Filament/Resources/InvoiceResource.php` | 2 (lines 65, 67) |
+| `app/Services/InvoiceService.php` | 0 |
+| Blade views | ~15 |
+| **Total PHP** | **10** |
 
-All UI text, email content, validation messages, and notifications are hardcoded in French across:
-- 13 email blade views
-- 8 portal blade views
-- 12 Filament resource/page files
-- 5 controllers
+`config('association.currency')` exists but is only used in `QrBillService.php:39`.
 
-**Assessment:** The CLAUDE.md explicitly states "No i18n / no localization layer". For package reuse, a minimal translation layer (even just config-based string replacement) would be needed.
+### 4.5 Email Addresses
+
+All centralized in `config/association.php` and accessed via `BaseMailable` helpers. Zero hardcoded email addresses in `app/Mail/` or controllers. ✓
 
 ---
 
-## 4. Architectural Patterns — Assessment
+## 5. Architectural Patterns Assessment
 
-### 4.1 What Works Well
+### What Works Well
 
 | Pattern | Assessment |
 |---|---|
-| **Enum-based status codes** | Clean, type-safe, consistent `getLabel()`/`getColor()` methods |
-| **SetsModifiedBy trait** | Applied consistently across all 9 domain models |
-| **Soft deletes** | Applied consistently on all domain models |
-| **Audit triggers** | MariaDB BEFORE UPDATE/DELETE triggers on all domain tables |
-| **Config for business values** | IBAN, cotisation amount, creditor address in `config/ffgva.php` |
-| **Test coverage** | 440 tests with DatabaseTransactions, no reliance on seed data |
-| **Route organization** | Clean separation of public, portal, admin, API routes |
-| **Domain model** | Clear entities (Member, Event, Invoice) with proper relationships |
+| **BaseMailable** | All 13 mail classes extend it; from/reply-to centralized via config |
+| **SetsModifiedBy trait** | Applied consistently on all 9 domain models |
+| **Soft deletes** | All 9 domain models; manual pivot scoping where needed |
+| **Audit triggers** | MariaDB BEFORE UPDATE/DELETE on all domain tables |
+| **Enum getLabel()/getColor()** | All 8 enums implement both methods consistently |
+| **Service extraction** | InvoiceEmailService, EventRegistrationService, AdhesionService, InvoicePaymentService eliminate prior duplication |
+| **Portal controller split** | 6 focused controllers (44-198 lines each) vs prior 596-line monolith |
+| **PaymentDateForm** | Reusable form schema replaces 3 identical modal definitions |
+| **ICalService::formatEvent()** | Shared VEVENT builder eliminates duplication |
+| **config/association.php** | Single file for identity/branding (18 keys) |
+| **Test suite** | 475 tests, DatabaseTransactions, no seed-data dependencies |
+| **Visual regression tests** | Dusk-based mobile screenshots with pixel comparison |
 
-### 4.2 What Needs Improvement
+### What Needs Improvement
 
 | Pattern | Issue | Impact |
 |---|---|---|
-| **Static services** | No DI, no interfaces, untestable via mocking | Blocks extension |
-| **Controller-as-orchestrator** | Business logic in controllers instead of services | Blocks reuse |
-| **Filament-as-business-logic** | Modal actions contain workflows | Tight coupling to Filament |
-| **Inline CSS** | 300+ lines in blade `@section('styles')` blocks | Unmaintainable |
-| **No base Mailable** | 11 classes repeat from/reply-to | Branding scattered |
-| **Mixed timestamp patterns** | Some models use `const CREATED_AT = null`, others `$timestamps = false` | Inconsistency |
-| **Mixed cast styles** | Some use `protected $casts` property, others `casts()` method | Inconsistency |
+| **Brand colors in views** | 87 occurrences of `#80081C` in blade/CSS | Rebrand requires editing 25+ files |
+| **Unused config keys** | `colors.primary`, `currency` defined but not used in views | Config exists but doesn't deliver value |
+| **Policies unused** | EventPolicy, MemberPolicy exist but 0 `$this->authorize()` calls | Authorization logic duplicated as `abort(403)` |
+| **Deprecated delegates** | 4 methods in InvoiceService delegate to other services | Dead code, confusing call paths |
+| **Static-only services** | All 11 services use static methods | Blocks DI, mocking, extension |
+| **Inline validation** | 7 controllers do `$request->validate()` vs 3 form requests | Inconsistent pattern |
+| **portal.css duplication** | Identical file in `resources/css/` and `public/css/` | No build pipeline, manual sync |
 
 ---
 
-## 5. Model Layer Analysis
+## 6. Model Layer Analysis
 
-### 5.1 Consistency Issues
+### 6.1 Consistency
 
-| Pattern | Models using it | Models not using it | Issue |
+| Model | CREATED_AT | Casts | SetsModifiedBy | SoftDeletes |
+|---|---|---|---|---|
+| Member | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| Event | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| Invoice | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| InvoiceLine | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| MemberPhone | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| EventChef | `const = null` ✓ | **none** ✗ | ✓ | ✓ |
+| EventMember | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| MemberStrava | `const = null` ✓ | method ✓ | ✓ | ✓ |
+| User | default | method ✓ | — | — |
+| MemberMagicToken | `$timestamps = false` | method ✓ | — | — |
+| PortalAuditLog | `$timestamps = false` | method ✓ | — | — |
+
+**Issues:**
+- EventChef missing casts (no cast defined at all)
+- MemberMagicToken/PortalAuditLog use `$timestamps = false` (correct — tables have `created_at` only, no `updated_at`)
+
+### 6.2 Enum Usage — Raw String Comparisons
+
+**Bugs found (2):**
+1. `app/Http/Controllers/Portal/DashboardController.php:18` — `->where('statuscode', EventStatus::Publie)` missing `->value` — compares enum object to string column
+2. `app/Filament/Widgets/UpcomingEvents.php:22` — `->where('statuscode', '!=', 'X')` — raw string instead of `EventStatus::Annule->value`
+
+**Constants using raw strings (intentional, used in whereIn):**
+- `Member::PORTAL_ACCESSIBLE_STATUSES = ['A', 'P', 'N', 'E']` (Member.php:38)
+- `Member::ACTIVE_STATUSES = ['A', 'E']` (Member.php:41)
+
+**getRawOriginal() calls:** 29 total across app/ — these are necessary for Eloquent casting bypass but could be reduced with query scopes.
+
+---
+
+## 7. Service Layer Analysis
+
+### 7.1 Service Inventory
+
+| Service | Lines | Methods | Responsibility |
 |---|---|---|---|
-| `const CREATED_AT = null` | Member, Event, Invoice, InvoiceLine, MemberPhone, EventChef, EventMember, MemberStrava | MemberMagicToken, PortalAuditLog | MMT/PAL use `$timestamps = false` |
-| `protected function casts(): array` | Member, Event, Invoice, InvoiceLine, MemberPhone, EventChef, EventMember | MemberMagicToken, PortalAuditLog | MMT/PAL use `protected $casts` property |
-| `SetsModifiedBy` trait | All 9 domain models | User, MemberMagicToken, PortalAuditLog | Correct (non-domain) |
-| `SoftDeletes` trait | All 9 domain models | User, MemberMagicToken, PortalAuditLog | Correct |
+| InvoiceService | 142 | 9 (4 deprecated) | Invoice creation + deprecated delegates |
+| InvoicePdfService | 169 | 2 | PDF generation with FPDF |
+| InvoiceEmailService | 63 | 3 | Create invoice + send email |
+| InvoicePaymentService | 62 | 2 | Payment processing + membership |
+| QrBillService | 75 | 2 | Swiss QR bill generation |
+| EventRegistrationService | 52 | 1 | Event registration workflow |
+| AdhesionService | 114 | 3 | Adhesion workflow |
+| ICalService | 92 | 3 | iCal generation |
+| PhoneFormatter | 148 | 1 | Phone number formatting |
+| MemberCardService | 95 | 2 | Membership card PDF |
+| PortalAudit | 21 | 1 | Audit logging |
+| **Total** | **1,033** | **29** | |
 
-### 5.2 Enum Usage Inconsistency
+### 7.2 Missing Service Extractions
 
-**Problem:** Models cast statuscode to enums, but services/controllers compare with raw strings.
+| Logic | Currently in | Recommended |
+|---|---|---|
+| Excel export (60 lines) | MembersRelationManager.php:154-211 | ExcelExportService |
+| Email resend (inline) | MembersRelationManager.php:265-274 | Use InvoiceEmailService::sendExisting() |
+| Strava OAuth (40 lines) | StravaController.php:40-80 | StravaService |
+| Phone create/update | 3 controllers/services | Member::setPhone() |
 
-```php
-// Model casts (correct):
-'statuscode' => MemberStatus::class,
+### 7.3 Deprecated Delegate Anti-Pattern
 
-// Service comparison (wrong — uses raw string):
-if ($invoice->getRawOriginal('type') !== 'C') { return; }  // InvoiceService.php:341
-
-// Controller comparison (wrong — uses raw string):
-$member->getRawOriginal('statuscode') === 'P'  // FormController.php:74
-
-// Filament comparison (wrong — uses raw string):
-->whereIn('event_member.status', ['N', 'C'])  // MembersRelationManager.php:142
-```
-
-**Count:** 40+ raw string comparisons that should use enum values.
-
-### 5.3 Missing Enum: InvoiceType.getColor()
-
-`InvoiceType` and `UserRole` are missing `getColor()` methods, breaking pattern consistency with other enums.
+InvoiceService has 4 `@deprecated` methods that exist solely for backward compatibility with tests. These add 20 lines of indirection and confuse the dependency graph.
 
 ---
 
-## 6. Service Layer Analysis
+## 8. View Layer Analysis
 
-### 6.1 Missing Services (business logic in wrong layer)
+### 8.1 Portal CSS — Remaining Inline Styles
 
-| Missing Service | Logic currently in | Methods needed |
+| View | CSS in @section('styles') | Already in portal.css |
 |---|---|---|
-| `AdhesionService` | FormController, AdhesionActivationController, PortalController | `submitAdhesion()`, `confirmEmail()`, `processPayment()` |
-| `EventRegistrationService` | EventRegistrationController, PortalController, MembersRelationManager | `register()`, `cancel()`, `resendEmail()` |
-| `InvoiceEmailService` | 9 locations (see 2.1) | `createAndSend()` |
-| `MemberPhoneService` | 3 controllers | `createOrUpdate()` |
+| peloton-event.blade.php | ~150 lines | ~10 lines |
+| adhesion-inscription.blade.php | ~120 lines | ~15 lines |
+| evenement.blade.php | ~100 lines | ~20 lines |
+| adhesion-edit.blade.php | ~80 lines | 0 |
+| dashboard.blade.php | ~60 lines | ~40 lines |
+| login.blade.php | ~45 lines | 0 |
+| adhesion.blade.php | ~40 lines | ~10 lines |
+| carte.blade.php | ~30 lines | 0 |
+| factures.blade.php | ~25 lines | ~10 lines |
+| inscription-event-nouveau.blade.php | ~60 lines | 0 |
+| **Total remaining inline** | **~710 lines** | |
+| **portal.css** | **222 lines** | |
 
-### 6.2 InvoiceService Return Value Anti-Pattern
+### 8.2 Email Inline Colors
 
-All `create*()` methods return `['pdf' => ..., 'filename' => ..., 'invoice_number' => ...]`. Callers then query the invoice by number:
+Email templates require inline styles (email client compatibility), but colors should reference config:
 
-```php
-$result = InvoiceService::createCotisation($member, $year);
-$invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+```blade
+{{-- Current (hardcoded): --}}
+style="background-color: #80081C;"
+
+{{-- Target (config-driven): --}}
+style="background-color: {{ config('association.colors.primary') }};"
 ```
 
-**Should return the Invoice model directly** — the caller needs the model, not the number.
+**Occurrences:** 30 inline `#80081C` + 6 inline `#f5f1e9` across 11 email templates.
 
 ---
 
-## 7. View Layer Analysis
+## 9. Rebranding Effort Matrix
 
-### 7.1 Portal CSS Duplication
+### Current State
 
-Estimated 300+ lines of CSS duplicated across portal blade views in `@section('styles')` blocks:
-
-| View | CSS lines | Duplicated classes |
+| Task | Files | Effort |
 |---|---|---|
-| `dashboard.blade.php` | ~117 | `.portal-nav-btn`, badge styles |
-| `adhesion.blade.php` | ~99 | Card styles, button styles |
-| `peloton.blade.php` | ~56 | Badge styles, card styles |
-| `carte.blade.php` | ~61 | Card styles, button styles |
-| `evenement.blade.php` | ~50 | Badge styles, card styles |
-| `factures.blade.php` | ~40 | Table styles, badge styles |
-| `peloton-member.blade.php` | ~50 | Badge styles, info card |
-| `peloton-event.blade.php` | ~50 | Badge styles, participant list |
-| `protection-des-donnees.blade.php` | ~45 | Card styles |
-
-**Fix:** Extract to `resources/css/portal.css`, compile via Vite, include in `portail/layout.blade.php`.
-
-### 7.2 Email Inline Styles
-
-Email views necessarily use inline styles (email client compatibility), but colors and spacing are hardcoded. For rebranding, a preprocessor or config-driven approach would help:
-
-```php
-// In layout.blade.php, use config:
-style="background-color: {{ config('ffgva.theme.primary') }};"
-```
-
----
-
-## 8. Rebranding Effort Matrix
-
-### Current State (manual effort)
-
-| Task | Files to change | Estimated effort |
-|---|---|---|
-| Change brand color | 39 files | 4 hours |
-| Change organization name | 15 files | 2 hours |
-| Change email addresses | 11 mail classes + config | 1 hour |
-| Change logo | 1 asset + 15 references | 1 hour |
-| Change IBAN/address | config + PDF template | 30 min |
-| Change currency | 50+ references | 4 hours |
-| Change date format | 30+ references | 3 hours |
-| Change email text (French) | 13 email views | 4 hours |
-| Change portal text | 8 portal views | 3 hours |
-| **Total** | | **~22 hours** |
-
-### Target State (after refactoring)
-
-| Task | Changes needed | Estimated effort |
-|---|---|---|
-| Change brand color | 1 CSS file + config | 5 min |
-| Change organization name | .env | 1 min |
-| Change email addresses | .env | 1 min |
+| Change brand color (#80081C) | 25+ blade/CSS files (87 occurrences) | 4 hours |
+| Change org name | 2 mail subjects + portal title + config | 30 min |
+| Change email addresses | config/association.php only | 5 min |
 | Change logo | 1 asset file | 5 min |
-| Change IBAN/address | .env | 1 min |
-| Change currency | config | 5 min |
-| Change date format | config | 5 min |
-| Change email/portal text | Override view files | 2 hours |
-| **Total** | | **~2.5 hours** |
+| Change IBAN/address | config/association.php only | 5 min |
+| Change currency (CHF) | 10 PHP + 15 blade references | 2 hours |
+| Change creditor/invoice PDF | config-driven ✓ | 0 |
+| **Total** | | **~7 hours** |
+
+### Target State (after CSS variables + email config)
+
+| Task | Changes | Effort |
+|---|---|---|
+| Change brand color | 1 CSS file (variables) + config/association.php | 10 min |
+| Change org name | config/association.php | 1 min |
+| Change email addresses | config/association.php | 1 min |
+| Change logo | 1 asset file | 5 min |
+| Change IBAN/address | config/association.php | 1 min |
+| Change currency | config/association.php (if views use config) | 5 min |
+| **Total** | | **~25 min** |
 
 ---
 
-## 9. Recommended Refactoring Roadmap
+## 10. Recommended Refactoring Roadmap
 
-### Phase 1: Extract Services (2-3 days)
-1. Create `InvoiceEmailService::createAndSend()` — eliminate 9-location duplication
-2. Create `EventRegistrationService::register()` — eliminate 3-location duplication
-3. Create `AdhesionService` — centralize adhesion workflow
-4. Move `onCotisationPaid()` to `InvoicePaymentService`
-5. Split `InvoiceService` into creation, PDF, QR services
-6. Return Invoice model from creation methods instead of array
+### Phase 3: Brand Colors in Views (1-2 days)
+1. Define CSS custom properties in portal layout: `--color-primary`, `--color-primary-hover`, `--color-bg`
+2. Replace 87 hardcoded `#80081C` references in blade/CSS with variables
+3. Replace 17 `#f5f1e9` references with variable
+4. Email templates: use `{{ config('association.colors.primary') }}` for inline styles
+5. Remove duplicate `public/css/portal.css` — use build output or symlink
 
-### Phase 2: Centralize Configuration (1-2 days)
-1. Create `BaseMailable` with from/reply-to from config
-2. Move all email addresses to config with env fallbacks
-3. Add theme config: colors, logo path, currency, date format, website URL
-4. Define `Member::PORTAL_ACCESSIBLE_STATUSES` constant
-5. Replace raw status string comparisons with enum references
+### Phase 4: Cleanup (1 day)
+1. Fix 2 enum bugs (DashboardController.php:18, UpcomingEvents.php:22)
+2. Remove 4 deprecated delegates from InvoiceService (update 22 test references)
+3. Replace 8 manual `abort(403)` with `$this->authorize()` using existing policies
+4. Extract phone create/update to `Member::setPhone()`
+5. Wire `config('association.currency')` to remaining 10 hardcoded `'CHF'` in PHP
+6. Use `config('association.name')` in 2 mail subjects + portal title
 
-### Phase 3: Centralize Styling (1-2 days)
-1. Extract portal CSS to `resources/css/portal.css`
-2. Define CSS custom properties for brand colors
-3. Use config values in email blade templates for colors
-4. Move inline SVG icon handling to proper Filament components
+### Phase 5: Service Completeness (1 day)
+1. Extract Excel export from MembersRelationManager to ExcelExportService
+2. Replace inline email resend in MembersRelationManager with `InvoiceEmailService::sendExisting()`
+3. Convert 7 inline validations to form requests (or consolidate)
 
-### Phase 4: Interfaces & DI (2-3 days)
-1. Define interfaces: `InvoiceGeneratorInterface`, `MemberCardGeneratorInterface`
-2. Convert static services to injectable classes
-3. Register in service provider with default implementations
-4. Allow override via service container binding
-
-### Phase 5: Package Structure (3-5 days)
-1. Extract core domain (models, services, enums) to `packages/association-manager`
-2. Keep FFGVA-specific views, branding, config in main app
-3. Define extension points: custom PDF templates, email templates, card designs
-4. Document configuration and customization guide
+### Phase 6: Package Extraction (3-5 days, when needed)
+1. Define interfaces for extension points (InvoicePdfGenerator, MemberCardGenerator)
+2. Convert static services to injectable (register in ServiceProvider)
+3. Extract core domain to `packages/association-manager`
+4. Keep FFGVA-specific views, config, assets in main app
 
 ---
 
-## 10. Strengths to Preserve
+## 11. Strengths to Preserve
 
-1. **Comprehensive test suite** — 440 tests, all using DatabaseTransactions (no RefreshDatabase)
-2. **Clean enum implementation** — type-safe status codes with labels and colors
-3. **Audit trail** — MariaDB triggers on all domain tables
-4. **Consistent trait usage** — SetsModifiedBy on all domain models
-5. **Proper soft deletes** — with manual pivot table soft-delete scoping
-6. **No cascade deletes** — enforced by design
-7. **Separation of portal from admin** — distinct auth, middleware, views
-8. **Swiss QR-bill integration** — well-implemented via sprain/swiss-qr-bill
-9. **Configuration for business values** — IBAN, cotisation amount, creditor data in config
+1. **475-test suite** with DatabaseTransactions (no RefreshDatabase, no seed-data dependency)
+2. **Visual regression tests** — Dusk mobile screenshots with pixel comparison
+3. **BaseMailable pattern** — all 13 mail classes extend it, from/reply-to centralized
+4. **config/association.php** — single file for identity/branding (18 keys)
+5. **SetsModifiedBy trait** — consistent across all 9 domain models
+6. **MariaDB audit triggers** — BEFORE UPDATE/DELETE on all domain tables
+7. **No cascade deletes** — enforced by design
+8. **Enum consistency** — all 8 enums have getLabel() + getColor()
+9. **Service separation** — 11 focused services (avg 94 lines each)
+10. **Portal controller split** — 6 controllers, none over 200 lines
+11. **PaymentDateForm** — reusable form schema pattern
+12. **Swiss QR-bill integration** — clean separation in QrBillService
 
 ---
 
-*Report generated by architecture analysis of /opt/ffgva codebase.*
-*Analysis covers: 11 models, 5 services, 8 enums, 10 controllers, 13 mail classes, 12 Filament resources/pages/widgets, 25+ blade views, 440 tests.*
+*Analysis covers: 11 models, 11 services, 8 enums, 13 controllers, 14 mail classes, 25 Filament resources/pages/widgets, 47 blade views, 2 policies, 3 form requests, 2 middleware, 67 tests (475 test cases, 1171 assertions). Generated 20.04.2026.*
