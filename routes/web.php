@@ -44,6 +44,12 @@ Route::get('/carte/v/{token}', [CarteController::class, 'carteValider'])
     ->where('token', '[a-f0-9]{16}')
     ->name('carte.valider');
 
+// Non-member registration (public)
+Route::get('/register', [PortalAuthController::class, 'registerForm'])->name('register');
+Route::post('/register', [PortalAuthController::class, 'registerStore'])
+    ->middleware('throttle:3,60')
+    ->name('register.store');
+
 // Portal auth (public)
 Route::get('/login', [PortalAuthController::class, 'login'])->name('portail.login');
 Route::post('/auth/send-link', [PortalAuthController::class, 'sendLink'])

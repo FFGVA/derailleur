@@ -85,6 +85,61 @@ class PortalAuthController extends Controller
         return redirect()->route('portail.dashboard');
     }
 
+    public function registerForm()
+    {
+        return view('portail.register');
+    }
+
+    public function registerStore(Request $request)
+    {
+        // Honeypot
+        if ($request->filled('website')) {
+            return view('portail.register-confirmation');
+        }
+
+        $request->validate([
+            'prenom' => ['required', 'string', 'max:40'],
+            'nom' => ['required', 'string', 'max:60'],
+            'email' => ['required', 'email', 'max:255'],
+            'telephone' => ['required', 'string', 'max:20'],
+        ], [
+            'prenom.required' => 'Le prénom est obligatoire.',
+            'nom.required' => 'Le nom est obligatoire.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'L\'adresse email n\'est pas valide.',
+            'telephone.required' => 'Le numéro de téléphone est obligatoire.',
+        ]);
+
+        $email = $request->input('email');
+        $member = Member::where('email', $email)->first();
+
+        if (! $member) {
+            $member = Member::create([
+                'first_name' => $request->input('prenom'),
+                'last_name' => $request->input('nom'),
+                'email' => $email,
+                'statuscode' => MemberStatus::NonMembre->value,
+                'is_invitee' => false,
+            ]);
+
+            $member->setPhone($request->input('telephone'));
+        }
+
+        // Send magic link (regardless of new or existing — don't reveal)
+        if (in_array($member->getRawOriginal('statuscode'), Member::PORTAL_ACCESSIBLE_STATUSES)) {
+            [$token, $rawToken] = MemberMagicToken::generateFor($member);
+            $magicLinkUrl = url('/auth/verify/' . $rawToken);
+
+            Mail::send(new PortalMagicLinkMail(
+                member: $member,
+                magicLinkUrl: $magicLinkUrl,
+                expiresAt: $token->expires_at->format('d.m.Y à H:i'),
+            ));
+        }
+
+        return view('portail.register-confirmation');
+    }
+
     public function logout(Request $request)
     {
         $memberId = $request->session()->get('portal_member_id');
