@@ -42,6 +42,14 @@ class Member extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (Member $member) {
+            if ($member->metadata && isset($member->metadata['instagram'])) {
+                $meta = $member->metadata;
+                $meta['instagram'] = ltrim($meta['instagram'], '@');
+                $member->metadata = $meta;
+            }
+        });
+
         static::updating(function (Member $member) {
             if ($member->isDirty('statuscode') && $member->getRawOriginal('statuscode') !== MemberStatus::Actif->value && $member->statuscode === MemberStatus::Actif && !$member->member_number) {
                 $member->member_number = static::nextMemberNumber();

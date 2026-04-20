@@ -92,7 +92,7 @@ class AdhesionEndpointTest extends TestCase
         $this->assertIsArray($member->metadata);
         $this->assertEquals('route', $member->metadata['type_velo']);
         $this->assertEquals('weekend', $member->metadata['sorties']);
-        $this->assertEquals('@jeandupont', $member->metadata['instagram']);
+        $this->assertEquals('jeandupont', $member->metadata['instagram']);
         $this->assertEquals('jean_dupont', $member->metadata['strava']);
         $this->assertEquals('oui', $member->metadata['statuts_ok']);
         $this->assertEquals('oui', $member->metadata['cotisation_ok']);
