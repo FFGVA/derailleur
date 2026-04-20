@@ -18,6 +18,8 @@
             line-height: 1.5;
             color: #333;
             background-color: var(--color-bg);
+        }
+        .portal-page {
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
@@ -70,6 +72,7 @@
     </style>
 </head>
 <body>
+<div class="portal-page">
     @yield('header')
 
     <main class="portal-main">
@@ -80,8 +83,20 @@
         <img src="{{ asset(config('association.logo_path')) }}" alt="{{ config('association.name') }}" style="height: 2rem; margin-bottom: 0.5rem;">
         <div>&copy; {{ date('Y') }} Smart Gecko SA</div>
     </footer>
+</div>
 
     <script>
+    function openPopup(id) {
+        var el = document.getElementById(id);
+        if (el && el.parentNode !== document.body) {
+            document.body.appendChild(el);
+        }
+        if (el) el.classList.add('active');
+    }
+    function closePopup(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    }
     function openMaps(q) {
         var ua = navigator.userAgent || '';
         if (/iPhone|iPad|iPod/i.test(ua)) {

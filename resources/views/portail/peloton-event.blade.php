@@ -225,7 +225,7 @@
         position: fixed;
         inset: 0;
         background: rgba(0,0,0,0.4);
-        z-index: 50;
+        z-index: 9999;
         align-items: center;
         justify-content: center;
         padding: 1.25rem;
@@ -233,7 +233,7 @@
     .portal-overlay.active { display: flex; }
     .portal-popup {
         display: block;
-        position: static;
+        position: relative;
         background: white;
         border-radius: 0.75rem;
         padding: 1.5rem;
@@ -243,11 +243,25 @@
         overflow-y: auto;
         box-shadow: 0 4px 24px rgba(0,0,0,0.15);
     }
+    .portal-popup-x {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #999;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0.25rem;
+    }
+    .portal-popup-x:hover { color: #333; }
     .portal-popup-title {
         font-size: 1rem;
         font-weight: 700;
         margin-bottom: 0.75rem;
         color: #333;
+        padding-right: 2rem;
     }
     .portal-popup-body {
         font-size: 0.9375rem;
@@ -296,7 +310,7 @@
                 </span>
             @endif
             @if($event->description)
-                <button class="portal-desc-btn" onclick="document.getElementById('descPopup').classList.add('active')" aria-label="Description">
+                <button class="portal-desc-btn" onclick="openPopup('descPopup')" aria-label="Description">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
@@ -342,7 +356,7 @@
         <div class="portal-section-header">
             <div class="portal-section-title">Présences ({{ $participants->filter(fn ($p) => in_array($p->pivot->status->value, ['N', 'C']))->count() }})</div>
             @if($availableMembers->isNotEmpty())
-                <button class="portal-add-btn" onclick="document.getElementById('addPopup').classList.add('active')" aria-label="Ajouter">+</button>
+                <button class="portal-add-btn" onclick="openPopup('addPopup')" aria-label="Ajouter">+</button>
             @endif
         </div>
 
@@ -420,8 +434,9 @@
 
     {{-- Add participant popup --}}
     @if($availableMembers->isNotEmpty())
-        <div id="addPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div id="addPopup" class="portal-overlay" onclick="if(event.target===this)closePopup(this.id)">
             <div class="portal-popup">
+                <button class="portal-popup-x" onclick="closePopup('addPopup')">&times;</button>
                 <div class="portal-popup-title">Ajouter une participante</div>
                 <form method="POST" action="{{ route('portail.peloton.add', $event) }}">
                     @csrf
@@ -433,18 +448,19 @@
                     </select>
                     <button type="submit" class="portal-popup-submit">Ajouter</button>
                 </form>
-                <button class="portal-popup-close" onclick="document.getElementById('addPopup').classList.remove('active')">Annuler</button>
+                <button class="portal-popup-close" onclick="closePopup('addPopup')">Annuler</button>
             </div>
         </div>
     @endif
 
     {{-- Description popup --}}
     @if($event->description)
-        <div id="descPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div id="descPopup" class="portal-overlay" onclick="if(event.target===this)closePopup(this.id)">
             <div class="portal-popup">
+                <button class="portal-popup-x" onclick="closePopup('descPopup')">&times;</button>
                 <div class="portal-popup-title">Description</div>
                 <div class="portal-popup-body">{!! clean($event->description) !!}</div>
-                <button class="portal-popup-close" onclick="document.getElementById('descPopup').classList.remove('active')">Fermer</button>
+                <button class="portal-popup-close" onclick="closePopup('descPopup')">Fermer</button>
             </div>
         </div>
     @endif
