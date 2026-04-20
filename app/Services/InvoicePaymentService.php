@@ -29,7 +29,7 @@ class InvoicePaymentService
             $periodStart = now();
         }
 
-        $newEnd = InvoiceService::computeMembershipEnd($periodStart);
+        $newEnd = self::computeMembershipEnd($periodStart);
 
         $wasActive = in_array($member->getRawOriginal('statuscode'), Member::ACTIVE_STATUSES);
 
@@ -42,5 +42,21 @@ class InvoicePaymentService
         if (! $wasActive) {
             Mail::send(new ActivationMail($member));
         }
+    }
+
+    /**
+     * Compute membership end date: 31.12 of the start year,
+     * unless start is in Nov/Dec → 31.12 of the following year.
+     */
+    public static function computeMembershipEnd(\DateTimeInterface $periodStart): \Carbon\Carbon
+    {
+        $month = (int) $periodStart->format('m');
+        $year = (int) $periodStart->format('Y');
+
+        if ($month >= 11) {
+            $year++;
+        }
+
+        return \Carbon\Carbon::create($year, 12, 31);
     }
 }

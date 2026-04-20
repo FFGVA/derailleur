@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Invoice;
 use App\Models\Member;
+use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -154,7 +155,7 @@ class InvoiceTest extends TestCase
         // When no membership_end, start from today, end 31.12 of current year
         // (unless Nov/Dec, then end of next year)
         $expectedStart = now()->format('d.m.Y');
-        $expectedEnd = InvoiceService::computeMembershipEnd(now())->format('d.m.Y');
+        $expectedEnd = InvoicePaymentService::computeMembershipEnd(now())->format('d.m.Y');
         $this->assertStringContainsString($expectedStart, $line->description);
         $this->assertStringContainsString($expectedEnd, $line->description);
     }

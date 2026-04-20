@@ -40,7 +40,7 @@ class InvoiceService
         } else {
             $periodStart = now();
         }
-        $periodEnd = self::computeMembershipEnd($periodStart);
+        $periodEnd = InvoicePaymentService::computeMembershipEnd($periodStart);
 
         InvoiceLine::create([
             'invoice_id' => $invoice->id,
@@ -129,20 +129,10 @@ class InvoiceService
         InvoicePaymentService::onCotisationPaid($invoice);
     }
 
-    /**
-     * Compute membership end date: 31.12 of the start year,
-     * unless start is in Nov/Dec → 31.12 of the following year.
-     */
+    /** @deprecated Use InvoicePaymentService::computeMembershipEnd() */
     public static function computeMembershipEnd(\DateTimeInterface $periodStart): \Carbon\Carbon
     {
-        $month = (int) $periodStart->format('m');
-        $year = (int) $periodStart->format('Y');
-
-        if ($month >= 11) {
-            $year++;
-        }
-
-        return \Carbon\Carbon::create($year, 12, 31);
+        return InvoicePaymentService::computeMembershipEnd($periodStart);
     }
 
     public static function utf8(string $text): string

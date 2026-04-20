@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Member;
+use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -275,28 +276,28 @@ class InvoicePdfContentTest extends TestCase
     public function test_membership_end_is_dec_31_same_year(): void
     {
         $start = \Carbon\Carbon::create(2026, 3, 15);
-        $end = InvoiceService::computeMembershipEnd($start);
+        $end = InvoicePaymentService::computeMembershipEnd($start);
         $this->assertEquals('2026-12-31', $end->format('Y-m-d'));
     }
 
     public function test_membership_end_extends_to_next_year_for_november(): void
     {
         $start = \Carbon\Carbon::create(2026, 11, 1);
-        $end = InvoiceService::computeMembershipEnd($start);
+        $end = InvoicePaymentService::computeMembershipEnd($start);
         $this->assertEquals('2027-12-31', $end->format('Y-m-d'));
     }
 
     public function test_membership_end_extends_to_next_year_for_december(): void
     {
         $start = \Carbon\Carbon::create(2026, 12, 15);
-        $end = InvoiceService::computeMembershipEnd($start);
+        $end = InvoicePaymentService::computeMembershipEnd($start);
         $this->assertEquals('2027-12-31', $end->format('Y-m-d'));
     }
 
     public function test_membership_end_october_stays_same_year(): void
     {
         $start = \Carbon\Carbon::create(2026, 10, 31);
-        $end = InvoiceService::computeMembershipEnd($start);
+        $end = InvoicePaymentService::computeMembershipEnd($start);
         $this->assertEquals('2026-12-31', $end->format('Y-m-d'));
     }
 
