@@ -16,4 +16,13 @@ enum InvoiceType: string
             self::Autre => 'Autre',
         };
     }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Cotisation => 'primary',
+            self::Evenement => 'info',
+            self::Autre => 'gray',
+        };
+    }
 }

@@ -27,4 +27,10 @@ class UserRoleTest extends TestCase
         $this->assertSame('Administratrice', UserRole::Admin->getLabel());
         $this->assertSame('Cheffe de peloton', UserRole::ChefPeloton->getLabel());
     }
+
+    public function test_get_color_returns_valid_values(): void
+    {
+        $this->assertSame('danger', UserRole::Admin->getColor());
+        $this->assertSame('warning', UserRole::ChefPeloton->getColor());
+    }
 }

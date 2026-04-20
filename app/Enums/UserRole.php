@@ -14,4 +14,12 @@ enum UserRole: string
             self::ChefPeloton => 'Cheffe de peloton',
         };
     }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Admin => 'danger',
+            self::ChefPeloton => 'warning',
+        };
+    }
 }
