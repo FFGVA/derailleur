@@ -12,7 +12,7 @@
     .portal-lpd-card h1 {
         font-size: 1.25rem;
         font-weight: 700;
-        color: #80081C;
+        color: var(--color-primary);
         margin-bottom: 1.25rem;
     }
     .portal-lpd-card h2 {
@@ -64,7 +64,7 @@
 
         <h2>Préposée à la protection des données</h2>
         <p>La présidente de Fast and Female Geneva assume la fonction de préposée à la protection des données.<br>
-        Contact : <a href="mailto:{{ config('association.contact_email') }}" style="color: #80081C;">{{ config('association.contact_email') }}</a></p>
+        Contact : <a href="mailto:{{ config('association.contact_email') }}" style="color: var(--color-primary);">{{ config('association.contact_email') }}</a></p>
 
         <h2>Données collectées</h2>
         <p>L'association collecte et traite les données suivantes :</p>
@@ -118,7 +118,7 @@
         <div class="portal-lpd-contact">
             <strong>Contact</strong><br>
             Pour toute question relative à la protection de tes données personnelles :<br>
-            <a href="mailto:{{ config('association.contact_email') }}" style="color: #80081C;">{{ config('association.contact_email') }}</a>
+            <a href="mailto:{{ config('association.contact_email') }}" style="color: var(--color-primary);">{{ config('association.contact_email') }}</a>
         </div>
     </div>
 @endsection

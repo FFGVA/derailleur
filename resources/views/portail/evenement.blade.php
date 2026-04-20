@@ -27,7 +27,7 @@
     }
     .portal-info-label { color: #666; display: flex; align-items: center; gap: 0.375rem; }
     .portal-info-value { font-weight: 500; color: #333; text-align: right; }
-    .portal-info-value a { color: #80081C; text-decoration: none; }
+    .portal-info-value a { color: var(--color-primary); text-decoration: none; }
     .portal-info-value a:hover { text-decoration: underline; }
     .portal-chef-card {
         background: white;
@@ -58,7 +58,7 @@
     }
     .portal-chef-email {
         font-size: 0.8125rem;
-        color: #80081C;
+        color: var(--color-primary);
         text-decoration: none;
     }
     .portal-chef-email:hover { text-decoration: underline; }
@@ -73,7 +73,7 @@
         text-decoration: none;
         display: flex;
     }
-    .portal-chef-icons a:hover { color: #80081C; }
+    .portal-chef-icons a:hover { color: var(--color-primary); }
     .portal-chef-icons svg {
         width: 1.25rem;
         height: 1.25rem;
@@ -82,7 +82,7 @@
         display: block;
         width: 100%;
         padding: 0.875rem;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 1rem;
@@ -130,7 +130,7 @@
     .portal-popup-submit {
         width: 100%;
         padding: 0.75rem;
-        background: #80081C;
+        background: var(--color-primary);
         border: none;
         border-radius: 0.5rem;
         font-weight: 600;
@@ -206,7 +206,7 @@
         @endif
 
         <div class="portal-info-row">
-            <span class="portal-info-label">Début <a href="{{ route('portail.evenement.ical', $event) }}" title="Ajouter au calendrier" style="color: #80081C; display: inline-flex;"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></a></span>
+            <span class="portal-info-label">Début <a href="{{ route('portail.evenement.ical', $event) }}" title="Ajouter au calendrier" style="color: var(--color-primary); display: inline-flex;"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></a></span>
             <span class="portal-info-value">{{ $event->starts_at->format('d.m.Y H:i') }}</span>
         </div>
         @if($event->ends_at)
@@ -217,13 +217,13 @@
         @endif
         @if($event->location)
             <div class="portal-info-row">
-                <span class="portal-info-label">Lieu <a href="#" onclick="openMaps('{{ urlencode($event->location) }}');return false;" style="color: #80081C; display: inline-flex;" aria-label="Ouvrir dans Plans"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a></span>
+                <span class="portal-info-label">Lieu <a href="#" onclick="openMaps('{{ urlencode($event->location) }}');return false;" style="color: var(--color-primary); display: inline-flex;" aria-label="Ouvrir dans Plans"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></a></span>
                 <span class="portal-info-value">{{ $event->location }}</span>
             </div>
         @endif
         @if($event->gpx_file)
             <div class="portal-info-row">
-                <span class="portal-info-label">Parcours <a href="{{ asset('storage/' . $event->gpx_file) }}" download="{{ Str::slug($event->title) }}-{{ $event->starts_at->format('Y-m-d') }}.gpx" style="color: #80081C; display: inline-flex;" title="Télécharger GPX"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></a></span>
+                <span class="portal-info-label">Parcours <a href="{{ asset('storage/' . $event->gpx_file) }}" download="{{ Str::slug($event->title) }}-{{ $event->starts_at->format('Y-m-d') }}.gpx" style="color: var(--color-primary); display: inline-flex;" title="Télécharger GPX"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></a></span>
                 <span class="portal-info-value"><a href="{{ asset('storage/' . $event->gpx_file) }}" download="{{ Str::slug($event->title) }}-{{ $event->starts_at->format('Y-m-d') }}.gpx">Télécharger GPX</a></span>
             </div>
         @endif

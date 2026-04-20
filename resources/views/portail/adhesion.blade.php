@@ -57,7 +57,7 @@
         gap: 0.5rem;
         width: 100%;
         padding: 0.875rem;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 0.9375rem;

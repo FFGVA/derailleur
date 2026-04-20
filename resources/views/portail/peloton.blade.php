@@ -8,7 +8,7 @@
     }
     .portal-event-count {
         font-size: 0.75rem;
-        color: #80081C;
+        color: var(--color-primary);
         font-weight: 500;
         margin-top: 0.25rem;
     }

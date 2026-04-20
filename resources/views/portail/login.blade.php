@@ -33,11 +33,11 @@
     }
     .portal-input:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-submit {
         width: 100%;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 1rem;

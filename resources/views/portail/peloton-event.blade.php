@@ -42,7 +42,7 @@
     }
     .portal-info-label { color: #666; }
     .portal-info-value { font-weight: 500; color: #333; text-align: right; }
-    .portal-info-value a { color: #80081C; text-decoration: none; }
+    .portal-info-value a { color: var(--color-primary); text-decoration: none; }
     .portal-info-value a:hover { text-decoration: underline; }
     .portal-section-header {
         display: flex;
@@ -58,10 +58,10 @@
     .portal-add-btn {
         width: 1.75rem;
         height: 1.75rem;
-        border: 2px solid #80081C;
+        border: 2px solid var(--color-primary);
         border-radius: 0.375rem;
         background: white;
-        color: #80081C;
+        color: var(--color-primary);
         font-size: 1.125rem;
         font-weight: 700;
         display: flex;
@@ -72,7 +72,7 @@
         line-height: 1;
     }
     .portal-add-btn:hover {
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
     }
     .portal-popup-select {
@@ -92,12 +92,12 @@
     }
     .portal-popup-select:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-popup-submit {
         width: 100%;
         padding: 0.75rem;
-        background: #80081C;
+        background: var(--color-primary);
         border: none;
         border-radius: 0.5rem;
         font-weight: 600;
@@ -183,7 +183,7 @@
         text-decoration: none;
         display: flex;
     }
-    .portal-participant-icons a:hover { color: #80081C; }
+    .portal-participant-icons a:hover { color: var(--color-primary); }
     .portal-participant-icons svg {
         width: 1.25rem;
         height: 1.25rem;
@@ -320,7 +320,7 @@
             </div>
         @endif
         <div class="portal-info-row">
-            <span class="portal-info-label">Parcours <a href="#" onclick="document.getElementById('gpxInput').click();return false;" style="color: #80081C; display: inline-flex;" title="{{ $event->gpx_file ? 'Remplacer le fichier GPX' : 'Ajouter un fichier GPX' }}"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></a></span>
+            <span class="portal-info-label">Parcours <a href="#" onclick="document.getElementById('gpxInput').click();return false;" style="color: var(--color-primary); display: inline-flex;" title="{{ $event->gpx_file ? 'Remplacer le fichier GPX' : 'Ajouter un fichier GPX' }}"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></a></span>
             <span class="portal-info-value">
                 @if($event->gpx_file)
                     <a href="{{ asset('storage/' . $event->gpx_file) }}" download="{{ Str::slug($event->title) }}-{{ $event->starts_at->format('Y-m-d') }}.gpx">Télécharger GPX</a>

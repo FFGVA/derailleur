@@ -46,7 +46,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        background: #80081C;
+        background: var(--color-primary);
         color: white;
         padding: 0.625rem 1.25rem;
         border-radius: 0.5rem;
@@ -56,7 +56,7 @@
         transition: background 0.2s;
     }
     .carte-download:hover {
-        background: #660616;
+        background: var(--color-primary-hover);
     }
 @endsection
 

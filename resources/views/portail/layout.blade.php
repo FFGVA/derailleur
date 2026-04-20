@@ -7,18 +7,23 @@
     <title>@yield('title', 'Mon espace') — Fast and Female Geneva</title>
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
     <style>
+        :root {
+            --color-primary: {{ config('association.colors.primary') }};
+            --color-primary-hover: {{ config('association.colors.primary_hover') }};
+            --color-bg: {{ config('association.colors.background') }};
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.5;
             color: #333;
-            background-color: #f5f1e9;
+            background-color: var(--color-bg);
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
         }
         .portal-header {
-            background-color: #80081C;
+            background-color: var(--color-primary);
             padding: 0.75rem 1.25rem;
             display: flex;
             align-items: center;

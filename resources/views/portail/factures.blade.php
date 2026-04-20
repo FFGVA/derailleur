@@ -41,15 +41,15 @@
         gap: 0.375rem;
         font-size: 0.8125rem;
         font-weight: 500;
-        color: #80081C;
+        color: var(--color-primary);
         text-decoration: none;
         padding: 0.25rem 0.625rem;
         border-radius: 0.375rem;
-        border: 1px solid #80081C;
+        border: 1px solid var(--color-primary);
         transition: background-color 0.2s;
     }
     .portal-pdf-btn:hover {
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
     }
     .portal-pdf-btn svg {

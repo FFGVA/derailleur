@@ -53,7 +53,7 @@
     }
     .portal-input:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-input-readonly {
         background-color: #f5f1e9;
@@ -68,7 +68,7 @@
     .portal-checkbox-row input[type="checkbox"] {
         width: 1.125rem;
         height: 1.125rem;
-        accent-color: #80081C;
+        accent-color: var(--color-primary);
     }
     .portal-checkbox-row label {
         font-size: 0.9375rem;
@@ -76,7 +76,7 @@
     }
     .portal-submit {
         width: 100%;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 1rem;

@@ -18,7 +18,7 @@
     }
     .portal-info-label { color: #666; }
     .portal-info-value { font-weight: 500; color: #333; text-align: right; }
-    .portal-info-value a { color: #80081C; text-decoration: none; }
+    .portal-info-value a { color: var(--color-primary); text-decoration: none; }
     .portal-info-value a:hover { text-decoration: underline; }
     .portal-no-photo-banner {
         display: flex;

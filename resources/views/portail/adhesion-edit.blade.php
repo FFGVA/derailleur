@@ -34,7 +34,7 @@
     }
     .portal-form-input:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-form-row {
         display: grid;
@@ -84,7 +84,7 @@
         font-size: 0.8125rem;
         color: #666;
     }
-    .portal-phone-wa input { width: 1rem; height: 1rem; accent-color: #80081C; }
+    .portal-phone-wa input { width: 1rem; height: 1rem; accent-color: var(--color-primary); }
     .portal-add-phone {
         display: flex;
         align-items: center;
@@ -94,10 +94,10 @@
         padding: 0.625rem;
         margin-bottom: 1rem;
         background: white;
-        color: #80081C;
+        color: var(--color-primary);
         font-weight: 600;
         font-size: 0.875rem;
-        border: 2px dashed #80081C;
+        border: 2px dashed var(--color-primary);
         border-radius: 0.75rem;
         cursor: pointer;
         transition: background-color 0.2s;
@@ -110,7 +110,7 @@
         gap: 0.5rem;
         width: 100%;
         padding: 0.875rem;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 0.9375rem;

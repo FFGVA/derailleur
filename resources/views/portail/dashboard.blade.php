@@ -14,7 +14,7 @@
     .portal-welcome-name {
         font-size: 1.375rem;
         font-weight: 700;
-        color: #80081C;
+        color: var(--color-primary);
         margin-bottom: 0.25rem;
     }
     .portal-welcome-phone {
@@ -51,7 +51,7 @@
     .portal-nav-icon {
         width: 2rem;
         height: 2rem;
-        color: #80081C;
+        color: var(--color-primary);
     }
     /* badge, event-card, section-title, empty → portal.css */
 @endsection
@@ -69,7 +69,7 @@
 @section('content')
     <div class="portal-welcome-card" style="position: relative;">
         @if(!in_array($member->getRawOriginal('statuscode'), ['D', 'N']))
-            <a href="{{ route('portail.carte') }}" style="position: absolute; top: 1rem; right: 1rem; color: #80081C;" title="Ma carte de membre">
+            <a href="{{ route('portail.carte') }}" style="position: absolute; top: 1rem; right: 1rem; color: var(--color-primary);" title="Ma carte de membre">
                 <svg width="1.5rem" height="1.5rem" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/>
@@ -87,10 +87,10 @@
     </div>
 
     @if($member->getRawOriginal('statuscode') === 'N')
-        <div style="background: linear-gradient(135deg, #80081C 0%, #a30d25 100%); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; color: white; box-shadow: 0 2px 8px rgba(128,8,28,0.3);">
+        <div style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; color: white; box-shadow: 0 2px 8px rgba(128,8,28,0.3);">
             <div style="font-weight: 700; font-size: 1.0625rem; margin-bottom: 0.375rem;">Deviens membre !</div>
             <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.75rem;">Soutiens notre association et profite des événements et avantages réservés aux membres.</div>
-            <a href="{{ route('portail.adhesion.inscription') }}" style="display: inline-block; background: white; color: #80081C; font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
+            <a href="{{ route('portail.adhesion.inscription') }}" style="display: inline-block; background: white; color: var(--color-primary); font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
                 Je m'inscris !
             </a>
         </div>
@@ -135,7 +135,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 @if($openAmount > 0)
-                    <span style="font-size: 1.25rem; font-weight: 700; color: #80081C;">CHF {{ number_format((float) $openAmount, 2, '.', '') }}</span>
+                    <span style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary);">CHF {{ number_format((float) $openAmount, 2, '.', '') }}</span>
                 @endif
             </div>
             Factures

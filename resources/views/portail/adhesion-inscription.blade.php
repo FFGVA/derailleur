@@ -15,7 +15,7 @@
         max-width: 420px;
     }
     .portal-intro-card {
-        background: linear-gradient(135deg, #80081C 0%, #a30d25 100%);
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
         border-radius: 0.75rem;
         padding: 1.25rem;
         margin-bottom: 1.5rem;
@@ -52,7 +52,7 @@
     }
     .portal-input:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-input-readonly {
         background-color: #f5f1e9;
@@ -72,7 +72,7 @@
     }
     .portal-select:focus {
         outline: none;
-        border-color: #80081C;
+        border-color: var(--color-primary);
     }
     .portal-radio-group {
         margin-bottom: 1rem;
@@ -86,7 +86,7 @@
     .portal-radio-row input[type="radio"] {
         width: 1.125rem;
         height: 1.125rem;
-        accent-color: #80081C;
+        accent-color: var(--color-primary);
     }
     .portal-radio-row label {
         font-size: 0.9375rem;
@@ -101,7 +101,7 @@
     .portal-checkbox-row input[type="checkbox"] {
         width: 1.125rem;
         height: 1.125rem;
-        accent-color: #80081C;
+        accent-color: var(--color-primary);
         margin-top: 0.125rem;
         flex-shrink: 0;
     }
@@ -111,7 +111,7 @@
     }
     .portal-submit {
         width: 100%;
-        background-color: #80081C;
+        background-color: var(--color-primary);
         color: white;
         font-weight: 600;
         font-size: 1rem;
@@ -229,7 +229,7 @@
 
                 <div class="portal-checkbox-row">
                     <input type="checkbox" id="statuts_ok" name="statuts_ok" value="oui" {{ old('statuts_ok') ? 'checked' : '' }} required>
-                    <label for="statuts_ok">J'ai lu et j'accepte les <a href="{{ route('portail.lpd') }}" style="color: #80081C;">statuts de l'association</a></label>
+                    <label for="statuts_ok">J'ai lu et j'accepte les <a href="{{ route('portail.lpd') }}" style="color: var(--color-primary);">statuts de l'association</a></label>
                 </div>
                 @error('statuts_ok')<div class="portal-error">{{ $message }}</div>@enderror
 
