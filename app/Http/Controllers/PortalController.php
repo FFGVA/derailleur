@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EventMemberStatus;
 use App\Enums\EventStatus;
+use App\Enums\InvoiceStatus;
 use App\Mail\EventConfirmationMail;
 use App\Mail\ExpiredMemberRegistrationMail;
-use App\Mail\InvoiceMail;
 use App\Mail\MemberUpdateRequestMail;
 use App\Mail\AdhesionMail;
 use App\Models\Event;
@@ -13,7 +14,9 @@ use App\Models\EventMember;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\MemberPhone;
+use App\Services\EventRegistrationService;
 use App\Services\ICalService;
+use App\Services\InvoiceEmailService;
 use App\Services\InvoiceService;
 use App\Services\MemberCardService;
 use App\Services\PortalAudit;
@@ -116,7 +119,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if (!in_array($member->getRawOriginal('statuscode'), ['N', 'D'])) {
+        if (!in_array($member->getRawOriginal('statuscode'), [MemberStatus::NonMembre->value, MemberStatus::Brouillon->value])) {
             return redirect()->route('portail.dashboard');
         }
 
@@ -131,7 +134,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if (!in_array($member->getRawOriginal('statuscode'), ['N', 'D'])) {
+        if (!in_array($member->getRawOriginal('statuscode'), [MemberStatus::NonMembre->value, MemberStatus::Brouillon->value])) {
             return redirect()->route('portail.dashboard');
         }
 
@@ -170,7 +173,7 @@ class PortalController extends Controller
             'first_name' => $request->input('prenom'),
             'last_name' => $request->input('nom'),
             'photo_ok' => $request->input('photo_ok') !== 'non',
-            'statuscode' => 'P',
+            'statuscode' => MemberStatus::EnAttente->value,
             'metadata' => $metadata ?: null,
         ]);
 
@@ -189,17 +192,7 @@ class PortalController extends Controller
         $member->update(['email_verified_at' => $member->email_verified_at ?? now()]);
 
         // Create cotisation invoice + send by email
-        $result = InvoiceService::generate($member);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-
-        $qrImage = InvoiceService::generateQrCodeBase64($invoice);
-        Mail::send(new InvoiceMail(
-            invoice: $invoice,
-            pdfContent: $result['pdf'],
-            pdfFilename: $result['filename'],
-            qrImageBase64: $qrImage,
-        ));
-        $invoice->update(['statuscode' => 'E']);
+        $invoice = InvoiceEmailService::createAndSendCotisation($member, (int) date('Y'));
 
         // Notify admin
         Mail::send(new AdhesionMail(
@@ -217,7 +210,7 @@ class PortalController extends Controller
             cotisation_ok: $request->input('cotisation_ok'),
         ));
 
-        PortalAudit::log($request, $member, 'inscription', 'Adhésion soumise via le portail — facture ' . $result['invoice_number']);
+        PortalAudit::log($request, $member, 'inscription', 'Adhésion soumise via le portail — facture ' . $invoice->invoice_number);
 
         return redirect()->route('portail.dashboard');
     }
@@ -228,7 +221,7 @@ class PortalController extends Controller
 
         $qrUrl = self::generateCarteToken($member);
 
-        $isActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E'])
+        $isActive = in_array($member->getRawOriginal('statuscode'), Member::ACTIVE_STATUSES)
             && (!$member->membership_end || !$member->membership_end->isPast());
 
         return view('portail.carte', [
@@ -249,7 +242,7 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        if (! in_array($member->getRawOriginal('statuscode'), ['A', 'E'])) {
+        if (! in_array($member->getRawOriginal('statuscode'), Member::ACTIVE_STATUSES)) {
             abort(403);
         }
 
@@ -296,7 +289,7 @@ class PortalController extends Controller
             ]);
         }
 
-        $isActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E'])
+        $isActive = in_array($member->getRawOriginal('statuscode'), Member::ACTIVE_STATUSES)
             && (!$member->membership_end || !$member->membership_end->isPast());
 
         return view('portail.carte-valider', [
@@ -311,7 +304,7 @@ class PortalController extends Controller
         $member = $request->attributes->get('portal_member');
         $invoices = $member->invoices()
             ->whereNull('deleted_at')
-            ->whereIn('statuscode', ['N', 'E', 'P'])
+            ->whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value, InvoiceStatus::Paid->value])
             ->orderByDesc('updated_at')
             ->with('lines')
             ->get();
@@ -333,7 +326,7 @@ class PortalController extends Controller
 
         // Treat cancelled as not registered
         $registration = $pivot?->pivot;
-        if ($registration && $registration->status->value === 'X') {
+        if ($registration && $registration->status->value === EventMemberStatus::Annule->value) {
             $registration = null;
         }
 
@@ -360,46 +353,15 @@ class PortalController extends Controller
     {
         $member = $request->attributes->get('portal_member');
 
-        $pivot = EventMember::where('event_id', $event->id)
-            ->where('member_id', $member->id)
-            ->first();
+        $registered = EventRegistrationService::register($member, $event);
 
-        // Already actively registered — do nothing
-        if ($pivot && $pivot->getRawOriginal('status') !== 'X') {
-            return redirect()->route('portail.evenement', $event);
-        }
-
-        $applicablePrice = (float) $event->priceForMember($member);
-        $newStatus = $applicablePrice > 0 ? 'N' : 'C';
-
-        if ($pivot) {
-            $pivot->update(['status' => $newStatus]);
-        } else {
-            EventMember::create([
-                'event_id' => $event->id,
-                'member_id' => $member->id,
-                'status' => $newStatus,
-            ]);
-        }
-
-        if ($applicablePrice > 0) {
-            $result = InvoiceService::createEvent($member, $event);
-            $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-            $invoice->update(['statuscode' => 'E']);
-
-            $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-            $ical = ICalService::generate($event);
-            $icalFilename = ICalService::filename($event);
-            Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
-        } else {
-            Mail::send(new EventConfirmationMail($member, $event));
-        }
-
-        if ($member->membership_end && $member->membership_end->isPast()) {
+        if ($registered && $member->membership_end && $member->membership_end->isPast()) {
             Mail::send(new ExpiredMemberRegistrationMail($member, $event));
         }
 
-        PortalAudit::log($request, $member, 'inscription', "Événement #{$event->id} — {$event->title}");
+        if ($registered) {
+            PortalAudit::log($request, $member, 'inscription', "Événement #{$event->id} — {$event->title}");
+        }
 
         return redirect()->route('portail.evenement', $event);
     }
@@ -410,12 +372,12 @@ class PortalController extends Controller
 
         $pivot = EventMember::where('event_id', $event->id)
             ->where('member_id', $member->id)
-            ->whereIn('status', ['N', 'C'])
+            ->whereIn('status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])
             ->whereNull('deleted_at')
             ->first();
 
         if ($pivot) {
-            $pivot->update(['status' => 'X']);
+            $pivot->update(['status' => EventMemberStatus::Annule->value]);
             PortalAudit::log($request, $member, 'annulation', "Événement #{$event->id} — {$event->title}");
         }
 
@@ -511,7 +473,7 @@ class PortalController extends Controller
             ->get();
 
         $participantIds = $participants->pluck('id');
-        $availableMembers = Member::whereIn('statuscode', ['A', 'P', 'N'])
+        $availableMembers = Member::whereIn('statuscode', [MemberStatus::Actif->value, MemberStatus::EnAttente->value, MemberStatus::NonMembre->value])
             ->whereNull('deleted_at')
             ->whereNotIn('id', $participantIds)
             ->orderBy('first_name')
@@ -519,7 +481,7 @@ class PortalController extends Controller
             ->get(['id', 'first_name', 'last_name']);
 
         // Find members with open invoices for this event
-        $openInvoiceMemberIds = \App\Models\Invoice::whereIn('statuscode', ['N', 'E'])
+        $openInvoiceMemberIds = \App\Models\Invoice::whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value])
             ->whereNull('deleted_at')
             ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))
             ->pluck('member_id')
@@ -588,7 +550,7 @@ class PortalController extends Controller
             EventMember::create([
                 'event_id' => $event->id,
                 'member_id' => $targetMemberId,
-                'status' => 'C',
+                'status' => EventMemberStatus::Confirme->value,
                 'present' => true,
             ]);
 
@@ -596,14 +558,7 @@ class PortalController extends Controller
             $applicablePrice = (float) $event->priceForMember($targetMember);
 
             if ($applicablePrice > 0) {
-                $result = InvoiceService::createEvent($targetMember, $event);
-                $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-                $invoice->update(['statuscode' => 'E']);
-
-                $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-                $ical = ICalService::generate($event);
-                $icalFilename = ICalService::filename($event);
-                Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+                InvoiceEmailService::createAndSendEvent($targetMember, $event);
             }
 
             PortalAudit::log($request, $member, 'ajout participante', "Événement #{$event->id} — {$targetMember->first_name} {$targetMember->last_name}");

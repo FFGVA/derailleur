@@ -6,9 +6,8 @@ use App\Enums\MemberStatus;
 use App\Filament\Resources\MemberResource\Pages;
 use App\Filament\Resources\MemberResource\RelationManagers;
 use App\Mail\AdhesionConfirmationMail;
-use App\Mail\InvoiceMail;
 use App\Models\Member;
-use App\Services\InvoiceService;
+use App\Services\InvoiceEmailService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -102,16 +101,7 @@ class MemberResource extends Resource
                                 ->action(function (?Model $record) {
                                     $record->update(['membership_requested_at' => now()]);
 
-                                    $result = InvoiceService::generate($record);
-                                    $invoice = \App\Models\Invoice::where('invoice_number', $result['invoice_number'])->first();
-                                    $qrImage = InvoiceService::generateQrCodeBase64($invoice);
-                                    Mail::send(new InvoiceMail(
-                                        invoice: $invoice,
-                                        pdfContent: $result['pdf'],
-                                        pdfFilename: $result['filename'],
-                                        qrImageBase64: $qrImage,
-                                    ));
-                                    $invoice->update(['statuscode' => 'E']);
+                                    InvoiceEmailService::createAndSendCotisation($record, (int) date('Y'));
 
                                     Mail::send(new AdhesionConfirmationMail($record));
 
@@ -123,7 +113,7 @@ class MemberResource extends Resource
                                 })
                                 ->visible(fn (?Model $record) => $record
                                     && $record->membership_requested_at === null
-                                    && ! in_array($record->getRawOriginal('statuscode'), ['A', 'E'])
+                                    && ! in_array($record->getRawOriginal('statuscode'), Member::ACTIVE_STATUSES)
                                 ),
                         ])->columnStart(4)->columnSpan(1),
                         Forms\Components\Textarea::make('notes')
@@ -287,12 +277,12 @@ class MemberResource extends Resource
                     ->label('Demande d\'adhésion')
                     ->queries(
                         true: fn ($query) => $query->where(function ($q) {
-                            $q->where('statuscode', 'P')
+                            $q->where('statuscode', MemberStatus::EnAttente->value)
                                 ->orWhere(function ($q2) {
                                     $q2->whereNotNull('membership_requested_at');
                                 });
                         }),
-                        false: fn ($query) => $query->where('statuscode', '!=', 'P')->whereNull('membership_requested_at'),
+                        false: fn ($query) => $query->where('statuscode', '!=', MemberStatus::EnAttente->value)->whereNull('membership_requested_at'),
                         blank: fn ($query) => $query,
                     ),
                 Tables\Filters\SelectFilter::make('city')

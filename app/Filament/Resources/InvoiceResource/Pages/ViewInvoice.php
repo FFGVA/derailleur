@@ -7,6 +7,7 @@ use App\Enums\InvoiceType;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\MemberResource;
 use App\Models\Member;
+use App\Services\InvoicePaymentService;
 use App\Services\InvoiceService;
 use Filament\Actions;
 use Filament\Forms;
@@ -84,7 +85,7 @@ class ViewInvoice extends ViewRecord
                                     Components\TextEntry::make('cotisation_year')
                                         ->label('Année cotisation')
                                         ->placeholder('—')
-                                        ->hidden(fn ($record) => $record->getRawOriginal('type') !== 'C'),
+                                        ->hidden(fn ($record) => $record->getRawOriginal('type') !== InvoiceType::Cotisation->value),
                                     Components\TextEntry::make('notes')
                                         ->label('Notes')
                                         ->placeholder('—')
@@ -153,8 +154,8 @@ class ViewInvoice extends ViewRecord
                                                 );
 
                                                 // Update status to Sent if still New
-                                                if ($record->getRawOriginal('statuscode') === 'N') {
-                                                    $record->update(['statuscode' => 'E']);
+                                                if ($record->getRawOriginal('statuscode') === InvoiceStatus::New->value) {
+                                                    $record->update(['statuscode' => InvoiceStatus::Sent->value]);
                                                 }
 
                                                 \Filament\Notifications\Notification::make()
@@ -203,7 +204,7 @@ class ViewInvoice extends ViewRecord
                                                 $date = \DateTime::createFromFormat('d.m.Y', $data['payment_date']);
 
                                                 $updates = [
-                                                    'statuscode' => 'P',
+                                                    'statuscode' => InvoiceStatus::Paid->value,
                                                     'payment_date' => $date->format('Y-m-d'),
                                                 ];
 
@@ -217,7 +218,7 @@ class ViewInvoice extends ViewRecord
                                                 $record->update($updates);
 
                                                 Member::assignMemberNumber($record->member);
-                                                InvoiceService::onCotisationPaid($record);
+                                                InvoicePaymentService::onCotisationPaid($record);
 
                                                 Notification::make()
                                                     ->title('Facture payée')
@@ -227,7 +228,7 @@ class ViewInvoice extends ViewRecord
 
                                                 $this->refreshFormData(['statuscode', 'payment_date', 'notes']);
                                             })
-                                            ->visible(fn () => !in_array($this->record->getRawOriginal('statuscode'), ['P', 'X'])),
+                                            ->visible(fn () => !in_array($this->record->getRawOriginal('statuscode'), [InvoiceStatus::Paid->value, InvoiceStatus::Cancelled->value])),
                                     ]),
                                 ]),
                         ])->columnSpan(1),
@@ -248,7 +249,7 @@ class ViewInvoice extends ViewRecord
                             ->label('')
                             ->view('filament.infolists.invoice-events'),
                     ])
-                    ->hidden(fn ($record) => $record->getRawOriginal('type') !== 'E' || $record->events->isEmpty()),
+                    ->hidden(fn ($record) => $record->getRawOriginal('type') !== InvoiceType::Evenement->value || $record->events->isEmpty()),
 
                 // Last modified
                 Components\Section::make()

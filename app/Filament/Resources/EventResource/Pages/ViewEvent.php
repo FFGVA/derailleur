@@ -90,7 +90,7 @@ class ViewEvent extends ViewRecord
                                         ->color(fn (EventStatus $state) => $state->getColor()),
                                     Components\TextEntry::make('members_count')
                                         ->label('Participantes')
-                                        ->state(fn ($record) => $record->members()->whereIn('event_member.status', ['N', 'C'])->count())
+                                        ->state(fn ($record) => $record->members()->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])->count())
                                         ->icon('heroicon-o-user-group'),
                                     Components\TextEntry::make('price')
                                         ->label('Prix membre')
@@ -168,11 +168,11 @@ class ViewEvent extends ViewRecord
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Envoyer un rappel')
-                ->modalDescription(fn () => 'Un e-mail de rappel sera envoyé à toutes les participantes inscrites (' . $this->record->members()->whereIn('event_member.status', ['N', 'C'])->count() . ' personnes).')
+                ->modalDescription(fn () => 'Un e-mail de rappel sera envoyé à toutes les participantes inscrites (' . $this->record->members()->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])->count() . ' personnes).')
                 ->modalSubmitActionLabel('Envoyer')
                 ->action(function () {
                     $participants = $this->record->members()
-                        ->whereIn('event_member.status', ['N', 'C'])
+                        ->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])
                         ->get();
 
                     $count = 0;

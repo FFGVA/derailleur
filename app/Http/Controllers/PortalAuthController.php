@@ -26,7 +26,7 @@ class PortalAuthController extends Controller
         $email = $request->validated()['email'];
 
         $member = Member::where('email', $email)
-            ->whereIn('statuscode', ['A', 'P', 'N', 'E'])
+            ->whereIn('statuscode', Member::PORTAL_ACCESSIBLE_STATUSES)
             ->first();
 
         if ($member) {
@@ -56,7 +56,7 @@ class PortalAuthController extends Controller
         }
 
         $member = Member::where('id', $magicToken->member_id)
-            ->whereIn('statuscode', ['A', 'P', 'N', 'E'])
+            ->whereIn('statuscode', Member::PORTAL_ACCESSIBLE_STATUSES)
             ->first();
 
         if (!$member) {

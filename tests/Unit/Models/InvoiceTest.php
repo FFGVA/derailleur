@@ -128,8 +128,7 @@ class InvoiceTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, 2026);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, 2026);
         $line = $invoice->lines->first();
 
         // Next period starts day after current membership_end, ends 31.12 of that year
@@ -149,8 +148,7 @@ class InvoiceTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, 2026);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, 2026);
         $line = $invoice->lines->first();
 
         // When no membership_end, start from today, end 31.12 of current year
@@ -175,8 +173,7 @@ class InvoiceTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, 2026);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, 2026);
 
         $invoice->update([
             'statuscode' => 'P',

@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\EventResource\RelationManagers;
 
 use App\Enums\EventMemberStatus;
+use App\Enums\InvoiceType;
+use App\Enums\MemberStatus;
 use App\Mail\EventConfirmationMail;
 use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Services\ICalService;
+use App\Services\InvoiceEmailService;
 use App\Services\InvoiceService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -34,7 +37,7 @@ class MembersRelationManager extends RelationManager
                 Forms\Components\Select::make('status')
                     ->label('Statut')
                     ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                    ->default('N')
+                    ->default(EventMemberStatus::Inscrit->value)
                     ->required(),
             ]);
     }
@@ -136,8 +139,8 @@ class MembersRelationManager extends RelationManager
                     ->label('Inscrites/Confirmées')
                     ->default(true)
                     ->queries(
-                        true: fn ($query) => $query->whereIn('event_member.status', ['N', 'C']),
-                        false: fn ($query) => $query->where('event_member.status', 'X'),
+                        true: fn ($query) => $query->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value]),
+                        false: fn ($query) => $query->where('event_member.status', EventMemberStatus::Annule->value),
                         blank: fn ($query) => $query,
                     ),
             ])
@@ -150,7 +153,7 @@ class MembersRelationManager extends RelationManager
                     ->action(function () {
                         $event = $this->getOwnerRecord();
                         $participants = $event->members()
-                            ->whereIn('event_member.status', ['N', 'C'])
+                            ->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])
                             ->whereNull('event_member.deleted_at')
                             ->with('phones')
                             ->orderBy('last_name')
@@ -184,7 +187,7 @@ class MembersRelationManager extends RelationManager
                         // Data rows
                         foreach ($participants as $p) {
                             $phone = $p->phones->first()?->phone_number ?? '';
-                            $status = $p->pivot->getRawOriginal('status') === 'C' ? 'Confirmée' : 'Inscrite';
+                            $status = $p->pivot->getRawOriginal('status') === EventMemberStatus::Confirme->value ? 'Confirmée' : 'Inscrite';
                             $presence = match ($p->pivot->getRawOriginal('present')) {
                                 1, true => 'Oui',
                                 0, false => 'Non',
@@ -211,7 +214,7 @@ class MembersRelationManager extends RelationManager
                     ->icon('heroicon-o-plus')
                     ->color('primary')
                     ->recordSelectSearchColumns(['first_name', 'last_name', 'member_number'])
-                    ->recordSelectOptionsQuery(fn ($query) => $query->whereIn('statuscode', ['A', 'P', 'I']))
+                    ->recordSelectOptionsQuery(fn ($query) => $query->whereIn('statuscode', [MemberStatus::Actif->value, MemberStatus::EnAttente->value, MemberStatus::Inactif->value]))
                     ->preloadRecordSelect()
                     ->recordTitle(fn (Member $record) =>
                         $record->first_name . ' ' . $record->last_name .
@@ -223,7 +226,7 @@ class MembersRelationManager extends RelationManager
                         Forms\Components\Select::make('status')
                             ->label('Statut')
                             ->options(collect(EventMemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->default('N')
+                            ->default(EventMemberStatus::Inscrit->value)
                             ->required(),
                     ])
                     ->after(function ($record) {
@@ -232,14 +235,7 @@ class MembersRelationManager extends RelationManager
                         $applicablePrice = (float) $event->priceForMember($member);
 
                         if ($applicablePrice > 0) {
-                            $result = InvoiceService::createEvent($member, $event);
-                            $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-                            $invoice->update(['statuscode' => 'E']);
-
-                            $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-                            $ical = ICalService::generate($event);
-                            $icalFilename = ICalService::filename($event);
-                            Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+                            InvoiceEmailService::createAndSendEvent($member, $event);
                         }
                     })
                     ->visible(fn () => $this->canManageParticipants()),
@@ -260,7 +256,7 @@ class MembersRelationManager extends RelationManager
 
                         if ($applicablePrice > 0) {
                             $invoice = Invoice::where('member_id', $member->id)
-                                ->where('type', 'E')
+                                ->where('type', InvoiceType::Evenement->value)
                                 ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))
                                 ->latest('updated_at')
                                 ->first();

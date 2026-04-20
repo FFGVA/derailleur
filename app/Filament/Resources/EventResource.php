@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\EventMemberStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Filament\Resources\EventResource\Pages;
@@ -55,7 +56,7 @@ class EventResource extends Resource
                         Forms\Components\Select::make('statuscode')
                             ->label('Statut')
                             ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->default('N')
+                            ->default(EventStatus::Nouveau->value)
                             ->required()
                             ->columnSpan(3),
                         Forms\Components\TextInput::make('max_participants')
@@ -189,7 +190,7 @@ class EventResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('active_members_count')
                     ->label('Participantes')
-                    ->state(fn ($record) => $record->members()->whereIn('event_member.status', ['N', 'C'])->count())
+                    ->state(fn ($record) => $record->members()->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])->count())
                     ->sortable(false),
             ])
             ->filters([
@@ -197,8 +198,8 @@ class EventResource extends Resource
                     ->label('Événements actifs')
                     ->default(true)
                     ->queries(
-                        true: fn (Builder $query) => $query->whereNotIn('statuscode', ['T', 'X']),
-                        false: fn (Builder $query) => $query->whereIn('statuscode', ['T', 'X']),
+                        true: fn (Builder $query) => $query->whereNotIn('statuscode', [EventStatus::Termine->value, EventStatus::Annule->value]),
+                        false: fn (Builder $query) => $query->whereIn('statuscode', [EventStatus::Termine->value, EventStatus::Annule->value]),
                         blank: fn (Builder $query) => $query,
                     ),
                 Tables\Filters\SelectFilter::make('event_type')

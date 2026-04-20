@@ -3,10 +3,11 @@
 namespace App\Filament\Pages;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\InvoiceType;
 use App\Enums\MemberStatus;
-use App\Mail\InvoiceMail;
 use App\Models\Member;
-use App\Services\InvoiceService;
+use App\Services\InvoiceEmailService;
+use App\Services\InvoicePaymentService;
 use App\Models\Invoice;
 use App\Models\Member as MemberModel;
 use Filament\Forms;
@@ -16,7 +17,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Illuminate\Support\Facades\Mail;
 
 class Cotisations extends Page implements HasTable
 {
@@ -42,13 +42,13 @@ class Cotisations extends Page implements HasTable
         return $table
             ->query(
                 Member::query()
-                    ->where('statuscode', 'A')
+                    ->where('statuscode', MemberStatus::Actif->value)
                     ->whereNotNull('membership_end')
                     ->where('membership_end', '<=', $endOfNextMonth)
                     ->whereNull('deleted_at')
                     ->whereDoesntHave('invoices', function ($q) use ($currentYear) {
-                        $q->where('type', 'C')
-                            ->where('statuscode', 'P')
+                        $q->where('type', InvoiceType::Cotisation->value)
+                            ->where('statuscode', InvoiceStatus::Paid->value)
                             ->whereNull('deleted_at')
                             ->where('cotisation_year', '>=', $currentYear);
                     })
@@ -77,7 +77,7 @@ class Cotisations extends Page implements HasTable
                     ->label('Année')
                     ->state(function ($record) {
                         $invoice = $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->whereNull('deleted_at')
                             ->orderByDesc('cotisation_year')
                             ->first();
@@ -87,7 +87,7 @@ class Cotisations extends Page implements HasTable
                     ->label('N° facture')
                     ->state(function ($record) {
                         $invoice = $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->whereNull('deleted_at')
                             ->orderByDesc('cotisation_year')
                             ->first();
@@ -96,7 +96,7 @@ class Cotisations extends Page implements HasTable
                     ->color('primary')
                     ->url(function ($record) {
                         $invoice = $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->whereNull('deleted_at')
                             ->orderByDesc('cotisation_year')
                             ->first();
@@ -107,7 +107,7 @@ class Cotisations extends Page implements HasTable
                     ->badge()
                     ->state(function ($record) {
                         $invoice = $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->whereNull('deleted_at')
                             ->orderByDesc('cotisation_year')
                             ->first();
@@ -119,7 +119,7 @@ class Cotisations extends Page implements HasTable
                         Tables\Actions\Action::make('goToInvoice')
                             ->action(function ($record) {
                                 $invoice = $record->invoices()
-                                    ->where('type', 'C')
+                                    ->where('type', InvoiceType::Cotisation->value)
                                     ->whereNull('deleted_at')
                                     ->orderByDesc('cotisation_year')
                                     ->first();
@@ -142,7 +142,7 @@ class Cotisations extends Page implements HasTable
                     ->visible(function ($record) {
                         $currentYear = (int) date('Y');
                         return !$record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->where('cotisation_year', $currentYear)
                             ->whereNull('deleted_at')
                             ->exists();
@@ -151,7 +151,7 @@ class Cotisations extends Page implements HasTable
                         $currentYear = (int) date('Y');
 
                         // Guard against duplicates
-                        if ($record->invoices()->where('type', 'C')->where('cotisation_year', $currentYear)->whereNull('deleted_at')->exists()) {
+                        if ($record->invoices()->where('type', InvoiceType::Cotisation->value)->where('cotisation_year', $currentYear)->whereNull('deleted_at')->exists()) {
                             Notification::make()
                                 ->title('Facture déjà existante')
                                 ->body("Une facture de cotisation {$currentYear} existe déjà pour ce membre.")
@@ -160,26 +160,11 @@ class Cotisations extends Page implements HasTable
                             return;
                         }
 
-                        $result = InvoiceService::createCotisation($record, $currentYear);
-
-                        $invoice = $record->invoices()
-                            ->where('invoice_number', $result['invoice_number'])
-                            ->first();
-
-                        $qrImage = InvoiceService::generateQrCodeBase64($invoice);
-
-                        Mail::send(new InvoiceMail(
-                            invoice: $invoice,
-                            pdfContent: $result['pdf'],
-                            pdfFilename: $result['filename'],
-                            qrImageBase64: $qrImage,
-                        ));
-
-                        $invoice->update(['statuscode' => 'E']);
+                        $invoice = InvoiceEmailService::createAndSendCotisation($record, $currentYear);
 
                         Notification::make()
                             ->title('Facture envoyée')
-                            ->body("Facture {$result['invoice_number']} envoyée à {$record->email}")
+                            ->body("Facture {$invoice->invoice_number} envoyée à {$record->email}")
                             ->success()
                             ->send();
                     }),
@@ -221,18 +206,18 @@ class Cotisations extends Page implements HasTable
                     ->visible(function ($record) {
                         $currentYear = (int) date('Y');
                         return $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->where('cotisation_year', $currentYear)
-                            ->whereIn('statuscode', ['N', 'E'])
+                            ->whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value])
                             ->whereNull('deleted_at')
                             ->exists();
                     })
                     ->action(function ($record, array $data) {
                         $currentYear = (int) date('Y');
                         $invoice = $record->invoices()
-                            ->where('type', 'C')
+                            ->where('type', InvoiceType::Cotisation->value)
                             ->where('cotisation_year', $currentYear)
-                            ->whereIn('statuscode', ['N', 'E'])
+                            ->whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value])
                             ->whereNull('deleted_at')
                             ->first();
 
@@ -242,7 +227,7 @@ class Cotisations extends Page implements HasTable
 
                         $date = \DateTime::createFromFormat('d.m.Y', $data['payment_date']);
                         $updates = [
-                            'statuscode' => 'P',
+                            'statuscode' => InvoiceStatus::Paid->value,
                             'payment_date' => $date->format('Y-m-d'),
                         ];
                         if (!empty($data['notes'])) {
@@ -254,7 +239,7 @@ class Cotisations extends Page implements HasTable
                         $invoice->update($updates);
 
                         MemberModel::assignMemberNumber($record);
-                        InvoiceService::onCotisationPaid($invoice);
+                        InvoicePaymentService::onCotisationPaid($invoice);
 
                         Notification::make()
                             ->title('Facture payée')

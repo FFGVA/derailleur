@@ -2,6 +2,9 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\EventStatus;
+use App\Enums\InvoiceStatus;
+use App\Enums\MemberStatus;
 use App\Filament\Resources\EventResource;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\MemberResource;
@@ -15,30 +18,30 @@ class StatsOverview extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
-        $plannedEvents = Event::whereIn('statuscode', ['N', 'P'])
+        $plannedEvents = Event::whereIn('statuscode', [EventStatus::Nouveau->value, EventStatus::Publie->value])
             ->where('starts_at', '>=', now()->startOfDay())
             ->whereNull('deleted_at')
             ->count();
 
-        $toClose = Event::where('statuscode', 'P')
+        $toClose = Event::where('statuscode', EventStatus::Publie->value)
             ->where('starts_at', '<', now()->startOfDay())
             ->whereNull('deleted_at')
             ->count();
 
         $totalEvents = Event::whereNull('deleted_at')->count();
 
-        $unpaidTotal = Invoice::whereIn('statuscode', ['N', 'E'])
+        $unpaidTotal = Invoice::whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value])
             ->sum('amount');
 
-        $activeMembers = Member::where('statuscode', 'A')
+        $activeMembers = Member::where('statuscode', MemberStatus::Actif->value)
             ->whereNull('deleted_at')
             ->count();
 
         $pendingAdhesions = Member::whereNull('deleted_at')
             ->where(function ($q) {
-                $q->where('statuscode', 'P')
+                $q->where('statuscode', MemberStatus::EnAttente->value)
                     ->orWhere(function ($q2) {
-                        $q2->where('statuscode', 'N')
+                        $q2->where('statuscode', MemberStatus::NonMembre->value)
                             ->whereNotNull('membership_requested_at');
                     });
             })

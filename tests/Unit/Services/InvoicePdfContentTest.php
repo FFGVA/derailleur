@@ -28,9 +28,9 @@ class InvoicePdfContentTest extends TestCase
         ], $overrides));
     }
 
-    private function cleanupPdf(array $result): void
+    private function cleanupPdf(Invoice $invoice): void
     {
-        \Illuminate\Support\Facades\Storage::delete('invoices/' . $result['filename']);
+        \Illuminate\Support\Facades\Storage::delete('invoices/' . $invoice->pdf_filename);
     }
 
     // ── Cotisation invoice — PDF structure ──
@@ -38,35 +38,36 @@ class InvoicePdfContentTest extends TestCase
     public function test_cotisation_pdf_is_valid(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
+        $pdfResult = InvoiceService::generatePdf($invoice);
 
-        $this->assertStringStartsWith('%PDF', $result['pdf']);
-        $this->assertGreaterThan(1000, strlen($result['pdf']), 'PDF should be substantial');
+        $this->assertStringStartsWith('%PDF', $pdfResult['pdf']);
+        $this->assertGreaterThan(1000, strlen($pdfResult['pdf']), 'PDF should be substantial');
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_pdf_stores_file(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
         $this->assertTrue(
-            \Illuminate\Support\Facades\Storage::exists('invoices/' . $result['filename'])
+            \Illuminate\Support\Facades\Storage::exists('invoices/' . $invoice->pdf_filename)
         );
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_pdf_stores_filename_on_record(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-        $this->assertEquals($result['filename'], $invoice->pdf_filename);
+        $invoice->refresh();
+        $this->assertNotNull($invoice->pdf_filename);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     // ── Cotisation invoice — database records ──
@@ -75,7 +76,7 @@ class InvoicePdfContentTest extends TestCase
     {
         $member = $this->makeMember();
         $year = (int) date('Y');
-        $result = InvoiceService::createCotisation($member, $year);
+        $invoice = InvoiceService::createCotisation($member, $year);
 
         $this->assertDatabaseHas('invoices', [
             'member_id' => $member->id,
@@ -85,15 +86,14 @@ class InvoicePdfContentTest extends TestCase
             'amount' => 50.00,
         ]);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_creates_invoice_line_with_period(): void
     {
         $member = $this->makeMember(['membership_end' => '2026-12-31']);
-        $result = InvoiceService::createCotisation($member, 2027);
+        $invoice = InvoiceService::createCotisation($member, 2027);
 
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $line = $invoice->lines->first();
 
         $this->assertNotNull($line);
@@ -101,42 +101,42 @@ class InvoicePdfContentTest extends TestCase
         $this->assertStringContainsString('01.01.2027', $line->description);
         $this->assertStringContainsString('31.12.2027', $line->description);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_custom_amount(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'), 75.00);
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'), 75.00);
 
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $this->assertEquals(75.00, (float) $invoice->amount);
         $this->assertEquals(75.00, (float) $invoice->lines->first()->amount);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_filename_format(): void
     {
         $member = $this->makeMember(['first_name' => 'Marie', 'last_name' => 'Dupont']);
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
+        $pdfResult = InvoiceService::generatePdf($invoice);
 
-        $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $result['filename']);
-        $this->assertStringEndsWith('.pdf', $result['filename']);
+        $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $pdfResult['filename']);
+        $this->assertStringEndsWith('.pdf', $pdfResult['filename']);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_cotisation_invoice_number_format(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
         $year = date('Y');
         $memberId = str_pad((string) $member->id, 3, '0', STR_PAD_LEFT);
-        $this->assertMatchesRegularExpression("/^{$year}-{$memberId}-\\d{3}$/", $result['invoice_number']);
+        $this->assertMatchesRegularExpression("/^{$year}-{$memberId}-\\d{3}$/", $invoice->invoice_number);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     // ── Event invoice ──
@@ -151,7 +151,7 @@ class InvoicePdfContentTest extends TestCase
             'price' => 30.00,
         ]);
 
-        $result = InvoiceService::createEvent($member, $event);
+        $invoice = InvoiceService::createEvent($member, $event);
 
         $this->assertDatabaseHas('invoices', [
             'member_id' => $member->id,
@@ -159,11 +159,10 @@ class InvoicePdfContentTest extends TestCase
             'amount' => 30.00,
         ]);
 
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $this->assertEquals(1, $invoice->lines()->count());
         $this->assertEquals(1, $invoice->events()->count());
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_event_invoice_line_contains_event_title_and_date(): void
@@ -177,14 +176,13 @@ class InvoicePdfContentTest extends TestCase
             'price' => 20.00,
         ]);
 
-        $result = InvoiceService::createEvent($member, $event);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createEvent($member, $event);
         $line = $invoice->lines->first();
 
         $this->assertStringContainsString('Tour du Salève', $line->description);
         $this->assertStringContainsString($startDate->format('d.m.Y'), $line->description);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_event_invoice_multi_events(): void
@@ -203,14 +201,13 @@ class InvoicePdfContentTest extends TestCase
             'price' => 30.00,
         ]);
 
-        $result = InvoiceService::createEvent($member, [$event1, $event2]);
+        $invoice = InvoiceService::createEvent($member, [$event1, $event2]);
 
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
         $this->assertEquals(50.00, (float) $invoice->amount);
         $this->assertEquals(2, $invoice->lines()->count());
         $this->assertEquals(2, $invoice->events()->count());
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_event_invoice_uses_member_price_for_active_member(): void
@@ -224,11 +221,10 @@ class InvoicePdfContentTest extends TestCase
             'price_non_member' => 25.00,
         ]);
 
-        $result = InvoiceService::createEvent($member, $event);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createEvent($member, $event);
         $this->assertEquals(15.00, (float) $invoice->amount);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     // ── Autre invoice ──
@@ -251,29 +247,27 @@ class InvoicePdfContentTest extends TestCase
     public function test_qr_code_base64_returns_data_uri(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
         $qr = InvoiceService::generateQrCodeBase64($invoice);
 
         $this->assertNotNull($qr);
         $this->assertStringStartsWith('data:image/png;base64,', $qr);
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     public function test_qr_code_contains_iban(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
         $qr = InvoiceService::generateQrCodeBase64($invoice);
         // The QR code itself encodes the IBAN - we can't decode PNG here,
         // but we verify the QR bill is built with correct IBAN via the config
         $this->assertEquals('CH9580808004931084283', config('ffgva.iban'));
 
-        $this->cleanupPdf($result);
+        $this->cleanupPdf($invoice);
     }
 
     // ── computeMembershipEnd ──
@@ -311,8 +305,7 @@ class InvoicePdfContentTest extends TestCase
     public function test_on_cotisation_paid_extends_membership(): void
     {
         $member = $this->makeMember(['membership_end' => '2026-12-31']);
-        $result = InvoiceService::createCotisation($member, 2027);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, 2027);
         $invoice->update(['statuscode' => 'P']);
 
         InvoiceService::onCotisationPaid($invoice);
@@ -321,7 +314,7 @@ class InvoicePdfContentTest extends TestCase
         $this->assertEquals('2027-12-31', $member->membership_end->format('Y-m-d'));
         $this->assertEquals('A', $member->getRawOriginal('statuscode'));
 
-        \Illuminate\Support\Facades\Storage::delete('invoices/' . $result['filename']);
+        \Illuminate\Support\Facades\Storage::delete('invoices/' . $invoice->pdf_filename);
     }
 
     public function test_on_cotisation_paid_ignores_event_invoice(): void
@@ -334,8 +327,7 @@ class InvoicePdfContentTest extends TestCase
             'price' => 20.00,
         ]);
 
-        $result = InvoiceService::createEvent($member, $event);
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createEvent($member, $event);
 
         InvoiceService::onCotisationPaid($invoice);
 
@@ -344,6 +336,6 @@ class InvoicePdfContentTest extends TestCase
         $this->assertEquals('2026-12-31', $member->membership_end->format('Y-m-d'));
         $this->assertEquals('P', $member->getRawOriginal('statuscode'));
 
-        \Illuminate\Support\Facades\Storage::delete('invoices/' . $result['filename']);
+        \Illuminate\Support\Facades\Storage::delete('invoices/' . $invoice->pdf_filename);
     }
 }

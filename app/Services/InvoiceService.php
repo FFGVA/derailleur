@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Mail\ActivationMail;
+use App\Enums\InvoiceStatus;
+use App\Enums\InvoiceType;
 use App\Models\Event;
 use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Member;
-use Illuminate\Support\Facades\Mail;
 use Fpdf\Fpdf;
 use Sprain\SwissQrBill\DataGroup\Element\AdditionalInformation;
 use Sprain\SwissQrBill\DataGroup\Element\CreditorInformation;
@@ -22,17 +22,17 @@ class InvoiceService
     /**
      * Create a cotisation invoice with line and generate PDF.
      */
-    public static function createCotisation(Member $member, int $year, ?float $amount = null): array
+    public static function createCotisation(Member $member, int $year, ?float $amount = null): Invoice
     {
         $amount = $amount ?? config('ffgva.cotisation_annuelle');
 
         $invoice = Invoice::create([
             'member_id' => $member->id,
-            'type' => 'C',
+            'type' => InvoiceType::Cotisation->value,
             'cotisation_year' => $year,
             'invoice_number' => Invoice::generateNumber($member),
             'amount' => $amount,
-            'statuscode' => 'N',
+            'statuscode' => InvoiceStatus::New->value,
         ]);
 
         // Period: membership runs until 31.12 of the cotisation year
@@ -51,24 +51,26 @@ class InvoiceService
             'sort_order' => 0,
         ]);
 
-        return self::generatePdf($invoice);
+        self::generatePdf($invoice);
+
+        return $invoice;
     }
 
     /**
      * Create an event invoice with lines and generate PDF.
      * Accepts one or more events.
      */
-    public static function createEvent(Member $member, Event|array $events): array
+    public static function createEvent(Member $member, Event|array $events): Invoice
     {
         $events = is_array($events) ? $events : [$events];
         $totalAmount = collect($events)->sum(fn ($e) => (float) $e->priceForMember($member));
 
         $invoice = Invoice::create([
             'member_id' => $member->id,
-            'type' => 'E',
+            'type' => InvoiceType::Evenement->value,
             'invoice_number' => Invoice::generateNumber($member),
             'amount' => $totalAmount,
-            'statuscode' => 'N',
+            'statuscode' => InvoiceStatus::New->value,
         ]);
 
         // Attach events via pivot
@@ -83,7 +85,9 @@ class InvoiceService
             ]);
         }
 
-        return self::generatePdf($invoice);
+        self::generatePdf($invoice);
+
+        return $invoice;
     }
 
     /**
@@ -93,10 +97,10 @@ class InvoiceService
     {
         return Invoice::create([
             'member_id' => $member->id,
-            'type' => 'A',
+            'type' => InvoiceType::Autre->value,
             'invoice_number' => Invoice::generateNumber($member),
             'amount' => 0,
-            'statuscode' => 'N',
+            'statuscode' => InvoiceStatus::New->value,
             'notes' => $notes,
         ]);
     }
@@ -115,8 +119,8 @@ class InvoiceService
 
         // Title based on type
         $title = match ($invoice->getRawOriginal('type')) {
-            'C' => 'Facture — Cotisation annuelle',
-            'E' => 'Facture — Événement',
+            InvoiceType::Cotisation->value => 'Facture — Cotisation annuelle',
+            InvoiceType::Evenement->value => 'Facture — Événement',
             default => 'Facture',
         };
 
@@ -251,7 +255,7 @@ class InvoiceService
     /**
      * Legacy method for adhesion flow — creates a cotisation invoice.
      */
-    public static function generate(Member $member): array
+    public static function generate(Member $member): Invoice
     {
         return self::createCotisation($member, (int) date('Y'));
     }
@@ -334,35 +338,11 @@ class InvoiceService
     }
 
     /**
-     * Update member's membership_end when a cotisation invoice is paid.
+     * @deprecated Use InvoicePaymentService::onCotisationPaid() instead.
      */
     public static function onCotisationPaid(Invoice $invoice): void
     {
-        if ($invoice->getRawOriginal('type') !== 'C') {
-            return;
-        }
-
-        $member = $invoice->member;
-
-        if ($member->membership_end) {
-            $periodStart = $member->membership_end->copy()->addDay();
-        } else {
-            $periodStart = now();
-        }
-
-        $newEnd = self::computeMembershipEnd($periodStart);
-
-        $wasActive = in_array($member->getRawOriginal('statuscode'), ['A', 'E']);
-
-        $member->update([
-            'membership_end' => $newEnd,
-            'statuscode' => 'A',
-            'membership_requested_at' => null,
-        ]);
-
-        if (! $wasActive) {
-            Mail::send(new ActivationMail($member));
-        }
+        InvoicePaymentService::onCotisationPaid($invoice);
     }
 
     public static function utf8(string $text): string

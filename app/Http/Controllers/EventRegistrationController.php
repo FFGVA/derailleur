@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\EventConfirmationMail;
-use App\Mail\InvoiceMail;
+use App\Enums\EventStatus;
+use App\Enums\MemberStatus;
 use App\Models\Event;
 use App\Models\EventMember;
-use App\Models\Invoice;
 use App\Models\Member;
 use App\Models\MemberMagicToken;
 use App\Models\MemberPhone;
-use App\Services\ICalService;
-use App\Services\InvoiceService;
+use App\Services\EventRegistrationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class EventRegistrationController extends Controller
 {
@@ -35,7 +32,7 @@ class EventRegistrationController extends Controller
         }
 
         $member = Member::where('id', $magicToken->member_id)
-            ->whereIn('statuscode', ['A', 'P', 'N', 'E'])
+            ->whereIn('statuscode', Member::PORTAL_ACCESSIBLE_STATUSES)
             ->first();
 
         if (!$member) {
@@ -44,7 +41,7 @@ class EventRegistrationController extends Controller
         }
 
         $event = Event::where('id', $eventId)
-            ->where('statuscode', 'P')
+            ->where('statuscode', EventStatus::Publie->value)
             ->whereNull('deleted_at')
             ->first();
 
@@ -73,7 +70,7 @@ class EventRegistrationController extends Controller
         }
 
         $event = Event::where('id', $request->query('event_id'))
-            ->where('statuscode', 'P')
+            ->where('statuscode', EventStatus::Publie->value)
             ->whereNull('deleted_at')
             ->first();
 
@@ -115,7 +112,7 @@ class EventRegistrationController extends Controller
         ]);
 
         $event = Event::where('id', $request->input('event_id'))
-            ->where('statuscode', 'P')
+            ->where('statuscode', EventStatus::Publie->value)
             ->whereNull('deleted_at')
             ->first();
 
@@ -142,7 +139,7 @@ class EventRegistrationController extends Controller
                 'first_name' => $request->input('prenom'),
                 'last_name' => $request->input('nom'),
                 'email' => $email,
-                'statuscode' => 'N',
+                'statuscode' => MemberStatus::NonMembre->value,
                 'is_invitee' => false,
                 'metadata' => $metadata,
             ]);
@@ -167,39 +164,6 @@ class EventRegistrationController extends Controller
 
     private function registerForEvent(Member $member, Event $event): void
     {
-        $applicablePrice = (float) $event->priceForMember($member);
-
-        $pivot = EventMember::where('event_id', $event->id)
-            ->where('member_id', $member->id)
-            ->first();
-
-        $newStatus = $applicablePrice > 0 ? 'N' : 'C';
-
-        if ($pivot && $pivot->getRawOriginal('status') !== 'X') {
-            return; // Already registered
-        }
-
-        if ($pivot) {
-            $pivot->update(['status' => $newStatus]);
-        } else {
-            EventMember::create([
-                'event_id' => $event->id,
-                'member_id' => $member->id,
-                'status' => $newStatus,
-            ]);
-        }
-
-        if ($applicablePrice > 0) {
-            $result = InvoiceService::createEvent($member, $event);
-            $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
-            $invoice->update(['statuscode' => 'E']);
-
-            $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
-            $ical = ICalService::generate($event);
-            $icalFilename = ICalService::filename($event);
-            Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
-        } else {
-            Mail::send(new EventConfirmationMail($member, $event));
-        }
+        EventRegistrationService::register($member, $event);
     }
 }

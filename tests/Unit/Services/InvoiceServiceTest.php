@@ -27,32 +27,33 @@ class InvoiceServiceTest extends TestCase
     public function test_generates_pdf_content(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::generate($member);
+        $invoice = InvoiceService::generate($member);
+        $pdfResult = InvoiceService::generatePdf($invoice);
 
-        $this->assertArrayHasKey('pdf', $result);
-        $this->assertNotEmpty($result['pdf']);
-        $this->assertStringStartsWith('%PDF', $result['pdf']);
+        $this->assertArrayHasKey('pdf', $pdfResult);
+        $this->assertNotEmpty($pdfResult['pdf']);
+        $this->assertStringStartsWith('%PDF', $pdfResult['pdf']);
     }
 
     public function test_returns_filename(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::generate($member);
+        $invoice = InvoiceService::generate($member);
+        $pdfResult = InvoiceService::generatePdf($invoice);
 
-        $this->assertArrayHasKey('filename', $result);
-        $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $result['filename']);
-        $this->assertStringEndsWith('.pdf', $result['filename']);
+        $this->assertArrayHasKey('filename', $pdfResult);
+        $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $pdfResult['filename']);
+        $this->assertStringEndsWith('.pdf', $pdfResult['filename']);
     }
 
     public function test_returns_invoice_number(): void
     {
         $member = $this->makeMember();
-        $result = InvoiceService::generate($member);
+        $invoice = InvoiceService::generate($member);
 
-        $this->assertArrayHasKey('invoice_number', $result);
         $year = date('Y');
         $memberId = str_pad((string) $member->id, 3, '0', STR_PAD_LEFT);
-        $this->assertMatchesRegularExpression("/^{$year}-{$memberId}-001$/", $result['invoice_number']);
+        $this->assertMatchesRegularExpression("/^{$year}-{$memberId}-001$/", $invoice->invoice_number);
     }
 
     public function test_creates_invoice_record(): void
@@ -74,8 +75,9 @@ class InvoiceServiceTest extends TestCase
             'last_name' => 'De La Tour',
             'email' => 'inv-svc-' . uniqid() . '@test.ch',
         ]);
-        $result = InvoiceService::generate($member);
+        $invoice = InvoiceService::generate($member);
+        $pdfResult = InvoiceService::generatePdf($invoice);
 
-        $this->assertStringStartsWith('ffgva_De_La_Tour_Marie_Claire-facture-', $result['filename']);
+        $this->assertStringStartsWith('ffgva_De_La_Tour_Marie_Claire-facture-', $pdfResult['filename']);
     }
 }

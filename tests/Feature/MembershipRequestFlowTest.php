@@ -184,8 +184,7 @@ class MembershipRequestFlowTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
         InvoiceService::onCotisationPaid($invoice);
@@ -210,8 +209,7 @@ class MembershipRequestFlowTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
         InvoiceService::onCotisationPaid($invoice);
@@ -234,8 +232,7 @@ class MembershipRequestFlowTest extends TestCase
             'city' => 'Genève',
         ]);
 
-        $result = InvoiceService::createCotisation($member, (int) date('Y'));
-        $invoice = Invoice::where('invoice_number', $result['invoice_number'])->first();
+        $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
         InvoiceService::onCotisationPaid($invoice);

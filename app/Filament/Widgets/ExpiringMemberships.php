@@ -2,6 +2,9 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\InvoiceStatus;
+use App\Enums\InvoiceType;
+use App\Enums\MemberStatus;
 use App\Models\Invoice;
 use App\Models\Member;
 use Filament\Widgets\StatsOverviewWidget;
@@ -25,19 +28,19 @@ class ExpiringMemberships extends StatsOverviewWidget
 
         $currentYear = (int) date('Y');
 
-        $count = Member::where('statuscode', 'A')
+        $count = Member::where('statuscode', MemberStatus::Actif->value)
             ->whereNotNull('membership_end')
             ->where('membership_end', '<=', $endOfNextMonth)
             ->whereNull('deleted_at')
             ->whereDoesntHave('invoices', function ($q) use ($currentYear) {
-                $q->where('type', 'C')
-                    ->where('statuscode', 'P')
+                $q->where('type', InvoiceType::Cotisation->value)
+                    ->where('statuscode', InvoiceStatus::Paid->value)
                     ->whereNull('deleted_at')
                     ->where('cotisation_year', '>=', $currentYear);
             })
             ->count();
 
-        $openAmount = Invoice::whereIn('statuscode', ['N', 'E'])
+        $openAmount = Invoice::whereIn('statuscode', [InvoiceStatus::New->value, InvoiceStatus::Sent->value])
             ->whereNull('deleted_at')
             ->sum('amount');
 

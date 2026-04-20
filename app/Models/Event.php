@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EventMemberStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Enums\MemberStatus;
@@ -72,7 +73,7 @@ class Event extends Model
         }
 
         return $this->members()
-            ->whereIn('event_member.status', ['N', 'C'])
+            ->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])
             ->whereNull('event_member.deleted_at')
             ->count() >= $this->max_participants;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EventStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\EventRegistrationExistingMail;
 use App\Mail\EventRegistrationNewMail;
@@ -27,7 +28,7 @@ class EventRegistrationController extends Controller
         }
 
         $event = Event::where('id', $request->input('event_id'))
-            ->where('statuscode', 'P')
+            ->where('statuscode', EventStatus::Publie->value)
             ->whereNull('deleted_at')
             ->first();
 
@@ -37,7 +38,7 @@ class EventRegistrationController extends Controller
 
         $email = $request->input('email');
         $member = Member::where('email', $email)
-            ->whereIn('statuscode', ['A', 'P', 'N', 'E'])
+            ->whereIn('statuscode', Member::PORTAL_ACCESSIBLE_STATUSES)
             ->first();
 
         if ($member) {

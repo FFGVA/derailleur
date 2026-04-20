@@ -50,13 +50,13 @@ class InvoiceResource extends Resource
                         Forms\Components\Select::make('type')
                             ->label('Type')
                             ->options(collect(InvoiceType::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->default('C')
+                            ->default(InvoiceType::Cotisation->value)
                             ->required()
                             ->live(),
                         Forms\Components\Select::make('statuscode')
                             ->label('Statut')
                             ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->default('N')
+                            ->default(InvoiceStatus::New->value)
                             ->required(),
                         Forms\Components\TextInput::make('amount')
                             ->label('Total (CHF)')
@@ -72,14 +72,14 @@ class InvoiceResource extends Resource
                             ->label('Année')
                             ->numeric()
                             ->default(date('Y'))
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'C'),
+                            ->visible(fn (Forms\Get $get) => $get('type') === InvoiceType::Cotisation->value),
                         Forms\Components\Select::make('events')
                             ->label('Événements')
                             ->relationship('events', 'title')
                             ->multiple()
                             ->searchable()
                             ->preload()
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'E'),
+                            ->visible(fn (Forms\Get $get) => $get('type') === InvoiceType::Evenement->value),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
@@ -241,7 +241,7 @@ class InvoiceResource extends Resource
                     ->label('Statut')
                     ->multiple()
                     ->options(collect(InvoiceStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                    ->default(['N', 'E']),
+                    ->default([InvoiceStatus::New->value, InvoiceStatus::Sent->value]),
                 Tables\Filters\TrashedFilter::make()
                     ->label('Supprimées'),
             ])
@@ -284,7 +284,7 @@ class InvoiceResource extends Resource
                     ->action(function (Invoice $record, array $data) {
                         $date = \DateTime::createFromFormat('d.m.Y', $data['payment_date']);
                         $updates = [
-                            'statuscode' => 'P',
+                            'statuscode' => InvoiceStatus::Paid->value,
                             'payment_date' => $date->format('Y-m-d'),
                         ];
                         if (!empty($data['notes'])) {
@@ -297,7 +297,7 @@ class InvoiceResource extends Resource
                         // Assign member number on payment
                         Member::assignMemberNumber($record->member);
                         // Extend membership for cotisation invoices
-                        \App\Services\InvoiceService::onCotisationPaid($record);
+                        \App\Services\InvoicePaymentService::onCotisationPaid($record);
                     })
                     ->visible(fn (Invoice $record) => $record->statuscode !== InvoiceStatus::Paid && $record->statuscode !== InvoiceStatus::Cancelled),
             ])

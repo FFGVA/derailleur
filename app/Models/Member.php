@@ -34,10 +34,16 @@ class Member extends Model
         'statuts_ok' => 'Statuts OK',
     ];
 
+    /** Statuses that grant portal access */
+    public const PORTAL_ACCESSIBLE_STATUSES = ['A', 'P', 'N', 'E'];
+
+    /** Statuses considered "active member" */
+    public const ACTIVE_STATUSES = ['A', 'E'];
+
     protected static function booted(): void
     {
         static::updating(function (Member $member) {
-            if ($member->isDirty('statuscode') && $member->getRawOriginal('statuscode') !== 'A' && $member->statuscode === MemberStatus::Actif && !$member->member_number) {
+            if ($member->isDirty('statuscode') && $member->getRawOriginal('statuscode') !== MemberStatus::Actif->value && $member->statuscode === MemberStatus::Actif && !$member->member_number) {
                 $member->member_number = static::nextMemberNumber();
             }
         });
