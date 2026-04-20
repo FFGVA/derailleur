@@ -5,15 +5,20 @@ namespace App\Filament\Resources;
 use App\Enums\MemberStatus;
 use App\Filament\Resources\MemberResource\Pages;
 use App\Filament\Resources\MemberResource\RelationManagers;
+use App\Mail\AdhesionConfirmationMail;
+use App\Mail\InvoiceMail;
 use App\Models\Member;
+use App\Services\InvoiceService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Mail;
 
 class MemberResource extends Resource
 {
@@ -69,6 +74,58 @@ class MemberResource extends Resource
                         Forms\Components\DatePicker::make('membership_end')
                             ->label('Fin adhésion')
                             ->displayFormat('d.m.Y'),
+                        Forms\Components\DateTimePicker::make('membership_requested_at')
+                            ->label('Demande d\'adhésion')
+                            ->displayFormat('d.m.Y')
+                            ->disabled()
+                            ->visible(fn (?Model $record) => $record?->membership_requested_at !== null)
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('clearMembershipRequest')
+                                    ->icon('heroicon-o-x-mark')
+                                    ->tooltip('Supprimer la demande')
+                                    ->color('danger')
+                                    ->size('xs')
+                                    ->requiresConfirmation()
+                                    ->action(function (Forms\Set $set, ?Model $record) {
+                                        $record?->update(['membership_requested_at' => null]);
+                                        $set('membership_requested_at', null);
+                                    })
+                            ),
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('requestMembership')
+                                ->label('Demande d\'adhésion')
+                                ->icon('heroicon-o-user-plus')
+                                ->color('warning')
+                                ->requiresConfirmation()
+                                ->modalHeading('Demande d\'adhésion')
+                                ->modalDescription(fn (?Model $record) => 'Enregistrer la demande d\'adhésion et envoyer la facture à ' . $record?->email . ' ?')
+                                ->action(function (?Model $record) {
+                                    $record->update(['membership_requested_at' => now()]);
+
+                                    $result = InvoiceService::generate($record);
+                                    $invoice = \App\Models\Invoice::where('invoice_number', $result['invoice_number'])->first();
+                                    $qrImage = InvoiceService::generateQrCodeBase64($invoice);
+                                    Mail::send(new InvoiceMail(
+                                        invoice: $invoice,
+                                        pdfContent: $result['pdf'],
+                                        pdfFilename: $result['filename'],
+                                        qrImageBase64: $qrImage,
+                                    ));
+                                    $invoice->update(['statuscode' => 'E']);
+
+                                    Mail::send(new AdhesionConfirmationMail($record));
+
+                                    Notification::make()
+                                        ->success()
+                                        ->title('Demande enregistrée')
+                                        ->body('Facture envoyée à ' . $record->email)
+                                        ->send();
+                                })
+                                ->visible(fn (?Model $record) => $record
+                                    && $record->membership_requested_at === null
+                                    && ! in_array($record->getRawOriginal('statuscode'), ['A', 'E'])
+                                ),
+                        ])->columnStart(4)->columnSpan(1),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
@@ -226,6 +283,18 @@ class MemberResource extends Resource
                 Tables\Filters\SelectFilter::make('statuscode')
                     ->label('Statut')
                     ->options(collect(MemberStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()])),
+                Tables\Filters\TernaryFilter::make('membership_requested')
+                    ->label('Demande d\'adhésion')
+                    ->queries(
+                        true: fn ($query) => $query->where(function ($q) {
+                            $q->where('statuscode', 'P')
+                                ->orWhere(function ($q2) {
+                                    $q2->whereNotNull('membership_requested_at');
+                                });
+                        }),
+                        false: fn ($query) => $query->where('statuscode', '!=', 'P')->whereNull('membership_requested_at'),
+                        blank: fn ($query) => $query,
+                    ),
                 Tables\Filters\SelectFilter::make('city')
                     ->label('Ville')
                     ->options(fn () => Member::query()->whereNotNull('city')->distinct()->pluck('city', 'city')->toArray()),

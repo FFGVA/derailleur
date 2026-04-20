@@ -126,10 +126,16 @@ class ViewMember extends ViewRecord
                                         ->label('N° membre')
                                         ->placeholder('—')
                                         ->weight('bold'),
+                                    Components\TextEntry::make('membership_requested_at')
+                                        ->label('Demande d\'adhésion')
+                                        ->dateTime('d.m.Y')
+                                        ->icon('heroicon-o-clock')
+                                        ->visible(fn ($record) => $record->membership_requested_at !== null),
                                     Components\TextEntry::make('membership_start')
                                         ->label('Début')
                                         ->date('d.m.Y')
-                                        ->placeholder('—'),
+                                        ->placeholder('—')
+                                        ->columnStart(1),
                                     Components\TextEntry::make('membership_end')
                                         ->label('Fin')
                                         ->date('d.m.Y')

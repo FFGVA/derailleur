@@ -34,6 +34,16 @@ class StatsOverview extends StatsOverviewWidget
             ->whereNull('deleted_at')
             ->count();
 
+        $pendingAdhesions = Member::whereNull('deleted_at')
+            ->where(function ($q) {
+                $q->where('statuscode', 'P')
+                    ->orWhere(function ($q2) {
+                        $q2->where('statuscode', 'N')
+                            ->whereNotNull('membership_requested_at');
+                    });
+            })
+            ->count();
+
         return [
             Stat::make('Événements', $plannedEvents . ' planifiés (' . $totalEvents . ')')
                 ->description($toClose > 0 ? $toClose . ' à clôturer' : 'Tous à jour')
@@ -50,6 +60,15 @@ class StatsOverview extends StatsOverviewWidget
                 ->icon('heroicon-o-users')
                 ->color('success')
                 ->url(MemberResource::getUrl('index')),
+            Stat::make('Demandes d\'adhésion', $pendingAdhesions)
+                ->description($pendingAdhesions > 0 ? 'En attente' : 'Aucune')
+                ->icon('heroicon-o-user-plus')
+                ->color($pendingAdhesions > 0 ? 'warning' : 'success')
+                ->url(MemberResource::getUrl('index', [
+                    'tableFilters' => [
+                        'membership_requested' => ['value' => '1'],
+                    ],
+                ])),
         ];
     }
 }
