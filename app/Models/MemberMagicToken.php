@@ -18,11 +18,14 @@ class MemberMagicToken extends Model
         'used_at',
     ];
 
-    protected $casts = [
-        'expires_at' => 'datetime',
-        'used_at' => 'datetime',
-        'created_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+            'used_at' => 'datetime',
+            'created_at' => 'datetime',
+        ];
+    }
 
     public function member(): BelongsTo
     {
