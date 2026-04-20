@@ -4,11 +4,15 @@ namespace App\Filament\Resources\MemberResource\Pages;
 
 use App\Enums\MemberStatus;
 use App\Filament\Resources\MemberResource;
+use App\Mail\AdhesionWelcomeMail;
 use App\Services\MemberCardService;
 use Filament\Actions;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class ViewMember extends ViewRecord
 {
@@ -89,7 +93,35 @@ class ViewMember extends ViewRecord
                                         ->label('Statut')
                                         ->badge()
                                         ->formatStateUsing(fn (MemberStatus $state) => $state->getLabel())
-                                        ->color(fn (MemberStatus $state) => $state->getColor()),
+                                        ->color(fn (MemberStatus $state) => $state->getColor())
+                                        ->hintAction(
+                                            Components\Actions\Action::make('resendActivation')
+                                                ->icon('heroicon-o-envelope')
+                                                ->tooltip('Renvoyer la confirmation de l\'email')
+                                                ->color('gray')
+                                                ->size('sm')
+                                                ->requiresConfirmation()
+                                                ->modalHeading('Renvoyer l\'email de confirmation')
+                                                ->modalDescription(fn () => 'Renvoyer l\'email d\'activation à ' . $this->record->first_name . ' ' . $this->record->last_name . ' (' . $this->record->email . ') ?')
+                                                ->action(function () {
+                                                    $member = $this->record;
+                                                    $rawToken = bin2hex(random_bytes(32));
+                                                    $member->update([
+                                                        'activation_token' => Hash::make($rawToken),
+                                                        'activation_sent_at' => now(),
+                                                    ]);
+
+                                                    $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
+                                                    Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
+
+                                                    Notification::make()
+                                                        ->success()
+                                                        ->title('Email envoyé')
+                                                        ->body('Email de confirmation renvoyé à ' . $member->email)
+                                                        ->send();
+                                                })
+                                                ->visible(fn () => $this->record->getRawOriginal('statuscode') === 'P' && $this->record->activation_token)
+                                        ),
                                     Components\TextEntry::make('member_number')
                                         ->label('N° membre')
                                         ->placeholder('—')
