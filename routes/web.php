@@ -3,8 +3,13 @@
 use App\Enums\EventStatus;
 use App\Http\Controllers\AdhesionActivationController;
 use App\Http\Controllers\EventRegistrationController;
+use App\Http\Controllers\Portal\AdhesionController;
+use App\Http\Controllers\Portal\CarteController;
+use App\Http\Controllers\Portal\DashboardController;
+use App\Http\Controllers\Portal\EventController;
+use App\Http\Controllers\Portal\FactureController;
+use App\Http\Controllers\Portal\PelotonController;
 use App\Http\Controllers\PortalAuthController;
-use App\Http\Controllers\PortalController;
 use App\Http\Controllers\StravaController;
 use App\Models\Event;
 use App\Services\ICalService;
@@ -35,7 +40,7 @@ Route::get('/events/ical', function () {
 })->name('events.ical');
 
 // Membership card validation (public, short token URL to avoid Chrome Safe Browsing false positives)
-Route::get('/carte/v/{token}', [PortalController::class, 'carteValider'])
+Route::get('/carte/v/{token}', [CarteController::class, 'carteValider'])
     ->where('token', '[a-f0-9]{16}')
     ->name('carte.valider');
 
@@ -52,28 +57,28 @@ Route::post('/deconnexion', [PortalAuthController::class, 'logout'])->name('port
 
 // Portal (authenticated)
 Route::middleware('portal')->prefix('portail')->group(function () {
-    Route::get('/', [PortalController::class, 'dashboard'])->name('portail.dashboard');
-    Route::get('/adhesion', [PortalController::class, 'adhesion'])->name('portail.adhesion');
-    Route::get('/protection-des-donnees', [PortalController::class, 'protectionDesDonnees'])->name('portail.lpd');
-    Route::get('/adhesion/modifier', [PortalController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
-    Route::post('/adhesion/modifier', [PortalController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
-    Route::get('/adhesion/inscription', [PortalController::class, 'adhesionInscription'])->name('portail.adhesion.inscription');
-    Route::post('/adhesion/inscription', [PortalController::class, 'adhesionInscriptionStore'])->name('portail.adhesion.inscription.store');
-    Route::get('/carte', [PortalController::class, 'carte'])->name('portail.carte');
-    Route::get('/carte/qr-url', [PortalController::class, 'carteQrUrl'])->name('portail.carte.qr-url');
-    Route::get('/carte/pdf', [PortalController::class, 'cartePdf'])->name('portail.carte.pdf');
-    Route::get('/factures', [PortalController::class, 'factures'])->name('portail.factures');
-    Route::get('/evenement/{event}', [PortalController::class, 'evenement'])->name('portail.evenement');
-    Route::post('/evenement/{event}/inscrire', [PortalController::class, 'inscrire'])->name('portail.evenement.inscrire');
-    Route::post('/evenement/{event}/annuler', [PortalController::class, 'annuler'])->name('portail.evenement.annuler');
-    Route::get('/evenement/{event}/ical', [PortalController::class, 'evenementIcal'])->name('portail.evenement.ical');
-    Route::get('/factures/{invoice}/pdf', [PortalController::class, 'facturePdf'])->name('portail.facture.pdf');
-    Route::get('/peloton', [PortalController::class, 'peloton'])->name('portail.peloton');
-    Route::get('/peloton/{event}', [PortalController::class, 'pelotonEvent'])->name('portail.peloton.event');
-    Route::post('/peloton/{event}/presence/{targetMember}', [PortalController::class, 'togglePresence'])->name('portail.peloton.presence');
-    Route::post('/peloton/{event}/ajouter', [PortalController::class, 'addParticipant'])->name('portail.peloton.add');
-    Route::post('/peloton/{event}/gpx', [PortalController::class, 'uploadGpx'])->name('portail.peloton.gpx');
-    Route::get('/peloton/{event}/membre/{targetMember}', [PortalController::class, 'pelotonMember'])->name('portail.peloton.member');
+    Route::get('/', [DashboardController::class, 'dashboard'])->name('portail.dashboard');
+    Route::get('/adhesion', [AdhesionController::class, 'adhesion'])->name('portail.adhesion');
+    Route::get('/protection-des-donnees', [AdhesionController::class, 'protectionDesDonnees'])->name('portail.lpd');
+    Route::get('/adhesion/modifier', [AdhesionController::class, 'adhesionEdit'])->name('portail.adhesion.edit');
+    Route::post('/adhesion/modifier', [AdhesionController::class, 'adhesionUpdate'])->name('portail.adhesion.update');
+    Route::get('/adhesion/inscription', [AdhesionController::class, 'adhesionInscription'])->name('portail.adhesion.inscription');
+    Route::post('/adhesion/inscription', [AdhesionController::class, 'adhesionInscriptionStore'])->name('portail.adhesion.inscription.store');
+    Route::get('/carte', [CarteController::class, 'carte'])->name('portail.carte');
+    Route::get('/carte/qr-url', [CarteController::class, 'carteQrUrl'])->name('portail.carte.qr-url');
+    Route::get('/carte/pdf', [CarteController::class, 'cartePdf'])->name('portail.carte.pdf');
+    Route::get('/factures', [FactureController::class, 'factures'])->name('portail.factures');
+    Route::get('/evenement/{event}', [EventController::class, 'evenement'])->name('portail.evenement');
+    Route::post('/evenement/{event}/inscrire', [EventController::class, 'inscrire'])->name('portail.evenement.inscrire');
+    Route::post('/evenement/{event}/annuler', [EventController::class, 'annuler'])->name('portail.evenement.annuler');
+    Route::get('/evenement/{event}/ical', [EventController::class, 'evenementIcal'])->name('portail.evenement.ical');
+    Route::get('/factures/{invoice}/pdf', [FactureController::class, 'facturePdf'])->name('portail.facture.pdf');
+    Route::get('/peloton', [PelotonController::class, 'peloton'])->name('portail.peloton');
+    Route::get('/peloton/{event}', [PelotonController::class, 'pelotonEvent'])->name('portail.peloton.event');
+    Route::post('/peloton/{event}/presence/{targetMember}', [PelotonController::class, 'togglePresence'])->name('portail.peloton.presence');
+    Route::post('/peloton/{event}/ajouter', [PelotonController::class, 'addParticipant'])->name('portail.peloton.add');
+    Route::post('/peloton/{event}/gpx', [PelotonController::class, 'uploadGpx'])->name('portail.peloton.gpx');
+    Route::get('/peloton/{event}/membre/{targetMember}', [PelotonController::class, 'pelotonMember'])->name('portail.peloton.member');
 });
 
 // Strava OAuth (admin only, requires auth)
