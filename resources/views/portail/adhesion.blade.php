@@ -3,20 +3,6 @@
 @section('title', 'Mon adhésion')
 
 @section('styles')
-    .portal-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        color: #80081C;
-        text-decoration: none;
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-    .portal-back svg {
-        width: 1rem;
-        height: 1rem;
-    }
     .portal-info-card {
         background: white;
         border-radius: 0.75rem;
@@ -41,18 +27,6 @@
         color: #333;
         text-align: right;
     }
-    .portal-badge {
-        display: inline-block;
-        font-size: 0.6875rem;
-        font-weight: 600;
-        padding: 0.125rem 0.5rem;
-        border-radius: 0.25rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    .portal-badge-green { background-color: #dcfce7; color: #166534; }
-    .portal-badge-orange { background-color: #fff7ed; color: #9a3412; }
-    .portal-badge-red { background-color: #fef2f2; color: #991b1b; }
     .portal-edit-btn {
         display: flex;
         align-items: center;

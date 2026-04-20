@@ -3,20 +3,6 @@
 @section('title', 'Protection des données')
 
 @section('styles')
-    .portal-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        color: #80081C;
-        text-decoration: none;
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-    .portal-back svg {
-        width: 1rem;
-        height: 1rem;
-    }
     .portal-lpd-card {
         background: white;
         border-radius: 0.75rem;

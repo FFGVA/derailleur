@@ -30,19 +30,6 @@
         color: #666;
         margin-top: 0.25rem;
     }
-    .portal-badge {
-        display: inline-block;
-        font-size: 0.6875rem;
-        font-weight: 600;
-        padding: 0.125rem 0.5rem;
-        border-radius: 0.25rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    .portal-badge-green { background-color: #dcfce7; color: #166534; }
-    .portal-badge-orange { background-color: #fff7ed; color: #9a3412; }
-    .portal-badge-blue { background-color: #dbeafe; color: #1e40af; }
-    .portal-badge-red { background-color: #fef2f2; color: #991b1b; }
     .portal-invoice-footer {
         display: flex;
         justify-content: flex-end;
@@ -68,12 +55,6 @@
     .portal-pdf-btn svg {
         width: 1rem;
         height: 1rem;
-    }
-    .portal-empty {
-        text-align: center;
-        padding: 2rem 1rem;
-        color: #999;
-        font-size: 0.9375rem;
     }
 @endsection
 

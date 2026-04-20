@@ -3,13 +3,6 @@
 @section('title', $event->title)
 
 @section('styles')
-    .portal-detail-card {
-        background: white;
-        border-radius: 0.75rem;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
     .portal-detail-title-row {
         display: flex;
         align-items: center;
@@ -47,7 +40,6 @@
         border-bottom: 1px solid #f0ede8;
         font-size: 0.9375rem;
     }
-    .portal-info-row:last-child { border-bottom: none; }
     .portal-info-label { color: #666; }
     .portal-info-value { font-weight: 500; color: #333; text-align: right; }
     .portal-info-value a { color: #80081C; text-decoration: none; }

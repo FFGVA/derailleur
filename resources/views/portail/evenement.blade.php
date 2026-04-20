@@ -3,13 +3,6 @@
 @section('title', $event->title)
 
 @section('styles')
-    .portal-detail-card {
-        background: white;
-        border-radius: 0.75rem;
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
     .portal-detail-title {
         font-size: 1.125rem;
         font-weight: 700;
@@ -32,23 +25,10 @@
         border-bottom: 1px solid #f0ede8;
         font-size: 0.9375rem;
     }
-    .portal-info-row:last-child { border-bottom: none; }
     .portal-info-label { color: #666; display: flex; align-items: center; gap: 0.375rem; }
     .portal-info-value { font-weight: 500; color: #333; text-align: right; }
     .portal-info-value a { color: #80081C; text-decoration: none; }
     .portal-info-value a:hover { text-decoration: underline; }
-    .portal-badge {
-        display: inline-block;
-        font-size: 0.6875rem;
-        font-weight: 600;
-        padding: 0.125rem 0.5rem;
-        border-radius: 0.25rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    .portal-badge-green { background-color: #dcfce7; color: #166534; }
-    .portal-badge-orange { background-color: #fff7ed; color: #9a3412; }
-    .portal-badge-red { background-color: #fef2f2; color: #991b1b; }
     .portal-chef-card {
         background: white;
         border-radius: 0.75rem;

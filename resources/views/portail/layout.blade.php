@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', 'Mon espace') — Fast and Female Geneva</title>
+    <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
