@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\EventStatus;
 use App\Models\Event;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
@@ -19,7 +20,7 @@ class UpcomingEvents extends Widget
         $today = now()->startOfDay();
 
         return Event::query()
-            ->where('statuscode', '!=', 'X')
+            ->where('statuscode', '!=', EventStatus::Annule)
             ->where(function ($q) use ($today) {
                 $q->where(function ($q2) use ($today) {
                     // Has end_date: show if end_date >= today

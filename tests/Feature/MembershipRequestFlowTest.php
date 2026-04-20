@@ -10,6 +10,7 @@ use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Member;
 use App\Services\InvoiceService;
+use App\Services\InvoicePaymentService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -187,7 +188,7 @@ class MembershipRequestFlowTest extends TestCase
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         $member->refresh();
         $this->assertEquals('A', $member->getRawOriginal('statuscode'));
@@ -212,7 +213,7 @@ class MembershipRequestFlowTest extends TestCase
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         Mail::assertSent(ActivationMail::class);
     }
@@ -235,7 +236,7 @@ class MembershipRequestFlowTest extends TestCase
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
         $invoice->update(['statuscode' => 'P', 'payment_date' => now()]);
 
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         Mail::assertNotSent(ActivationMail::class);
     }

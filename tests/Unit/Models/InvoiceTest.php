@@ -182,7 +182,7 @@ class InvoiceTest extends TestCase
         ]);
 
         // Simulate what markPaid should do
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         $member->refresh();
         // membership_end was 2026-03-31, next period starts 2026-04-01, ends 31.12.2026

@@ -109,32 +109,6 @@ class InvoiceService
         return self::createCotisation($member, (int) date('Y'));
     }
 
-    // ── Delegates (kept for backward compatibility) ──
-
-    /** @deprecated Use InvoicePdfService::generate() */
-    public static function generatePdf(Invoice $invoice): array
-    {
-        return InvoicePdfService::generate($invoice);
-    }
-
-    /** @deprecated Use QrBillService::generateQrCodeBase64() */
-    public static function generateQrCodeBase64(Invoice $invoice): ?string
-    {
-        return QrBillService::generateQrCodeBase64($invoice);
-    }
-
-    /** @deprecated Use InvoicePaymentService::onCotisationPaid() */
-    public static function onCotisationPaid(Invoice $invoice): void
-    {
-        InvoicePaymentService::onCotisationPaid($invoice);
-    }
-
-    /** @deprecated Use InvoicePaymentService::computeMembershipEnd() */
-    public static function computeMembershipEnd(\DateTimeInterface $periodStart): \Carbon\Carbon
-    {
-        return InvoicePaymentService::computeMembershipEnd($periodStart);
-    }
-
     public static function utf8(string $text): string
     {
         return InvoicePdfService::utf8($text);

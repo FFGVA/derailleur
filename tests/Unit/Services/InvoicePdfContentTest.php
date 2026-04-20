@@ -7,6 +7,8 @@ use App\Models\Invoice;
 use App\Models\InvoiceLine;
 use App\Models\Member;
 use App\Services\InvoicePaymentService;
+use App\Services\InvoicePdfService;
+use App\Services\QrBillService;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -40,7 +42,7 @@ class InvoicePdfContentTest extends TestCase
     {
         $member = $this->makeMember();
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
-        $pdfResult = InvoiceService::generatePdf($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
 
         $this->assertStringStartsWith('%PDF', $pdfResult['pdf']);
         $this->assertGreaterThan(1000, strlen($pdfResult['pdf']), 'PDF should be substantial');
@@ -120,7 +122,7 @@ class InvoicePdfContentTest extends TestCase
     {
         $member = $this->makeMember(['first_name' => 'Marie', 'last_name' => 'Dupont']);
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
-        $pdfResult = InvoiceService::generatePdf($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
 
         $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $pdfResult['filename']);
         $this->assertStringEndsWith('.pdf', $pdfResult['filename']);
@@ -250,7 +252,7 @@ class InvoicePdfContentTest extends TestCase
         $member = $this->makeMember();
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
-        $qr = InvoiceService::generateQrCodeBase64($invoice);
+        $qr = QrBillService::generateQrCodeBase64($invoice);
 
         $this->assertNotNull($qr);
         $this->assertStringStartsWith('data:image/png;base64,', $qr);
@@ -263,7 +265,7 @@ class InvoicePdfContentTest extends TestCase
         $member = $this->makeMember();
         $invoice = InvoiceService::createCotisation($member, (int) date('Y'));
 
-        $qr = InvoiceService::generateQrCodeBase64($invoice);
+        $qr = QrBillService::generateQrCodeBase64($invoice);
         // The QR code itself encodes the IBAN - we can't decode PNG here,
         // but we verify the QR bill is built with correct IBAN via the config
         $this->assertEquals('CH9580808004931084283', config('association.iban'));
@@ -309,7 +311,7 @@ class InvoicePdfContentTest extends TestCase
         $invoice = InvoiceService::createCotisation($member, 2027);
         $invoice->update(['statuscode' => 'P']);
 
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         $member->refresh();
         $this->assertEquals('2027-12-31', $member->membership_end->format('Y-m-d'));
@@ -330,7 +332,7 @@ class InvoicePdfContentTest extends TestCase
 
         $invoice = InvoiceService::createEvent($member, $event);
 
-        InvoiceService::onCotisationPaid($invoice);
+        InvoicePaymentService::onCotisationPaid($invoice);
 
         $member->refresh();
         // Membership end should NOT change for event invoices

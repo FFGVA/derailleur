@@ -4,6 +4,7 @@ namespace Tests\Unit\Services;
 
 use App\Models\Member;
 use App\Services\InvoiceService;
+use App\Services\InvoicePdfService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -28,7 +29,7 @@ class InvoiceServiceTest extends TestCase
     {
         $member = $this->makeMember();
         $invoice = InvoiceService::generate($member);
-        $pdfResult = InvoiceService::generatePdf($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
 
         $this->assertArrayHasKey('pdf', $pdfResult);
         $this->assertNotEmpty($pdfResult['pdf']);
@@ -39,7 +40,7 @@ class InvoiceServiceTest extends TestCase
     {
         $member = $this->makeMember();
         $invoice = InvoiceService::generate($member);
-        $pdfResult = InvoiceService::generatePdf($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
 
         $this->assertArrayHasKey('filename', $pdfResult);
         $this->assertStringStartsWith('ffgva_Dupont_Marie-facture-', $pdfResult['filename']);
@@ -76,7 +77,7 @@ class InvoiceServiceTest extends TestCase
             'email' => 'inv-svc-' . uniqid() . '@test.ch',
         ]);
         $invoice = InvoiceService::generate($member);
-        $pdfResult = InvoiceService::generatePdf($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
 
         $this->assertStringStartsWith('ffgva_De_La_Tour_Marie_Claire-facture-', $pdfResult['filename']);
     }
