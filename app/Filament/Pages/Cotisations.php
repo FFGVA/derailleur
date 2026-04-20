@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\InvoiceStatus;
 use App\Enums\InvoiceType;
 use App\Enums\MemberStatus;
+use App\Filament\Forms\PaymentDateForm;
 use App\Models\Member;
 use App\Services\InvoiceEmailService;
 use App\Services\InvoicePaymentService;
@@ -176,33 +177,7 @@ class Cotisations extends Page implements HasTable
                     ->modalSubmitActionLabel('OK')
                     ->modalCancelActionLabel('Annuler')
                     ->modalWidth('md')
-                    ->form([
-                        Forms\Components\Grid::make(10)
-                            ->schema([
-                                Forms\Components\TextInput::make('payment_date')
-                                    ->label('Date banque :')
-                                    ->placeholder('jj.mm.aaaa')
-                                    ->columnSpan(3)
-                                    ->required()
-                                    ->rule('regex:/^\d{2}\.\d{2}\.\d{4}$/')
-                                    ->rule(static function () {
-                                        return static function (string $attribute, $value, \Closure $fail) {
-                                            if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $value)) {
-                                                return;
-                                            }
-                                            $parsed = \DateTime::createFromFormat('d.m.Y', $value);
-                                            if (!$parsed || $parsed->format('d.m.Y') !== $value) {
-                                                $fail('Date invalide.');
-                                            }
-                                        };
-                                    })
-                                    ->live()
-                                    ->afterStateUpdated(fn ($state, Forms\Set $set) => $state),
-                            ]),
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Commentaire')
-                            ->rows(2),
-                    ])
+                    ->form(PaymentDateForm::schema())
                     ->visible(function ($record) {
                         $currentYear = (int) date('Y');
                         return $record->invoices()
