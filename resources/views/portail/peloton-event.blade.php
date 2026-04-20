@@ -232,6 +232,8 @@
     }
     .portal-overlay.active { display: flex; }
     .portal-popup {
+        display: block;
+        position: static;
         background: white;
         border-radius: 0.75rem;
         padding: 1.5rem;
