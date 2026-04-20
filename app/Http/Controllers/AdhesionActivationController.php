@@ -53,6 +53,8 @@ class AdhesionActivationController extends Controller
         $member->update([
             'email_verified_at' => now(),
             'activation_token' => null,
+            'statuscode' => 'N',
+            'membership_requested_at' => now(),
         ]);
 
         $result = InvoiceService::generate($member);

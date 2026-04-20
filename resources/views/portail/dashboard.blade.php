@@ -145,6 +145,11 @@
 
     @if($member->getRawOriginal('statuscode') === 'P')
         <div style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+            <div style="font-weight: 700; font-size: 1rem; color: #92400e; margin-bottom: 0.375rem;">Confirmation en attente</div>
+            <div style="font-size: 0.875rem; color: #78350f;">Confirme ton adresse email en cliquant sur le lien dans l'email que nous t'avons envoyé.</div>
+        </div>
+    @elseif($member->getRawOriginal('statuscode') === 'N' && $member->membership_requested_at)
+        <div style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
             <div style="font-weight: 700; font-size: 1rem; color: #92400e; margin-bottom: 0.375rem;">Adhésion en cours de traitement</div>
             <div style="font-size: 0.875rem; color: #78350f;">Ta demande d'adhésion a été reçue. Le paiement de la cotisation est en attente.</div>
         </div>

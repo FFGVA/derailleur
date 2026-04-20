@@ -357,6 +357,7 @@ class InvoiceService
         $member->update([
             'membership_end' => $newEnd,
             'statuscode' => 'A',
+            'membership_requested_at' => null,
         ]);
 
         if (! $wasActive) {

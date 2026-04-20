@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdhesionRequest;
 use App\Http\Requests\ContactRequest;
+use App\Mail\AdhesionConfirmationMail;
 use App\Mail\AdhesionMail;
 use App\Mail\AdhesionWelcomeMail;
 use App\Mail\ContactMail;
+use App\Mail\InvoiceMail;
 use App\Models\Member;
 use App\Models\MemberPhone;
+use App\Services\InvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -88,14 +91,37 @@ class FormController extends Controller
             }
         }
 
-        $rawToken = bin2hex(random_bytes(32));
-        $member->update([
-            'activation_token' => Hash::make($rawToken),
-            'activation_sent_at' => now(),
-        ]);
+        // Non-member with verified email: skip activation, send invoice directly
+        if ($member->getRawOriginal('statuscode') === 'N') {
+            $member->update([
+                'membership_requested_at' => now(),
+                'metadata' => $metadata ?: $member->metadata,
+                'photo_ok' => $photoOk,
+            ]);
 
-        $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
-        Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
+            $result = InvoiceService::generate($member);
+            $invoice = \App\Models\Invoice::where('invoice_number', $result['invoice_number'])->first();
+            $qrImage = InvoiceService::generateQrCodeBase64($invoice);
+            Mail::send(new InvoiceMail(
+                invoice: $invoice,
+                pdfContent: $result['pdf'],
+                pdfFilename: $result['filename'],
+                qrImageBase64: $qrImage,
+            ));
+            $invoice->update(['statuscode' => 'E']);
+
+            Mail::send(new AdhesionConfirmationMail($member));
+        } else {
+            // New member or re-submission: send activation email
+            $rawToken = bin2hex(random_bytes(32));
+            $member->update([
+                'activation_token' => Hash::make($rawToken),
+                'activation_sent_at' => now(),
+            ]);
+
+            $activationUrl = url("/adhesion/confirmer?token={$rawToken}&email={$member->email}");
+            Mail::send(new AdhesionWelcomeMail($member, $activationUrl));
+        }
 
         Mail::send(new AdhesionMail(
             nom: $request->input('nom'),
