@@ -77,11 +77,11 @@ class MembersRelationManager extends RelationManager
                     ->tooltip(fn ($record) => $record->statuscode->getLabel())
                     ->grow(false)
                     ->size(Tables\Columns\IconColumn\IconColumnSize::Small),
-                Tables\Columns\TextColumn::make('last_name')
-                    ->label('Nom')
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('first_name')
                     ->label('Prénom')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_name')
+                    ->label('Nom')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('pivot_present')
                     ->label('Présence')
