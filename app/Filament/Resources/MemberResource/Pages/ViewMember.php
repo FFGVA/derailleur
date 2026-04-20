@@ -94,12 +94,12 @@ class ViewMember extends ViewRecord
                                         ->badge()
                                         ->formatStateUsing(fn (MemberStatus $state) => $state->getLabel())
                                         ->color(fn (MemberStatus $state) => $state->getColor())
-                                        ->hintAction(
+                                        ->suffixAction(
                                             Components\Actions\Action::make('resendActivation')
                                                 ->icon('heroicon-o-envelope')
                                                 ->tooltip('Renvoyer la confirmation de l\'email')
                                                 ->color('gray')
-                                                ->size('sm')
+                                                ->size('xs')
                                                 ->requiresConfirmation()
                                                 ->modalHeading('Renvoyer l\'email de confirmation')
                                                 ->modalDescription(fn () => 'Renvoyer l\'email d\'activation à ' . $this->record->first_name . ' ' . $this->record->last_name . ' (' . $this->record->email . ') ?')
