@@ -6,13 +6,10 @@ use App\Enums\EventMemberStatus;
 use App\Enums\InvoiceType;
 use App\Enums\MemberStatus;
 use App\Mail\EventConfirmationMail;
-use App\Mail\InvoiceMail;
 use App\Models\Invoice;
 use App\Models\Member;
-use App\Services\ICalService;
+use App\Services\ExcelExportService;
 use App\Services\InvoiceEmailService;
-use App\Services\InvoicePdfService;
-use App\Services\QrBillService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Forms\Form;
@@ -152,61 +149,9 @@ class MembersRelationManager extends RelationManager
                     ->icon(fn () => new \Illuminate\Support\HtmlString('<img src="' . asset('images/ms-excel.svg') . '" style="width:1.25rem;height:1.25rem;">'))
                     ->color('gray')
                     ->action(function () {
-                        $event = $this->getOwnerRecord();
-                        $participants = $event->members()
-                            ->whereIn('event_member.status', [EventMemberStatus::Inscrit->value, EventMemberStatus::Confirme->value])
-                            ->whereNull('event_member.deleted_at')
-                            ->with('phones')
-                            ->orderBy('last_name')
-                            ->orderBy('first_name')
-                            ->get();
+                        $result = ExcelExportService::exportParticipants($this->getOwnerRecord());
 
-                        $filename = \Illuminate\Support\Str::slug($event->title) . '-' . $event->starts_at->format('Y-m-d') . '.xlsx';
-                        $tempPath = storage_path('app/private/' . $filename);
-
-                        $options = new \OpenSpout\Writer\XLSX\Options();
-                        $writer = new \OpenSpout\Writer\XLSX\Writer($options);
-                        $writer->openToFile($tempPath);
-
-                        $boldStyle = new \OpenSpout\Common\Entity\Style\Style();
-                        $boldStyle->setFontBold();
-
-                        // Event header
-                        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([$event->title], $boldStyle));
-                        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(['Début', $event->starts_at->format('d.m.Y H:i')]));
-                        if ($event->ends_at) {
-                            $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(['Fin', $event->ends_at->format('d.m.Y H:i')]));
-                        }
-                        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([]));
-
-                        // Column headers
-                        $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues(
-                            ['Nom', 'Prénom', 'E-mail', 'Téléphone', 'Statut', 'Présence'],
-                            $boldStyle
-                        ));
-
-                        // Data rows
-                        foreach ($participants as $p) {
-                            $phone = $p->phones->first()?->phone_number ?? '';
-                            $status = $p->pivot->getRawOriginal('status') === EventMemberStatus::Confirme->value ? 'Confirmée' : 'Inscrite';
-                            $presence = match ($p->pivot->getRawOriginal('present')) {
-                                1, true => 'Oui',
-                                0, false => 'Non',
-                                default => '',
-                            };
-                            $writer->addRow(\OpenSpout\Common\Entity\Row::fromValues([
-                                $p->last_name,
-                                $p->first_name,
-                                $p->email,
-                                $phone,
-                                $status,
-                                $presence,
-                            ]));
-                        }
-
-                        $writer->close();
-
-                        return response()->download($tempPath, $filename, [
+                        return response()->download($result['path'], $result['filename'], [
                             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         ])->deleteFileAfterSend();
                     }),
@@ -263,11 +208,7 @@ class MembersRelationManager extends RelationManager
                                 ->first();
 
                             if ($invoice) {
-                                $result = InvoicePdfService::generate($invoice);
-                                $qrBase64 = QrBillService::generateQrCodeBase64($invoice);
-                                $ical = ICalService::generate($event);
-                                $icalFilename = ICalService::filename($event);
-                                Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
+                                InvoiceEmailService::sendExisting($invoice, $event);
                             }
                         } else {
                             Mail::send(new EventConfirmationMail($member, $event));

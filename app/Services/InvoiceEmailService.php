@@ -48,14 +48,18 @@ class InvoiceEmailService
 
     /**
      * Send an existing invoice by email (regenerate PDF) and mark as sent.
+     * Optionally attach an iCal for an event.
      */
-    public static function sendExisting(Invoice $invoice): void
+    public static function sendExisting(Invoice $invoice, ?Event $event = null): void
     {
         $pdfResult = InvoicePdfService::generate($invoice);
         $qrBase64 = QrBillService::generateQrCodeBase64($invoice);
 
+        $ical = $event ? ICalService::generate($event) : null;
+        $icalFilename = $event ? ICalService::filename($event) : null;
+
         Mail::send(new InvoiceMail(
-            $invoice, $pdfResult['pdf'], $pdfResult['filename'], $qrBase64
+            $invoice, $pdfResult['pdf'], $pdfResult['filename'], $qrBase64, $ical, $icalFilename
         ));
 
         $invoice->update(['statuscode' => InvoiceStatus::Sent->value]);
