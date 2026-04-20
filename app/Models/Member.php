@@ -138,6 +138,23 @@ class Member extends Model
         return $this->hasMany(MemberPhone::class);
     }
 
+    /**
+     * Create or update the primary phone number.
+     */
+    public function setPhone(string $number, string $label = 'Mobile principal'): void
+    {
+        $phone = $this->phones()->first();
+        if ($phone) {
+            $phone->update(['phone_number' => $number]);
+        } else {
+            MemberPhone::create([
+                'member_id' => $this->id,
+                'phone_number' => $number,
+                'label' => $label,
+            ]);
+        }
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

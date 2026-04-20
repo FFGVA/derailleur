@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
-    <title>@yield('title', 'Mon espace') — Fast and Female Geneva</title>
+    <title>@yield('title', 'Mon espace') — {{ config('association.name') }}</title>
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
     <style>
         :root {
@@ -77,7 +77,7 @@
     </main>
 
     <footer class="portal-footer">
-        <img src="/images/logo-ffgva.png" alt="Fast and Female Geneva" style="height: 2rem; margin-bottom: 0.5rem;">
+        <img src="{{ asset(config('association.logo_path')) }}" alt="{{ config('association.name') }}" style="height: 2rem; margin-bottom: 0.5rem;">
         <div>&copy; {{ date('Y') }} Smart Gecko SA</div>
     </footer>
 

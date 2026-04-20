@@ -130,16 +130,7 @@ class AdhesionController extends Controller
             'metadata' => $metadata ?: null,
         ]);
 
-        $phone = $member->phones()->first();
-        if ($phone) {
-            $phone->update(['phone_number' => $request->input('telephone')]);
-        } else {
-            MemberPhone::create([
-                'member_id' => $member->id,
-                'phone_number' => $request->input('telephone'),
-                'label' => 'Mobile principal',
-            ]);
-        }
+        $member->setPhone($request->input('telephone'));
 
         // Email already verified (member is logged in)
         $member->update(['email_verified_at' => $member->email_verified_at ?? now()]);

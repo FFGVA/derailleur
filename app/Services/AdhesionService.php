@@ -36,11 +36,7 @@ class AdhesionService
             ]);
 
             if (! empty($data['telephone'])) {
-                MemberPhone::create([
-                    'member_id' => $member->id,
-                    'phone_number' => $data['telephone'],
-                    'label' => 'Mobile principal',
-                ]);
+                $member->setPhone($data['telephone']);
             }
         } elseif ($member->getRawOriginal('statuscode') === MemberStatus::EnAttente->value) {
             $member->update([
@@ -51,16 +47,7 @@ class AdhesionService
             ]);
 
             if (! empty($data['telephone'])) {
-                $phone = $member->phones()->first();
-                if ($phone) {
-                    $phone->update(['phone_number' => $data['telephone']]);
-                } else {
-                    MemberPhone::create([
-                        'member_id' => $member->id,
-                        'phone_number' => $data['telephone'],
-                        'label' => 'Mobile principal',
-                    ]);
-                }
+                $member->setPhone($data['telephone']);
             }
         }
 

@@ -18,7 +18,7 @@ class AdhesionWelcomeMail extends BaseMailable
         return new Envelope(
             from: $this->fromAssociation(),
             to: [$this->member->email],
-            subject: 'Bienvenue chez Fast and Female Geneva !',
+            subject: 'Bienvenue chez ' . config('association.name') . ' !',
         );
     }
 

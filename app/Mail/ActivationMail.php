@@ -19,7 +19,7 @@ class ActivationMail extends BaseMailable
             from: $this->fromAssociation(),
             to: [$this->member->email],
             replyTo: [$this->replyToAssociation()],
-            subject: 'Bienvenue chez Fast and Female Geneva !',
+            subject: 'Bienvenue chez ' . config('association.name') . ' !',
         );
     }
 
