@@ -24,7 +24,7 @@ class InvoiceService
      */
     public static function createCotisation(Member $member, int $year, ?float $amount = null): Invoice
     {
-        $amount = $amount ?? config('ffgva.cotisation_annuelle');
+        $amount = $amount ?? config('association.cotisation_annuelle');
 
         $invoice = Invoice::create([
             'member_id' => $member->id,
@@ -128,36 +128,42 @@ class InvoiceService
         $fpdf->AddPage();
         $fpdf->SetMargins(20, 20, 20);
 
+        // -- Colors from config --
+        $brand = config('association.colors.pdf_brand_rgb');
+        $textDark = config('association.colors.pdf_text_dark_rgb');
+        $textLight = config('association.colors.pdf_text_light_rgb');
+        $separator = config('association.colors.pdf_separator_rgb');
+
         // -- Logo --
-        $logoPath = public_path('images/logo-ffgva.png');
+        $logoPath = public_path(config('association.logo_path'));
         if (file_exists($logoPath)) {
             $fpdf->Image($logoPath, 20, 15, 40);
         }
 
         // -- Creditor address --
         $fpdf->SetFont('Helvetica', '', 9);
-        $fpdf->SetTextColor(102, 102, 102);
+        $fpdf->SetTextColor(...$textLight);
         $fpdf->SetXY(20, 40);
-        $fpdf->Cell(0, 4, self::utf8(config('ffgva.creditor_name')), 0, 1);
+        $fpdf->Cell(0, 4, self::utf8(config('association.creditor_name')), 0, 1);
         $fpdf->SetX(20);
-        $fpdf->Cell(0, 4, self::utf8(config('ffgva.creditor_address')), 0, 1);
+        $fpdf->Cell(0, 4, self::utf8(config('association.creditor_address')), 0, 1);
         $fpdf->SetX(20);
-        $fpdf->Cell(0, 4, self::utf8(config('ffgva.creditor_postal_code') . ' ' . config('ffgva.creditor_city')), 0, 1);
+        $fpdf->Cell(0, 4, self::utf8(config('association.creditor_postal_code') . ' ' . config('association.creditor_city')), 0, 1);
 
-        // -- Burgundy line --
-        $fpdf->SetDrawColor(128, 8, 28);
+        // -- Brand line --
+        $fpdf->SetDrawColor(...$brand);
         $fpdf->SetLineWidth(0.6);
         $fpdf->Line(20, 58, 190, 58);
 
         // -- Invoice title --
         $fpdf->SetFont('Helvetica', 'B', 18);
-        $fpdf->SetTextColor(128, 8, 28);
+        $fpdf->SetTextColor(...$brand);
         $fpdf->SetXY(20, 64);
         $fpdf->Cell(0, 10, self::utf8($title), 0, 1);
 
         // -- Member details --
         $fpdf->SetFont('Helvetica', '', 11);
-        $fpdf->SetTextColor(51, 51, 51);
+        $fpdf->SetTextColor(...$textDark);
         $y = 82;
         $labelX = 20;
         $valueX = 60;
@@ -191,15 +197,15 @@ class InvoiceService
         $y += 8;
 
         // Header row
-        $fpdf->SetFillColor(128, 8, 28);
-        $fpdf->SetTextColor(255, 255, 255);
+        $fpdf->SetFillColor(...$brand);
+        $fpdf->SetTextColor(255, 255, 255); // white on brand
         $fpdf->SetFont('Helvetica', 'B', 10);
         $fpdf->SetXY(20, $y);
         $fpdf->Cell(130, 8, 'Description', 0, 0, 'L', true);
         $fpdf->Cell(40, 8, 'Montant', 0, 1, 'R', true);
 
         // Item rows
-        $fpdf->SetTextColor(51, 51, 51);
+        $fpdf->SetTextColor(...$textDark);
         $fpdf->SetFont('Helvetica', '', 10);
         foreach ($invoice->lines as $line) {
             $y += 10;
@@ -208,7 +214,7 @@ class InvoiceService
             $fpdf->Cell(40, 8, 'CHF ' . number_format($line->amount, 2, '.', ''), 0, 1, 'R');
 
             // Line separator
-            $fpdf->SetDrawColor(200, 200, 200);
+            $fpdf->SetDrawColor(...$separator);
             $fpdf->SetLineWidth(0.3);
             $fpdf->Line(20, $y + 9, 190, $y + 9);
         }
@@ -286,18 +292,18 @@ class InvoiceService
         $qrBill = QrBill::create();
 
         $qrBill->setCreditor(StructuredAddress::createWithStreet(
-            config('ffgva.creditor_name'),
-            config('ffgva.creditor_address'),
+            config('association.creditor_name'),
+            config('association.creditor_address'),
             null,
-            config('ffgva.creditor_postal_code'),
-            config('ffgva.creditor_city'),
-            config('ffgva.creditor_country'),
+            config('association.creditor_postal_code'),
+            config('association.creditor_city'),
+            config('association.creditor_country'),
         ));
 
-        $qrBill->setCreditorInformation(CreditorInformation::create(config('ffgva.iban')));
+        $qrBill->setCreditorInformation(CreditorInformation::create(config('association.iban')));
 
         $qrBill->setPaymentAmountInformation(PaymentAmountInformation::create(
-            'CHF',
+            config('association.currency'),
             (float) $invoice->amount,
         ));
 

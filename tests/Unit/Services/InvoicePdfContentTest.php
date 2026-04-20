@@ -265,7 +265,7 @@ class InvoicePdfContentTest extends TestCase
         $qr = InvoiceService::generateQrCodeBase64($invoice);
         // The QR code itself encodes the IBAN - we can't decode PNG here,
         // but we verify the QR bill is built with correct IBAN via the config
-        $this->assertEquals('CH9580808004931084283', config('ffgva.iban'));
+        $this->assertEquals('CH9580808004931084283', config('association.iban'));
 
         $this->cleanupPdf($invoice);
     }

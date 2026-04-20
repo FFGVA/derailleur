@@ -156,7 +156,7 @@
 
             <div class="portal-intro-card">
                 <div class="portal-intro-title">Deviens membre !</div>
-                <div class="portal-intro-text">Soutiens notre association et profite des événements et avantages réservés aux membres. La cotisation annuelle est de CHF {{ number_format((float) config('ffgva.cotisation_annuelle'), 2, '.', '') }}.</div>
+                <div class="portal-intro-text">Soutiens notre association et profite des événements et avantages réservés aux membres. La cotisation annuelle est de CHF {{ number_format((float) config('association.cotisation_annuelle'), 2, '.', '') }}.</div>
             </div>
 
             <form method="POST" action="{{ route('portail.adhesion.inscription.store') }}">
@@ -235,7 +235,7 @@
 
                 <div class="portal-checkbox-row">
                     <input type="checkbox" id="cotisation_ok" name="cotisation_ok" value="oui" {{ old('cotisation_ok') ? 'checked' : '' }} required>
-                    <label for="cotisation_ok">J'accepte de payer la cotisation annuelle de CHF {{ number_format((float) config('ffgva.cotisation_annuelle'), 2, '.', '') }}</label>
+                    <label for="cotisation_ok">J'accepte de payer la cotisation annuelle de CHF {{ number_format((float) config('association.cotisation_annuelle'), 2, '.', '') }}</label>
                 </div>
                 @error('cotisation_ok')<div class="portal-error">{{ $message }}</div>@enderror
 

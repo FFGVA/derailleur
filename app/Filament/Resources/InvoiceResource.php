@@ -62,7 +62,7 @@ class InvoiceResource extends Resource
                             ->label('Total (CHF)')
                             ->numeric()
                             ->prefix('CHF')
-                            ->default(config('ffgva.cotisation_annuelle'))
+                            ->default(config('association.cotisation_annuelle'))
                             ->disabled()
                             ->dehydrated(),
                         Forms\Components\DatePicker::make('payment_date')

@@ -115,10 +115,10 @@
         </div>
 
         <div class="creditor">
-            {{ config('ffgva.creditor_name') }}<br>
+            {{ config('association.creditor_name') }}<br>
             c/o Livia Wagner<br>
-            {{ config('ffgva.creditor_address') }}<br>
-            {{ config('ffgva.creditor_postal_code') }} {{ config('ffgva.creditor_city') }}
+            {{ config('association.creditor_address') }}<br>
+            {{ config('association.creditor_postal_code') }} {{ config('association.creditor_city') }}
         </div>
 
         <h2 class="invoice-title">Facture — Cotisation annuelle</h2>

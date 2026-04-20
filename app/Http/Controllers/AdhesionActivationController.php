@@ -40,7 +40,7 @@ class AdhesionActivationController extends Controller
             ]);
         }
 
-        $expiryHours = config('ffgva.activation_expiry_hours', 72);
+        $expiryHours = config('association.activation_expiry_hours', 72);
         if ($member->activation_sent_at && $member->activation_sent_at->diffInHours(now()) > $expiryHours) {
             return response()->view('adhesion-error', [
                 'message' => 'Ce lien a expiré. Veuillez renouveler votre demande.',

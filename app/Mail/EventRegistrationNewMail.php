@@ -3,17 +3,11 @@
 namespace App\Mail;
 
 use App\Models\Event;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
-class EventRegistrationNewMail extends Mailable
+class EventRegistrationNewMail extends BaseMailable
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public string $email,
         public Event $event,
@@ -24,7 +18,7 @@ class EventRegistrationNewMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('noreply@ffgva.ch', 'Fast and Female Geneva - Ne pas répondre'),
+            from: $this->fromAssociation(),
             to: [$this->email],
             subject: 'Inscription — ' . $this->event->title,
         );

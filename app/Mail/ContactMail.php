@@ -2,16 +2,11 @@
 
 namespace App\Mail;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
-class ContactMail extends Mailable
+class ContactMail extends BaseMailable
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public string $name,
         public string $email,
@@ -21,7 +16,8 @@ class ContactMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            to: [config('mail.to_contact')],
+            from: $this->fromAssociation(),
+            to: [$this->contactAddress()],
             replyTo: [$this->email],
             subject: 'Nouveau message via le site FFGVA',
         );

@@ -18,7 +18,7 @@ class PortalAuth
             return redirect()->route('portail.login');
         }
 
-        $timeout = config('ffgva.portal_session_timeout_minutes', 300);
+        $timeout = config('association.portal_session_timeout_minutes', 300);
         $minutesSinceActivity = (now()->timestamp - $lastActivity) / 60;
 
         if ($minutesSinceActivity > $timeout) {

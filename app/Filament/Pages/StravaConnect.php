@@ -42,8 +42,8 @@ class StravaConnect extends Page
 
     public function isConfigured(): bool
     {
-        return !empty(config('ffgva.strava_client_id'))
-            && !empty(config('ffgva.strava_client_secret'));
+        return !empty(config('association.strava_client_id'))
+            && !empty(config('association.strava_client_secret'));
     }
 
     /**

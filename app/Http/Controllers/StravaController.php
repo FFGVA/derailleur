@@ -17,7 +17,7 @@ class StravaController extends Controller
         $user = $request->user();
         abort_unless($user?->isAdmin(), 403);
 
-        $clientId = config('ffgva.strava_client_id');
+        $clientId = config('association.strava_client_id');
         abort_unless($clientId, 500, 'STRAVA_CLIENT_ID non configuré dans .env');
 
         $params = http_build_query([
@@ -47,8 +47,8 @@ class StravaController extends Controller
         abort_unless($code, 400, 'Code d\'autorisation manquant');
 
         $response = Http::post('https://www.strava.com/oauth/token', [
-            'client_id' => config('ffgva.strava_client_id'),
-            'client_secret' => config('ffgva.strava_client_secret'),
+            'client_id' => config('association.strava_client_id'),
+            'client_secret' => config('association.strava_client_secret'),
             'code' => $code,
             'grant_type' => 'authorization_code',
         ]);
@@ -118,8 +118,8 @@ class StravaController extends Controller
         }
 
         $response = Http::post('https://www.strava.com/oauth/token', [
-            'client_id' => config('ffgva.strava_client_id'),
-            'client_secret' => config('ffgva.strava_client_secret'),
+            'client_id' => config('association.strava_client_id'),
+            'client_secret' => config('association.strava_client_secret'),
             'grant_type' => 'refresh_token',
             'refresh_token' => $link->refresh_token,
         ]);

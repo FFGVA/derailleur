@@ -40,8 +40,8 @@
 
         <x-filament::section>
             <div class="text-center">
-                <div class="text-3xl font-bold {{ config('ffgva.strava_club_id') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500' }}">
-                    {{ config('ffgva.strava_club_id') ?: '—' }}
+                <div class="text-3xl font-bold {{ config('association.strava_club_id') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500' }}">
+                    {{ config('association.strava_club_id') ?: '—' }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Club ID Strava
@@ -164,11 +164,11 @@
                 </div>
                 <div>
                     <span class="font-medium">Client ID :</span>
-                    <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{{ config('ffgva.strava_client_id') ?: 'non configuré' }}</code>
+                    <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{{ config('association.strava_client_id') ?: 'non configuré' }}</code>
                 </div>
                 <div>
                     <span class="font-medium">Club ID :</span>
-                    <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{{ config('ffgva.strava_club_id') ?: 'non configuré' }}</code>
+                    <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{{ config('association.strava_club_id') ?: 'non configuré' }}</code>
                 </div>
                 <div>
                     <span class="font-medium">Scopes :</span>

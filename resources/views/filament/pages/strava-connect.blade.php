@@ -123,16 +123,16 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Client ID</span>
-                        @if(config('ffgva.strava_client_id'))
-                            <span class="font-mono text-gray-900 dark:text-gray-100">{{ config('ffgva.strava_client_id') }}</span>
+                        @if(config('association.strava_client_id'))
+                            <span class="font-mono text-gray-900 dark:text-gray-100">{{ config('association.strava_client_id') }}</span>
                         @else
                             <span class="text-red-500">non configuré</span>
                         @endif
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-500">Client Secret</span>
-                        @if(config('ffgva.strava_client_secret'))
-                            <span class="font-mono text-gray-900 dark:text-gray-100">{{ str_repeat('•', 8) }}{{ substr(config('ffgva.strava_client_secret'), -4) }}</span>
+                        @if(config('association.strava_client_secret'))
+                            <span class="font-mono text-gray-900 dark:text-gray-100">{{ str_repeat('•', 8) }}{{ substr(config('association.strava_client_secret'), -4) }}</span>
                         @else
                             <span class="text-red-500">non configuré</span>
                         @endif

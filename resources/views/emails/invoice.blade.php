@@ -33,7 +33,7 @@
         <p style="font-size: 13px; color: #666; margin-bottom: 8px;">Scanne le QR code pour payer :</p>
         <img src="{{ $qrImageBase64 }}" alt="QR Code paiement" style="width: 180px; height: 180px;"><br>
         @php
-            $iban = config('ffgva.iban');
+            $iban = config('association.iban');
             $formatted = 'IBAN: ' . implode(' ', str_split($iban, 4));
         @endphp
         <p style="font-size: 13px; color: #333; margin-top: 8px; font-family: monospace; letter-spacing: 1px;">{{ $formatted }}</p>

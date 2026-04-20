@@ -34,7 +34,7 @@ class MemberMagicToken extends Model
      */
     public static function generateFor(Member $member, ?int $expiryMinutes = null): array
     {
-        $expiryMinutes ??= config('ffgva.portal_token_expiry_minutes', 15);
+        $expiryMinutes ??= config('association.portal_token_expiry_minutes', 15);
 
         $rawToken = bin2hex(random_bytes(32));
         $tokenHash = hash('sha256', $rawToken, binary: true);
