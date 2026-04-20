@@ -46,36 +46,6 @@ The codebase is functional, well-tested (475 tests, 1171 assertions), and has un
 
 **Recommendation:** Extract to `ExcelExportService::exportParticipants(Event $event)`.
 
-### 2.2 Open/Closed Principle (OCP)
-
-Status transitions are handled via direct `->update(['statuscode' => ...])` calls scattered across services and controllers. Adding a new status requires editing multiple files.
-
-**Locations of direct status writes:**
-- `app/Services/AdhesionService.php:34,102` — P, N
-- `app/Services/InvoicePaymentService.php:37` — A
-- `app/Services/EventRegistrationService.php:33-34` — N, C
-- `app/Services/InvoiceEmailService.php:44` — E (invoice)
-
-**Assessment:** For the current scope (6 member statuses, stable), this is acceptable. A state machine would add complexity without clear benefit unless the status set grows. Noted but not recommended for immediate action.
-
-### 2.3 Liskov Substitution Principle (LSP)
-
-No violations. Models don't use inheritance beyond Eloquent. Services are concrete static classes.
-
-### 2.4 Interface Segregation Principle (ISP)
-
-No interfaces defined. All services are concrete static classes. For package reuse, key extension points would benefit from interfaces:
-- `InvoiceGeneratorInterface` — custom invoice formats
-- `MemberCardGeneratorInterface` — custom card designs
-
-**Assessment:** Not blocking current operations. Required when extracting to package.
-
-### 2.5 Dependency Inversion Principle (DIP)
-
-All 11 services use exclusively static methods — impossible to inject alternatives via constructor.
-
-**Assessment:** Static services are appropriate for the current single-deployment model. Converting to injectable would require changing every caller. Defer to package extraction phase.
-
 ---
 
 ## 3. DRY Violations
@@ -162,15 +132,7 @@ Invoice PDF regeneration + QR + Mail::send pattern appears in:
 
 ### 4.4 Currency "CHF"
 
-| Location | Count |
-|---|---|
-| `app/Services/InvoicePdfService.php` | 3 (lines 118, 131, 138) |
-| `app/Filament/Resources/InvoiceResource.php` | 2 (lines 65, 67) |
-| `app/Services/InvoiceService.php` | 0 |
-| Blade views | ~15 |
-| **Total PHP** | **10** |
-
-`config('association.currency')` exists but is only used in `QrBillService.php:39`.
+Is not an issue. Swiss only application.
 
 ### 4.5 Email Addresses
 
@@ -327,7 +289,6 @@ style="background-color: {{ config('association.colors.primary') }};"
 | Change email addresses | config/association.php only | 5 min |
 | Change logo | 1 asset file | 5 min |
 | Change IBAN/address | config/association.php only | 5 min |
-| Change currency (CHF) | 10 PHP + 15 blade references | 2 hours |
 | Change creditor/invoice PDF | config-driven ✓ | 0 |
 | **Total** | | **~7 hours** |
 
@@ -340,7 +301,6 @@ style="background-color: {{ config('association.colors.primary') }};"
 | Change email addresses | config/association.php | 1 min |
 | Change logo | 1 asset file | 5 min |
 | Change IBAN/address | config/association.php | 1 min |
-| Change currency | config/association.php (if views use config) | 5 min |
 | **Total** | | **~25 min** |
 
 ---

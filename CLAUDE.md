@@ -18,6 +18,7 @@
 - Language: French only — ALL UI, emails, PDFs, validation messages. Tutoiement in member-facing emails.
 - Mobile-first responsive design
 - No i18n / no localization layer
+- Currency fixed to CHF — Switzerland-only operation, QR-bill requires CHF (or EUR, not used). Do not add multi-currency support.
 - CHAR(1) statuscode fields in DB — enumerations only in PHP code (app/Enums/)
 - No cascade deletes — EVER. Always check dependencies before deleting.
 - Soft-delete on all domain tables
