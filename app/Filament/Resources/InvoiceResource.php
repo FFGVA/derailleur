@@ -8,6 +8,8 @@ use App\Filament\Forms\PaymentDateForm;
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
 use App\Models\Member;
+use App\Services\InvoicePdfService;
+use App\Services\InvoiceService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -226,7 +228,7 @@ class InvoiceResource extends Resource
                         }
 
                         $invoice->recalculateAmount();
-                        \App\Services\InvoiceService::generatePdf($invoice);
+                        InvoicePdfService::generate($invoice);
 
                         \Filament\Notifications\Notification::make()
                             ->title('Facture créée')

@@ -17,7 +17,7 @@ use App\Models\MemberPhone;
 use App\Services\EventRegistrationService;
 use App\Services\ICalService;
 use App\Services\InvoiceEmailService;
-use App\Services\InvoiceService;
+use App\Services\InvoicePdfService;
 use App\Services\MemberCardService;
 use App\Services\PortalAudit;
 use App\Enums\MemberStatus;
@@ -406,7 +406,7 @@ class PortalController extends Controller
         }
 
         // Generate on the fly if missing
-        $result = InvoiceService::generatePdf($invoice);
+        $result = InvoicePdfService::generate($invoice);
 
         return response($result['pdf'], 200, [
             'Content-Type' => 'application/pdf',

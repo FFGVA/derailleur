@@ -34,8 +34,8 @@ class InvoiceEmailService
         $ical = ICalService::generate($singleEvent);
         $icalFilename = ICalService::filename($singleEvent);
 
-        $pdfResult = InvoiceService::generatePdf($invoice);
-        $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
+        $qrBase64 = QrBillService::generateQrCodeBase64($invoice);
 
         Mail::send(new InvoiceMail(
             $invoice, $pdfResult['pdf'], $pdfResult['filename'], $qrBase64, $ical, $icalFilename
@@ -51,8 +51,8 @@ class InvoiceEmailService
      */
     public static function sendExisting(Invoice $invoice): void
     {
-        $pdfResult = InvoiceService::generatePdf($invoice);
-        $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+        $pdfResult = InvoicePdfService::generate($invoice);
+        $qrBase64 = QrBillService::generateQrCodeBase64($invoice);
 
         Mail::send(new InvoiceMail(
             $invoice, $pdfResult['pdf'], $pdfResult['filename'], $qrBase64

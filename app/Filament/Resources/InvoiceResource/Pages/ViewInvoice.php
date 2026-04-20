@@ -7,8 +7,9 @@ use App\Enums\InvoiceType;
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\MemberResource;
 use App\Models\Member;
+use App\Services\InvoicePdfService;
 use App\Services\InvoicePaymentService;
-use App\Services\InvoiceService;
+use App\Services\QrBillService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Infolist;
@@ -118,7 +119,7 @@ class ViewInvoice extends ViewRecord
                                                     );
                                                 }
 
-                                                $result = \App\Services\InvoiceService::generatePdf($record);
+                                                $result = InvoicePdfService::generate($record);
                                                 return response()->streamDownload(
                                                     fn () => print($result['pdf']),
                                                     $result['filename'],
@@ -141,13 +142,13 @@ class ViewInvoice extends ViewRecord
                                                 if ($filename && Storage::exists('invoices/' . $filename)) {
                                                     $pdfContent = Storage::get('invoices/' . $filename);
                                                 } else {
-                                                    $result = \App\Services\InvoiceService::generatePdf($record);
+                                                    $result = InvoicePdfService::generate($record);
                                                     $pdfContent = $result['pdf'];
                                                     $filename = $result['filename'];
                                                 }
 
                                                 // Generate QR code for email
-                                                $qrBase64 = \App\Services\InvoiceService::generateQrCodeBase64($record);
+                                                $qrBase64 = QrBillService::generateQrCodeBase64($record);
 
                                                 \Illuminate\Support\Facades\Mail::send(
                                                     new \App\Mail\InvoiceMail($record, $pdfContent, $filename, $qrBase64)

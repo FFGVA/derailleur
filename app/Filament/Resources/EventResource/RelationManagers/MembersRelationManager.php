@@ -11,7 +11,8 @@ use App\Models\Invoice;
 use App\Models\Member;
 use App\Services\ICalService;
 use App\Services\InvoiceEmailService;
-use App\Services\InvoiceService;
+use App\Services\InvoicePdfService;
+use App\Services\QrBillService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Forms\Form;
@@ -262,8 +263,8 @@ class MembersRelationManager extends RelationManager
                                 ->first();
 
                             if ($invoice) {
-                                $result = InvoiceService::generatePdf($invoice);
-                                $qrBase64 = InvoiceService::generateQrCodeBase64($invoice);
+                                $result = InvoicePdfService::generate($invoice);
+                                $qrBase64 = QrBillService::generateQrCodeBase64($invoice);
                                 $ical = ICalService::generate($event);
                                 $icalFilename = ICalService::filename($event);
                                 Mail::send(new InvoiceMail($invoice, $result['pdf'], $result['filename'], $qrBase64, $ical, $icalFilename));
