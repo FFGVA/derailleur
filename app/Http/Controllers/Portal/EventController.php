@@ -35,6 +35,7 @@ class EventController extends Controller
             'event' => $event,
             'registration' => $registration,
             'applicablePrice' => (float) $event->priceForMember($member),
+            'viewerIsMember' => $member->isMember(),
         ]);
     }
 
@@ -52,6 +53,10 @@ class EventController extends Controller
     public function inscrire(Request $request, Event $event)
     {
         $member = $request->attributes->get('portal_member');
+
+        if (!$event->isOpenTo($member)) {
+            abort(403);
+        }
 
         $registered = EventRegistrationService::register($member, $event);
 

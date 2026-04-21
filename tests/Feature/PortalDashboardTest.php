@@ -201,6 +201,140 @@ class PortalDashboardTest extends TestCase
         $response->assertSee('CHF 15.00');
     }
 
+    // ── Members-only events ──
+
+    public function test_members_only_event_detail_shows_exclusive_link_instead_of_price_row(): void
+    {
+        $member = $this->createAuthenticatedMember('N');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Evénement exclusif pour les membres');
+        $response->assertDontSee('Prix non-membres');
+    }
+
+    public function test_members_only_event_hides_register_button_and_shows_devenir_membre_card_for_non_member(): void
+    {
+        $member = $this->createAuthenticatedMember('N');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertDontSee('portail.evenement.inscrire', false);
+        $response->assertDontSee('/inscrire', false);
+        $response->assertSee('Deviens membre', false);
+    }
+
+    public function test_members_only_event_shows_register_button_for_active_member(): void
+    {
+        $member = $this->createAuthenticatedMember('A');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Je m\'inscris', false);
+    }
+
+    public function test_members_only_event_shows_register_button_for_enfant(): void
+    {
+        $member = $this->createAuthenticatedMember('E');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Je m\'inscris', false);
+    }
+
+    public function test_inscrire_members_only_event_forbidden_for_non_member(): void
+    {
+        $member = $this->createAuthenticatedMember('N');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $response = $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/inscrire');
+
+        $response->assertForbidden();
+        $this->assertNull(EventMember::where('event_id', $event->id)->where('member_id', $member->id)->first());
+    }
+
+    public function test_inscrire_members_only_event_succeeds_for_active_member(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $member = $this->createAuthenticatedMember('A');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $this->withSession([
+            'portal_member_id' => $member->id,
+            'portal_last_activity' => now()->timestamp,
+        ])->post('/portail/evenement/' . $event->id . '/inscrire');
+
+        $this->assertNotNull(EventMember::where('event_id', $event->id)->where('member_id', $member->id)->first());
+    }
+
+    public function test_registration_service_refuses_non_member_for_members_only_event(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $member = $this->createAuthenticatedMember('N');
+
+        $event = Event::create([
+            'title' => 'Sortie exclusive',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'members_only' => true,
+        ]);
+
+        $result = \App\Services\EventRegistrationService::register($member, $event);
+
+        $this->assertFalse($result);
+        $this->assertNull(EventMember::where('event_id', $event->id)->where('member_id', $member->id)->first());
+    }
+
     public function test_event_detail_shows_register_button_when_not_registered(): void
     {
         $member = $this->createAuthenticatedMember();

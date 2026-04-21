@@ -40,6 +40,11 @@ class Member extends Model
     /** Statuses considered "active member" */
     public const ACTIVE_STATUSES = ['A', 'E'];
 
+    public function isMember(): bool
+    {
+        return in_array($this->getRawOriginal('statuscode'), self::ACTIVE_STATUSES, true);
+    }
+
     protected static function booted(): void
     {
         static::saving(function (Member $member) {

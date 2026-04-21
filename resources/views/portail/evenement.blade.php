@@ -237,19 +237,27 @@
                 <span class="portal-info-value">{{ $event->location }}</span>
             </div>
         @endif
-        @php
-            $priceNonMember = (float) ($event->price_non_member ?? $event->price);
-        @endphp
-        <div class="portal-info-row">
-            <span class="portal-info-label">Prix non-membres</span>
-            <span class="portal-info-value">
-                @if($priceNonMember == 0)
-                    <em>Gratuit</em>
-                @else
-                    CHF {{ number_format($priceNonMember, 2, '.', '') }}
-                @endif
-            </span>
-        </div>
+        @if($event->members_only)
+            <div class="portal-info-row">
+                <a href="{{ route('portail.adhesion.inscription') }}" class="portal-info-value" style="color: var(--color-primary); text-decoration: none; font-weight: 600; display: block; width: 100%; text-align: center;">
+                    Evénement exclusif pour les membres
+                </a>
+            </div>
+        @else
+            @php
+                $priceNonMember = (float) ($event->price_non_member ?? $event->price);
+            @endphp
+            <div class="portal-info-row">
+                <span class="portal-info-label">Prix non-membres</span>
+                <span class="portal-info-value">
+                    @if($priceNonMember == 0)
+                        <em>Gratuit</em>
+                    @else
+                        CHF {{ number_format($priceNonMember, 2, '.', '') }}
+                    @endif
+                </span>
+            </div>
+        @endif
         @if($event->gpx_file)
             <div class="portal-info-row">
                 <span class="portal-info-label">Parcours <a href="{{ asset('storage/' . $event->gpx_file) }}" download="{{ Str::slug($event->title) }}-{{ $event->starts_at->format('Y-m-d') }}.gpx" style="color: var(--color-primary); display: inline-flex;" title="Télécharger GPX"><svg width="1rem" height="1rem" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg></a></span>
@@ -297,7 +305,15 @@
         @endforeach
     @endif
 
-    @if(!$registration)
+    @if($event->members_only && !$viewerIsMember)
+        <div style="background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%); border-radius: 0.75rem; padding: 1.25rem; margin-top: 1rem; color: white; box-shadow: 0 2px 8px rgba(128,8,28,0.3);">
+            <div style="font-weight: 700; font-size: 1.0625rem; margin-bottom: 0.375rem;">Deviens membre !</div>
+            <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.75rem;">Soutiens notre association et profite des événements et avantages réservés aux membres.</div>
+            <a href="{{ route('portail.adhesion.inscription') }}" style="display: inline-block; background: white; color: var(--color-primary); font-weight: 600; font-size: 0.875rem; padding: 0.5rem 1.25rem; border-radius: 0.5rem; text-decoration: none;">
+                Je m'inscris !
+            </a>
+        </div>
+    @elseif(!$registration)
         @if($applicablePrice > 0)
             <button type="button" class="portal-register-btn" onclick="document.getElementById('confirmPopup').classList.add('active')">Je m'inscris</button>
         @else

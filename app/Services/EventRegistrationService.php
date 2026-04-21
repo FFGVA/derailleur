@@ -17,6 +17,10 @@ class EventRegistrationService
      */
     public static function register(Member $member, Event $event): bool
     {
+        if (!$event->isOpenTo($member)) {
+            return false;
+        }
+
         $applicablePrice = (float) $event->priceForMember($member);
 
         $pivot = EventMember::where('event_id', $event->id)

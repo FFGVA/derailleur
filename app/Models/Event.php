@@ -30,6 +30,7 @@ class Event extends Model
         'max_participants',
         'price',
         'price_non_member',
+        'members_only',
         'statuscode',
         'strava_event_id',
         'strava_route_id',
@@ -46,6 +47,7 @@ class Event extends Model
             'ends_at' => 'datetime',
             'price' => 'decimal:2',
             'price_non_member' => 'decimal:2',
+            'members_only' => 'boolean',
         ];
     }
 
@@ -55,15 +57,20 @@ class Event extends Model
     }
 
     /**
-     * Get the applicable price for a member: active members pay price, others pay price_non_member (fallback to price).
+     * Get the applicable price for a member: active members (Actif/Enfant) pay price, others pay price_non_member (fallback to price).
      */
     public function priceForMember(Member $member): string
     {
-        if ($member->statuscode === MemberStatus::Actif) {
+        if ($member->isMember()) {
             return $this->price;
         }
 
         return $this->price_non_member ?? $this->price;
+    }
+
+    public function isOpenTo(Member $member): bool
+    {
+        return !$this->members_only || $member->isMember();
     }
 
     public function isFull(): bool

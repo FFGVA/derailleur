@@ -55,12 +55,12 @@ class EventPricingTest extends TestCase
         $this->assertSame('25.00', $event->priceForMember($member));
     }
 
-    public function test_enfant_pays_non_member_price(): void
+    public function test_enfant_pays_member_price(): void
     {
         $event = $this->makeEvent();
         $member = $this->makeMember('E');
 
-        $this->assertSame('25.00', $event->priceForMember($member));
+        $this->assertSame('10.00', $event->priceForMember($member));
     }
 
     public function test_non_member_falls_back_to_member_price_when_no_non_member_price(): void
