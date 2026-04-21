@@ -4,15 +4,35 @@ namespace App\Filament\Resources\EventResource\Pages;
 
 use App\Filament\Resources\EventResource;
 use App\Models\EventChef;
+use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditEvent extends EditRecord
 {
     protected static string $resource = EventResource::class;
 
+    public function getTitle(): string
+    {
+        return $this->record->title;
+    }
+
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            Actions\DeleteAction::make()
+                ->before(function (Actions\DeleteAction $action) {
+                    if ($this->record->members()->count() > 0) {
+                        Notification::make()
+                            ->title('Suppression impossible')
+                            ->body('Cet événement a des participantes. Retirez-les d\'abord.')
+                            ->danger()
+                            ->send();
+                        $action->halt();
+                    }
+                })
+                ->visible(fn () => auth()->user()->isAdmin()),
+        ];
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

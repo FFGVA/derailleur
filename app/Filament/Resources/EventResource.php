@@ -35,118 +35,150 @@ class EventResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Détails de l\'événement')
-                    ->columns(12)
+                Forms\Components\Grid::make(3)
                     ->schema([
-                        Forms\Components\Select::make('event_type')
-                            ->label('Type')
-                            ->options(collect(EventType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()]))
-                            ->columnSpan(4),
-                        Forms\Components\TextInput::make('title')
-                            ->label('Titre')
-                            ->required()
-                            ->maxLength(200)
-                            ->columnSpan(8),
-                        Forms\Components\RichEditor::make('description')
-                            ->label('Description')
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('location')
-                            ->label('Lieu')
-                            ->columnSpan(6),
-                        Forms\Components\Select::make('statuscode')
-                            ->label('Statut')
-                            ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
-                            ->default(EventStatus::Nouveau->value)
-                            ->required()
-                            ->columnSpan(3),
-                        Forms\Components\TextInput::make('max_participants')
-                            ->label('Places')
-                            ->numeric()
-                            ->minValue(1)
-                            ->columnSpan(3),
-                        Forms\Components\TextInput::make('price')
-                            ->label('Prix membre')
-                            ->numeric()
-                            ->prefix('CHF')
-                            ->default(0)
-                            ->columnSpan(3),
-                        Forms\Components\TextInput::make('price_non_member')
-                            ->label('Prix non-membre')
-                            ->numeric()
-                            ->prefix('CHF')
-                            ->columnSpan(3),
-                        Forms\Components\DateTimePicker::make('starts_at')
-                            ->label('Début')
-                            ->displayFormat('d.m.Y H:i')
-                            ->required()
-                            ->columnSpan(3),
-                        Forms\Components\DateTimePicker::make('ends_at')
-                            ->label('Fin')
-                            ->displayFormat('d.m.Y H:i')
-                            ->columnSpan(3),
-                        Forms\Components\Select::make('chef_ids')
-                            ->label('Cheffes de peloton')
-                            ->multiple()
-                            ->options(fn () => \App\Models\Member::whereNull('deleted_at')
-                                ->orderBy('first_name')
-                                ->get()
-                                ->mapWithKeys(fn ($m) => [$m->id => $m->first_name . ' ' . $m->last_name]))
-                            ->searchable()
-                            ->preload()
-                            ->columnSpan(6),
-                        Forms\Components\FileUpload::make('gpx_file')
-                            ->label('Fichier GPX')
-                            ->disk('public')
-                            ->directory('gpx')
-                            ->preserveFilenames()
-                            ->maxSize(5120)
-                            ->columnSpan(6),
-                        Forms\Components\TextInput::make('strava_event_id')
-                            ->label('ID événement Strava')
-                            ->numeric()
-                            ->nullable()
-                            ->helperText('Coller l\'ID depuis l\'URL Strava du group event')
-                            ->columnSpan(6),
-                        Forms\Components\TextInput::make('strava_route_id')
-                            ->label('ID parcours Strava')
-                            ->numeric()
-                            ->nullable()
-                            ->helperText('Rempli automatiquement lors de la sync')
-                            ->disabled()
-                            ->columnSpan(6),
-                        Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('delete')
-                                ->label('Supprimer')
-                                ->icon('heroicon-o-trash')
-                                ->color('danger')
-                                ->requiresConfirmation()
-                                ->action(function ($record) {
-                                    if ($record->members()->count() > 0) {
-                                        \Filament\Notifications\Notification::make()
-                                            ->title('Suppression impossible')
-                                            ->body('Cet événement a des participantes. Retirez-les d\'abord.')
-                                            ->danger()
-                                            ->send();
-                                        return;
-                                    }
-                                    $record->delete();
-                                    redirect(EventResource::getUrl('index'));
-                                })
-                                ->visible(fn (?Model $record) => $record !== null && auth()->user()->isAdmin()),
-                        ])->alignEnd()->verticallyAlignEnd()->columnSpanFull(),
+                        // ── Row 1: Événement + (Infos, Tarifs stacked) ──
+                        Forms\Components\Section::make('Événement')
+                            ->extraAttributes(['class' => 'ffgva-card-beige'])
+                            ->columnSpan(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('title')
+                                    ->label('Titre')
+                                    ->required()
+                                    ->maxLength(200),
+                                Forms\Components\RichEditor::make('description')
+                                    ->label('Description'),
+                            ]),
+                        Forms\Components\Group::make([
+                            Forms\Components\Section::make('Infos')
+                                ->extraAttributes(['class' => 'ffgva-card-rose'])
+                                ->columns(2)
+                                ->schema([
+                                    Forms\Components\Select::make('event_type')
+                                        ->label('Type')
+                                        ->options(collect(EventType::cases())->mapWithKeys(fn ($t) => [$t->value => $t->getLabel()])),
+                                    Forms\Components\Select::make('statuscode')
+                                        ->label('Status Web')
+                                        ->options(collect(EventStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->getLabel()]))
+                                        ->default(EventStatus::Nouveau->value)
+                                        ->required(),
+                                ]),
+                            Forms\Components\Section::make('Tarifs')
+                                ->extraAttributes(['class' => 'ffgva-card-rose'])
+                                ->schema([
+                                    Forms\Components\TextInput::make('price')
+                                        ->label('Prix membres')
+                                        ->rule('numeric')
+                                        ->prefix('CHF')
+                                        ->default(0)
+                                        ->inlineLabel()
+                                        ->extraAttributes(['class' => 'ffgva-amount-field'])
+                                        ->extraInputAttributes(['style' => 'text-align: right;']),
+                                    Forms\Components\Toggle::make('members_only')
+                                        ->label('Exclusif')
+                                        ->default(false)
+                                        ->live()
+                                        ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                            $set('price_non_member', $state ? '9999.99' : null);
+                                        })
+                                        ->inline()
+                                        ->inlineLabel(),
+                                    Forms\Components\TextInput::make('price_non_member')
+                                        ->label('Prix non-membres')
+                                        ->rule('nullable')
+                                        ->rule('numeric')
+                                        ->prefix('CHF')
+                                        ->disabled(fn (Forms\Get $get): bool => (bool) $get('members_only'))
+                                        ->dehydrated()
+                                        ->inlineLabel()
+                                        ->extraAttributes(['class' => 'ffgva-amount-field'])
+                                        ->extraInputAttributes(['style' => 'text-align: right;']),
+                                ]),
+                        ])->columnSpan(1),
+
+                        // ── Row 2: Lieu + Dates (aligned horizontally) ──
+                        Forms\Components\Section::make('Lieu')
+                            ->extraAttributes(['class' => 'ffgva-card-beige'])
+                            ->columnSpan(2)
+                            ->columns(12)
+                            ->schema([
+                                Forms\Components\TextInput::make('location')
+                                    ->label('Lieu')
+                                    ->columnSpan(10),
+                                Forms\Components\TextInput::make('max_participants')
+                                    ->label('Places')
+                                    ->rule('integer')
+                                    ->rule('min:1')
+                                    ->maxLength(4)
+                                    ->columnSpan(2),
+                            ]),
+                        Forms\Components\Section::make('Dates')
+                            ->extraAttributes(['class' => 'ffgva-card-rose'])
+                            ->columnSpan(1)
+                            ->schema([
+                                Forms\Components\DateTimePicker::make('starts_at')
+                                    ->label('Début')
+                                    ->displayFormat('d.m.Y H:i')
+                                    ->required()
+                                    ->inlineLabel(),
+                                Forms\Components\DateTimePicker::make('ends_at')
+                                    ->label('Fin')
+                                    ->displayFormat('d.m.Y H:i')
+                                    ->inlineLabel(),
+                            ]),
+
+                        // ── Row 3: GPX + (Cheffes, Dernière modif stacked) ──
+                        Forms\Components\Section::make('GPX et Strava')
+                            ->extraAttributes(['class' => 'ffgva-card-beige'])
+                            ->columnSpan(2)
+                            ->schema([
+                                Forms\Components\FileUpload::make('gpx_file')
+                                    ->label('Fichier GPX')
+                                    ->disk('public')
+                                    ->directory('gpx')
+                                    ->preserveFilenames()
+                                    ->maxSize(5120),
+                                Forms\Components\TextInput::make('strava_event_id')
+                                    ->label('ID événement Strava')
+                                    ->numeric()
+                                    ->nullable()
+                                    ->helperText('Coller l\'ID depuis l\'URL Strava du group event'),
+                                Forms\Components\TextInput::make('strava_route_id')
+                                    ->label('ID parcours Strava')
+                                    ->numeric()
+                                    ->nullable()
+                                    ->helperText('Rempli automatiquement lors de la sync')
+                                    ->disabled(),
+                            ]),
+                        Forms\Components\Group::make([
+                            Forms\Components\Section::make('Cheffes de peloton')
+                                ->extraAttributes(['class' => 'ffgva-card-rose'])
+                                ->schema([
+                                    Forms\Components\Select::make('chef_ids')
+                                        ->hiddenLabel()
+                                        ->multiple()
+                                        ->options(fn () => \App\Models\Member::whereNull('deleted_at')
+                                            ->orderBy('first_name')
+                                            ->get()
+                                            ->mapWithKeys(fn ($m) => [$m->id => $m->first_name . ' ' . $m->last_name]))
+                                        ->searchable()
+                                        ->preload(),
+                                ]),
+                            Forms\Components\Section::make('Dernière modification')
+                                ->extraAttributes(['class' => 'ffgva-card-rose'])
+                                ->icon('heroicon-o-clock')
+                                ->columns(2)
+                                ->schema([
+                                    Forms\Components\Placeholder::make('updated_at_display')
+                                        ->label('Date')
+                                        ->content(fn ($record) => $record?->updated_at?->format('d.m.Y H:i') ?? '—'),
+                                    Forms\Components\Placeholder::make('modified_by_display')
+                                        ->label('Par')
+                                        ->content(fn ($record) => $record?->modifiedBy?->name ?? '—'),
+                                ])
+                                ->hiddenOn('create'),
+                        ])->columnSpan(1),
                     ]),
-                Forms\Components\Section::make('Dernière modification')
-                    ->icon('heroicon-o-clock')
-                    ->columns(2)
-                    ->schema([
-                        Forms\Components\Placeholder::make('updated_at_display')
-                            ->label('Date')
-                            ->content(fn ($record) => $record?->updated_at?->format('d.m.Y H:i') ?? '—'),
-                        Forms\Components\Placeholder::make('modified_by_display')
-                            ->label('Par')
-                            ->content(fn ($record) => $record?->modifiedBy?->name ?? '—'),
-                    ])
-                    ->hiddenOn('create'),
             ]);
     }
 
@@ -187,6 +219,10 @@ class EventResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->label('Prix')
                     ->money('CHF', locale: 'de_CH')
+                    ->tooltip(fn (Event $record): ?string => $record->members_only ? 'Événement membres' : null)
+                    ->extraAttributes(fn (Event $record): array => $record->members_only
+                        ? ['style' => 'background-color: #fef2f2;']
+                        : [])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('active_members_count')
                     ->label('Participantes')

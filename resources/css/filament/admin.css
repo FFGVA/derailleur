@@ -66,3 +66,13 @@ td:has(.ffgva-phones-table) > div {
 .dark .ffgva-phones-repeater li[data-repeater-item] {
     border-bottom-color: rgb(var(--gray-700)) !important;
 }
+
+/* Event edit form — card header tints per column */
+.ffgva-card-beige > .fi-section-header { background-color: #f5f1e9; }
+.ffgva-card-rose  > .fi-section-header { background-color: #fef2f2; }
+
+/* Narrow, right-pushed amount inputs (inline-labeled) */
+.ffgva-amount-field .fi-input-wrp {
+    max-width: 8rem;
+    margin-left: auto;
+}

@@ -407,6 +407,75 @@ class EventResourceTest extends TestCase
         $this->assertNotNull($softDeleted->deleted_at);
     }
 
+    // ── Members-only flag ──
+
+    public function test_create_members_only_event_stores_sentinel_price_non_member(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(CreateEvent::class)
+            ->fillForm([
+                'title' => 'Exclusif membres',
+                'starts_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+                'statuscode' => 'N',
+                'price' => 25,
+                'members_only' => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $event = Event::where('title', 'Exclusif membres')->first();
+        $this->assertNotNull($event);
+        $this->assertTrue($event->members_only);
+        $this->assertEquals('9999.99', $event->price_non_member);
+    }
+
+    public function test_toggling_members_only_off_clears_price_non_member(): void
+    {
+        $event = $this->makeEvent([
+            'title' => 'Going Public',
+            'members_only' => true,
+            'price_non_member' => '9999.99',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(EditEvent::class, ['record' => $event->id])
+            ->fillForm(['members_only' => false])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $event->refresh();
+        $this->assertFalse($event->members_only);
+        $this->assertNull($event->price_non_member);
+    }
+
+    public function test_view_page_shows_members_only_indicator(): void
+    {
+        $event = $this->makeEvent([
+            'title' => 'Vue exclusive',
+            'members_only' => true,
+        ]);
+
+        $this->actingAs($this->makeAdmin())
+            ->get(EventResource::getUrl('view', ['record' => $event]))
+            ->assertStatus(200)
+            ->assertSee('Événement membres');
+    }
+
+    public function test_list_page_marks_members_only_events(): void
+    {
+        $this->makeEvent([
+            'title' => 'Liste exclusive',
+            'members_only' => true,
+        ]);
+
+        $response = $this->actingAs($this->makeAdmin())
+            ->get('/admin/events');
+
+        $response->assertSee('background-color: #fef2f2', false);
+        // Tooltip text goes through JSON encoding (x-tooltip content), so match the substring that's stable across encodings.
+        $response->assertSee('nement membres', false);
+    }
+
     public function test_create_event_with_no_chefs(): void
     {
         Livewire::actingAs($this->makeAdmin())

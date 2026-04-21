@@ -100,7 +100,14 @@ class ViewEvent extends ViewRecord
                                         ->label('Prix non-membre')
                                         ->money('CHF', locale: 'de_CH')
                                         ->icon('heroicon-o-banknotes')
-                                        ->placeholder('—'),
+                                        ->placeholder('—')
+                                        ->hidden(fn ($record) => $record->members_only),
+                                    Components\TextEntry::make('members_only_indicator')
+                                        ->label('Accès')
+                                        ->state(fn () => 'Événement membres')
+                                        ->icon('heroicon-o-lock-closed')
+                                        ->color('danger')
+                                        ->visible(fn ($record) => $record->members_only),
                                     Components\TextEntry::make('max_participants')
                                         ->label('Places max.')
                                         ->placeholder('—')
