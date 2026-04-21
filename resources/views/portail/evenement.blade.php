@@ -101,15 +101,13 @@
         position: fixed;
         inset: 0;
         background: rgba(0,0,0,0.4);
-        z-index: 9999;
+        z-index: 50;
         align-items: center;
         justify-content: center;
         padding: 1.25rem;
     }
     .portal-overlay.active { display: flex; }
     .portal-popup {
-        display: block;
-        position: relative;
         background: white;
         border-radius: 0.75rem;
         padding: 1.5rem;
@@ -117,25 +115,11 @@
         width: 100%;
         box-shadow: 0 4px 24px rgba(0,0,0,0.15);
     }
-    .portal-popup-x {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: #999;
-        cursor: pointer;
-        line-height: 1;
-        padding: 0.25rem;
-    }
-    .portal-popup-x:hover { color: #333; }
     .portal-popup-title {
         font-size: 1rem;
         font-weight: 700;
         margin-bottom: 0.75rem;
         color: #333;
-        padding-right: 2rem;
     }
     .portal-popup-body {
         font-size: 0.9375rem;
@@ -286,7 +270,7 @@
 
     @if(!$registration)
         @if($applicablePrice > 0)
-            <button type="button" class="portal-register-btn" onclick="openPopup('confirmPopup')">Je m'inscris</button>
+            <button type="button" class="portal-register-btn" onclick="document.getElementById('confirmPopup').classList.add('active')">Je m'inscris</button>
         @else
             <form method="POST" action="{{ route('portail.evenement.inscrire', $event) }}">
                 @csrf
@@ -294,13 +278,12 @@
             </form>
         @endif
     @else
-        <button type="button" class="portal-cancel-btn" onclick="openPopup('cancelPopup')">Je ne peux pas venir</button>
+        <button type="button" class="portal-cancel-btn" onclick="document.getElementById('cancelPopup').classList.add('active')">Je ne peux pas venir</button>
     @endif
 
     @if($registration)
-        <div id="cancelPopup" class="portal-overlay" onclick="if(event.target===this)closePopup(this.id)">
+        <div id="cancelPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
             <div class="portal-popup">
-                <button class="portal-popup-x" onclick="closePopup('cancelPopup')">&times;</button>
                 <div class="portal-popup-title">Annuler l'inscription</div>
                 <div class="portal-popup-body">
                     Tu ne pourras plus participer à <strong>{{ $event->title }}</strong>. Confirmer l'annulation ?
@@ -309,15 +292,14 @@
                     @csrf
                     <button type="submit" class="portal-popup-cancel-submit">Confirmer l'annulation</button>
                 </form>
-                <button class="portal-popup-close" onclick="closePopup('cancelPopup')">Retour</button>
+                <button class="portal-popup-close" onclick="document.getElementById('cancelPopup').classList.remove('active')">Retour</button>
             </div>
         </div>
     @endif
 
     @if(!$registration && $applicablePrice > 0)
-        <div id="confirmPopup" class="portal-overlay" onclick="if(event.target===this)closePopup(this.id)">
+        <div id="confirmPopup" class="portal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
             <div class="portal-popup">
-                <button class="portal-popup-x" onclick="closePopup('confirmPopup')">&times;</button>
                 <div class="portal-popup-title">Confirmer l'inscription</div>
                 <div class="portal-popup-body">
                     L'événement <strong>{{ $event->title }}</strong> coûte <strong>CHF {{ number_format($applicablePrice, 2, '.', '') }}</strong>. Une facture te sera envoyée par e-mail.
@@ -326,7 +308,7 @@
                     @csrf
                     <button type="submit" class="portal-popup-submit">Confirmer</button>
                 </form>
-                <button class="portal-popup-close" onclick="closePopup('confirmPopup')">Annuler</button>
+                <button class="portal-popup-close" onclick="document.getElementById('confirmPopup').classList.remove('active')">Annuler</button>
             </div>
         </div>
     @endif

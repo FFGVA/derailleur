@@ -168,30 +168,7 @@
     margin-top: 0.25rem;
 }
 
-/* ── Popup/Modal (evenement, peloton-event) ── */
-/* .portal-overlay and .portal-popup are defined inline per view
-   (different layouts: centered modal vs bottom sheet) */
-.portal-popup-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: #333;
-}
-.portal-popup-body {
-    font-size: 0.9375rem;
-    color: #444;
-    line-height: 1.6;
-}
-.portal-popup-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #999;
-    cursor: pointer;
-}
+/* Popup/modal styles are defined inline per view — not in this file */
 
 /* ── No-photo banner ── */
 .portal-no-photo-banner {

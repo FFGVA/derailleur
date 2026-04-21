@@ -86,17 +86,6 @@
 </div>
 
     <script>
-    function openPopup(id) {
-        var el = document.getElementById(id);
-        if (el && el.parentNode !== document.body) {
-            document.body.appendChild(el);
-        }
-        if (el) el.classList.add('active');
-    }
-    function closePopup(id) {
-        var el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-    }
     function openMaps(q) {
         var ua = navigator.userAgent || '';
         if (/iPhone|iPad|iPod/i.test(ua)) {
