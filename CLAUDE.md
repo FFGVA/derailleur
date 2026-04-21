@@ -46,7 +46,8 @@
 - **100% green before commit**: run `php artisan test` after every change. Fix ALL failures — even unrelated ones — before committing
 - Tests use DatabaseTransactions (never RefreshDatabase) against real MariaDB
 - Run `php artisan test` after every change
-- Do not rely on Laravel migrations for production — use database/create_database.sql directly
+- **Local DB reload**: always use `scripts/db-load.sh` — it drops/recreates the DB, loads the production dump (`database/agiletra_ffgva.sql`), and seeds the local-only admin user (`database/seed_admin.sql` → admin@ffgva.ch / password). Never load the dump directly with `mysql < …`, or the admin login won't work.
+- Do not rely on Laravel migrations for production — schema changes are applied via ALTER scripts on production, then dumped
 - Migrations exist for local dev convenience only
 - **Wiki**: GitHub wiki (https://github.com/FFGVA/derailleur/wiki) contains functional and technical documentation. Update the wiki on every push when changes affect documented behavior. Wiki repo is at /tmp/derailleur.wiki (clone with `git clone https://github.com/FFGVA/derailleur.wiki.git /tmp/derailleur.wiki`). Functional pages: Membres, Événements, Facturation, Parcours adhésion, Rôles et permissions, Tableau de bord. Technical pages: Architecture, Modèle de données, API, Emails, Déploiement.
 
@@ -93,7 +94,7 @@
 - Script: scripts/deploy.sh (FTP via lftp to Hostpoint)
 - Credentials: scripts/ftp.conf (gitignored)
 - Production .env: .env.production (gitignored)
-- Database: database/create_database.sql (full schema), database/drop_all.sql (clean slate), database/seed_users.sql (admin users)
+- Database: production schema+data is dumped to `database/agiletra_ffgva.sql` (gitignored in practice — overwritten on each prod export); `database/seed_admin.sql` contains the local-only admin user seed. Use `scripts/db-load.sh` to refresh locally.
 - Static homepage: public/index.html (no PHP, no cookies)
 - Standalone mail scripts: mail/chaine.php, mail/guidon.php (kept in public/ until Hugo site migrates to /api/)
 
