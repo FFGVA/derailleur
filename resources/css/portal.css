@@ -168,7 +168,23 @@
     margin-top: 0.25rem;
 }
 
-/* Popup/modal styles are defined inline per view — not in this file */
+/*
+ * ⚠️  DO NOT ADD POPUP/MODAL RULES HERE ⚠️
+ *
+ * Popup styles (.portal-overlay, .portal-popup, .portal-popup-title,
+ * .portal-popup-body, .portal-popup-close, .portal-popup-submit, etc.) are
+ * intentionally defined inline in each blade view that uses them — see
+ * resources/views/portail/evenement.blade.php and peloton-event.blade.php.
+ *
+ * Reason: extracting them here once broke the popups because .portal-popup-close
+ * was styled as an absolute-positioned X icon (top-right), but the views use
+ * that same class for a full-width text button at the bottom of the popup. The
+ * shared rule hijacked the button and shoved it into the corner, hiding the
+ * popup title. See commit 58a12f5.
+ *
+ * If you want to share popup styles across views, first unify the HTML/class
+ * contract across ALL callers and verify with the PortalPopupTest Dusk tests.
+ */
 
 /* ── No-photo banner ── */
 .portal-no-photo-banner {

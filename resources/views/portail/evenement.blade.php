@@ -96,6 +96,21 @@
     .portal-register-btn:hover {
         background-color: #660614;
     }
+    /*
+     * ⚠️  POPUP STYLES — DO NOT EXTRACT TO portal.css ⚠️
+     *
+     * These .portal-popup-* rules are intentionally inline per-view. An earlier
+     * refactoring extracted them into portal.css and broke the popups because
+     * .portal-popup-close is used with DIFFERENT semantics across views:
+     *   - here (evenement.blade.php): full-width "Retour" text button at the bottom
+     *   - in peloton-event.blade.php: also a full-width bottom button (same rules here)
+     *   - a previous version of portal.css styled it as an absolute-positioned X
+     *     icon in the top-right corner — that rule hijacked the Retour button and
+     *     shoved it into the corner, hiding the popup title.
+     *
+     * Rule of thumb: if you touch these styles, keep them local to this file.
+     * See commit 58a12f5 for the revert to this working state.
+     */
     .portal-overlay {
         display: none;
         position: fixed;
@@ -142,6 +157,7 @@
     .portal-popup-submit:hover {
         background-color: #660614;
     }
+    /* Full-width "Retour"/"Annuler" button at bottom of popup — NOT an X icon. */
     .portal-popup-close {
         margin-top: 0.5rem;
         width: 100%;

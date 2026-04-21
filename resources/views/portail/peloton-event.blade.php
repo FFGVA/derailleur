@@ -219,7 +219,19 @@
         border-color: #d6d3d1;
         color: #a8a29e;
     }
-    /* Description popup */
+    /*
+     * ⚠️  POPUP STYLES — DO NOT EXTRACT TO portal.css ⚠️
+     *
+     * These .portal-popup-* rules are intentionally inline per-view. An earlier
+     * refactoring extracted them into portal.css and broke the popups because
+     * .portal-popup-close here is a full-width bottom button ("Annuler"/"Fermer"),
+     * but a previous shared rule styled it as an absolute-positioned X icon in
+     * the top-right corner — which hijacked this button and hid the popup title.
+     *
+     * Rule of thumb: if you touch these styles, keep them local to this file.
+     * Keep the definition in sync with evenement.blade.php.
+     * See commit 58a12f5 for the revert to this working state.
+     */
     .portal-overlay {
         display: none;
         position: fixed;
@@ -253,6 +265,7 @@
         color: #555;
         white-space: pre-wrap;
     }
+    /* Full-width "Annuler"/"Fermer" button at bottom of popup — NOT an X icon. */
     .portal-popup-close {
         margin-top: 1rem;
         width: 100%;
