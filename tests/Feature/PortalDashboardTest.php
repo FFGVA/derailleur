@@ -147,6 +147,60 @@ class PortalDashboardTest extends TestCase
         $response->assertSee('Confirmée');
     }
 
+    public function test_event_detail_shows_price_non_member_amount(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie tarifée',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 10,
+            'price_non_member' => 25,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Prix non-membres');
+        $response->assertSee('CHF 25.00');
+    }
+
+    public function test_event_detail_shows_gratuit_when_price_non_member_is_zero(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie libre',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 0,
+            'price_non_member' => 0,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Prix non-membres');
+        $response->assertSee('Gratuit');
+    }
+
+    public function test_event_detail_falls_back_to_price_when_price_non_member_null(): void
+    {
+        $member = $this->createAuthenticatedMember();
+
+        $event = Event::create([
+            'title' => 'Sortie fallback',
+            'starts_at' => now()->addDays(7),
+            'statuscode' => 'P',
+            'price' => 15,
+            'price_non_member' => null,
+        ]);
+
+        $response = $this->authenticatedGet($member, '/portail/evenement/' . $event->id);
+
+        $response->assertSee('Prix non-membres');
+        $response->assertSee('CHF 15.00');
+    }
+
     public function test_event_detail_shows_register_button_when_not_registered(): void
     {
         $member = $this->createAuthenticatedMember();
