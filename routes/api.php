@@ -27,6 +27,7 @@ Route::withoutMiddleware('throttle:api')->get('/events', function () {
         'location' => $e->location,
         'price' => $e->price,
         'price_non_member' => $e->price_non_member,
+        'members_only' => (bool) $e->members_only,
         'max_participants' => $e->max_participants,
     ]));
 });
