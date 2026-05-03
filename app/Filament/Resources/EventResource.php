@@ -107,9 +107,11 @@ class EventResource extends Resource
                                     ->columnSpan(10),
                                 Forms\Components\TextInput::make('max_participants')
                                     ->label('Places')
+                                    ->rule('nullable')
                                     ->rule('integer')
                                     ->rule('min:1')
-                                    ->maxLength(4)
+                                    ->rule('max:9999')
+                                    ->extraInputAttributes(['maxlength' => 4])
                                     ->columnSpan(2),
                             ]),
                         Forms\Components\Section::make('Dates')
