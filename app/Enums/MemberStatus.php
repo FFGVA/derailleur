@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Filament\Support\Colors\Color;
+
 enum MemberStatus: string
 {
     case Brouillon = 'D';
@@ -23,15 +25,15 @@ enum MemberStatus: string
         };
     }
 
-    public function getColor(): string
+    public function getColor(): string|array
     {
         return match ($this) {
             self::Brouillon => 'gray',
-            self::Actif => 'success',
+            self::Actif => Color::Green,
             self::Inactif => 'danger',
             self::EnAttente => 'warning',
-            self::NonMembre => 'info',
-            self::Enfant => 'success',
+            self::NonMembre => Color::Cyan,
+            self::Enfant => Color::Green,
         };
     }
 }

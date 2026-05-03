@@ -3,6 +3,7 @@
 namespace Tests\Unit\Enums;
 
 use App\Enums\MemberStatus;
+use Filament\Support\Colors\Color;
 use PHPUnit\Framework\TestCase;
 
 class MemberStatusTest extends TestCase
@@ -43,10 +44,10 @@ class MemberStatusTest extends TestCase
     public function test_get_color_returns_valid_values(): void
     {
         $this->assertSame('gray', MemberStatus::Brouillon->getColor());
-        $this->assertSame('success', MemberStatus::Actif->getColor());
+        $this->assertSame(Color::Green, MemberStatus::Actif->getColor());
         $this->assertSame('danger', MemberStatus::Inactif->getColor());
         $this->assertSame('warning', MemberStatus::EnAttente->getColor());
-        $this->assertSame('info', MemberStatus::NonMembre->getColor());
-        $this->assertSame('success', MemberStatus::Enfant->getColor());
+        $this->assertSame(Color::Cyan, MemberStatus::NonMembre->getColor());
+        $this->assertSame(Color::Green, MemberStatus::Enfant->getColor());
     }
 }
